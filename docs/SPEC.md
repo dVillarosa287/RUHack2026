@@ -80,6 +80,9 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 
 - Highlight text in the color of the selected sprite. The sprite appears at the highlight for about a second to confirm the save, then fades. (Stage 1 for the highlight, Stage 2 for the sprite animation)
 - Click anywhere on the page to place the selected sprite at that exact spot. The sprite is attached to the text it was placed on, so it follows that text when the page scrolls, resizes or reflows, and it can be dragged to a new spot. (Stage 1 with a plain marker, Stage 2 with real sprites)
+- A placed sprite is centered on the mouse, so it lands around the cursor and not off to one side. (Stage 2, see `BACKLOG.md` F3)
+- Once a sprite is selected in the toolbar, a copy of it follows the mouse and sits on top of the cursor, so it feels like the user is dragging it onto the page. Esc or the shovel puts it down. (Stage 2, see `BACKLOG.md` F4)
+- When the user jumps to a seed (from the viewer or the scroll rail), the seed's highlight turns yellow, stays yellow for a short while, then fades smoothly back to its normal look. It is not a one-second flash. (Stage 2, see `BACKLOG.md` F2)
 - Drag a sprite from the toolbar and drop it on the page. (Stage 2)
 - Place a sprite on a link: the user stays on the current tab, and the sprite stores the link's destination. Clicking that sprite in the viewer opens the destination. (Stage 2)
 - Annotations save per web page and reappear when the page is opened again. (Stage 1)
@@ -92,11 +95,13 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 - The toolbar opens in the top right corner and can be dragged anywhere in the window. It can be resized by dragging its bottom-left corner. It is opened and closed with the extension's icon in Chrome (or its close button), and it stays open, in the same place and size, in every tab until the user closes it. It is drawn above everything on the page, including a site's own pop-ups. (Stage 1)
 - The three most recently used sprites shown on the toolbar. (Stage 2)
 - Above the toolbar, the name of the forest the annotations are going into, with a way to switch forests or create a new one. (Stage 1)
+- A clearly labelled "Create new forest" button on the toolbar. Stage 1 has only a small "+ New" next to the forest picker; this replaces it with a button that says what it does. (Stage 2)
 - Two buttons: "Current Forest" opens the forest you are in, and "View Forests" opens all of your forests. (Stage 1)
 
 ### Scroll rail
 
 - A thin rail on the right edge of the page with a small marker for every annotation on that page. Clicking a marker scrolls to it. (Stage 2)
+- Look: the rail is a smallish, slim bar, but the sprites on it are larger than the bar and stick out past its edge. This is on purpose; keep the bar slim and let the sprites overhang. (Stage 2)
 - When you jump, the rail saves where you were. That saved spot is the "animal", because the animal follows you around. Clicking it takes you back. (Stage 2)
 - Option to show the animal as a visible sprite on the page. (Future)
 
@@ -104,7 +109,8 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 
 - View Forests: a Finder-style window with one icon per forest. New forests land in a tidy grid by default, the user can drag them around, choose each forest's icon, and double-click to open one. (Grid and open in Stage 1, dragging and icon choice in Stage 2)
 - A list of every annotation in a forest, grouped by web page, each one linking back to its page which opens in another window. (Stage 1)
-- Graph view: every annotation is a sprite node, as in Obsidian. The forest page keeps its list of annotations, and a "Graph view" button at the top right of it opens the graph. (Stage 2)
+- Graph view: every annotation is a sprite node, as in Obsidian. The forest page keeps its list of annotations, and a "Graph view" button at the top right of it opens the graph. Nodes spread out automatically once, the first time a node has no saved position; after that the positions are the user's and are saved. (Stage 2)
+- Large trees: in each forest, every web page that has 3 or more seeds gets a "large tree" node in the graph. It sits fairly close to its seeds and is joined to each of them by a very subtle line. It is worked out from the seeds (grouped by `url`) each time the graph is drawn, not saved, so it needs no data model change. A large tree is not a seed and cannot be quizzed. Placeholder art: the existing `tree` sprite drawn larger. (Stage 2)
 - Manual connections ("roots"): drag from one node to another to draw a root between them. (Stage 2)
 - A left sidebar with the folders inside the forest. (Stage 2)
 - The user's own notes and media as nodes that are not tied to a web page. (Stage 2 for text notes, Stage 3 for images)
@@ -179,9 +185,9 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 ### On a web page
 
 1. Open the extension on any web page. A rectangular toolbar appears with the sprite icons (sprout, lily pad, mushroom, flower, apple tree) and the three most recently used sprites. The color palette sits under the toolbar.
-2. Above the toolbar is the name of the forest you are in, which is the folder your annotations go into. You can switch forests or create a new one from here.
-3. Click a sprite to select it, then do one of the following.
-   - **Click a spot on the page.** The sprite is placed there and saved at that location.
+2. Above the toolbar is the name of the forest you are in, which is the folder your annotations go into. You can switch forests from here, or press "Create new forest".
+3. Click a sprite to select it. A copy of the sprite follows your mouse, as if you were dragging it. Then do one of the following.
+   - **Click a spot on the page.** The sprite is placed there, centered on the mouse, and saved at that location.
    - **Highlight text.** The text is highlighted in the sprite's color. The sprite appears at the highlight for a second to show it was saved, then fades away.
    - **Click a link.** You stay on the same tab. The sprite is saved pointing at the link's destination, and clicking it later in the viewer opens that destination.
 
@@ -189,7 +195,7 @@ Sprites can also be dragged from the toolbar and dropped on the page.
 
 ### The scroll rail
 
-A rail on the right side of the page shows where every sprite on the page is. Click a marker to jump to that part of the page. The spot you jumped from is saved as the "animal", since the animal follows you around, and clicking the animal returns you to it.
+A rail on the right side of the page shows where every sprite on the page is. It is a slim bar, and its sprites are bigger than the bar so they stick out past it. Click a marker to jump to that part of the page; the seed's highlight turns yellow, stays yellow for a while and then fades back. The spot you jumped from is saved as the "animal", since the animal follows you around, and clicking the animal returns you to it.
 
 ### The two forest buttons
 
@@ -201,7 +207,7 @@ This works like opening a folder in Finder. Each forest is an icon inside a rect
 
 ### Inside a forest
 
-A forest opens as a list of its annotations, with a "Graph view" button at the top right. That button opens the forest as an Obsidian-style graph, with a sprite icon for each node. The folders inside the forest are listed in a sidebar on the left. You connect two nodes by dragging from one to the other, which draws a root between them, or you ask the AI to suggest connections and accept the ones you agree with. You can add your own notes and media as nodes that did not come from a web page, using the same sprites. Nodes from the same page or website are linked automatically in a lighter style, and this can be switched off.
+A forest opens as a list of its annotations, with a "Graph view" button at the top right. That button opens the forest as an Obsidian-style graph, with a sprite icon for each node. The folders inside the forest are listed in a sidebar on the left. You connect two nodes by dragging from one to the other, which draws a root between them, or you ask the AI to suggest connections and accept the ones you agree with. You can add your own notes and media as nodes that did not come from a web page, using the same sprites. Nodes from the same page or website are linked automatically in a lighter style, and this can be switched off. A web page with 3 or more seeds in the forest also gets a "large tree" in the graph, placed near its seeds and joined to them by very subtle lines.
 
 ### Quizzes
 
@@ -258,19 +264,21 @@ Lily pads, fruit sprouts and the other sprites are in the toolbar from the start
 
 ## 10. Team plan for four people
 
-| Role | Owns | Stage 1 | Stage 2 | Stage 3 |
+There are no fixed roles: anyone takes any job, and jobs are claimed in `docs/DIVIDING_WORK.md`. The table below lists the four areas of the product, which say what each part owns and which folders it touches. They are not people.
+
+| Area | Owns | Stage 1 | Stage 2 | Stage 3 |
 | --- | --- | --- | --- | --- |
 | Page engine | Page script: selection, highlights, placing, anchoring, restoring | Highlight, place a marker, save, restore on reload | Drag and drop, link sprites, sturdier anchoring | Five-minute review prompt on the page, frog summary bubble |
 | On-page UI and art | Toolbar, palette, scroll rail, sprites and animations | Basic toolbar, forest picker, the two buttons | Sprite set, recents, palette, fade animation, scroll rail and animal | Growth art, frog animation, polish |
 | Viewer | The forests grid, list view, graph view | Forests grid, list of annotations by page | Graph with sprite nodes, roots, folder sidebar, notes | Quiz screen, automatic paths, suggested roots in the graph |
 | Data, AI and integration | Storage module, background worker, Gemini, repo and demo | Project setup, storage module, merging | Theme file, storage for roots and folders, Gemini key setup | Quiz generation, alarms, AI roots, export, demo script and write-up |
 
-The page engine is the hardest part, so the most experienced coder should take it. The on-page UI and art role suits someone newer to coding, since the art and animation can be done alongside small pieces of code.
+The page engine is the hardest area, so give its jobs to someone comfortable with code. The on-page UI and art jobs suit someone newer to coding, since the art and animation can be done alongside small pieces of code.
 
 ### Working rules
 
 - Spend the first 30 minutes together agreeing on the data model and the storage function names. The Data person writes the storage module first, with fake data if needed, so the other three can build against it right away.
-- Each role owns its own folder in the repo. Two people editing the same file is where merge conflicts come from.
+- Each job stays inside its own area's folders. Two people editing the same file is where merge conflicts come from.
 - One branch per person. Merge into main at every checkpoint, roughly every three hours, and make sure main still runs after each merge.
 - Use placeholder art (colored circles) until the sprites are ready. Art should never block code.
 - Stop adding features three hours before the deadline. Use that time to fix bugs, rehearse the demo and record a backup video.
@@ -303,8 +311,9 @@ Hour ranges assume a 24-hour event and should be scaled to the real schedule. Th
 - Sprites on links.
 - The scroll rail with markers and the animal.
 - Forests can be dragged around the grid and given an icon.
-- The graph view with sprite nodes, drag-to-connect roots and the folder sidebar.
+- The graph view with sprite nodes, large trees for pages with 3 or more seeds, drag-to-connect roots and the folder sidebar.
 - Text notes as nodes.
+- Polish on placing: sprites centered on the mouse, the selected sprite follows the cursor, the jump highlight stays yellow then fades, the "Create new forest" button, and rail sprites that stick out past the bar.
 - Sprites and colors loaded from one theme file.
 
 **Done when:** a forest with annotations from two different pages shows as a graph, and two nodes can be connected by hand.

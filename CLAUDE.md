@@ -11,7 +11,7 @@ HackRU project. A Chrome extension (Manifest V3) for annotating web pages for la
 
 ## Team and context
 
-- Four people. Each has one role, one branch and their own Claude session. Roles: Page engine, On-page UI and art, Viewer, Data/AI/integration. Details in `docs/SPEC.md` section 10.
+- Four people, each with their own branch and their own Claude session. There are no fixed roles: anyone takes any job. "Page engine", "On-page UI and art", "Viewer" and "Data, AI and integration" are areas of the product. They tag checklist items and say which folders a job touches. They are not people. Before you start a job, claim it by writing your name in the "Taken by" column of `docs/DIVIDING_WORK.md`, so two people do not do the same one.
 - Hackathon of about 24 hours. A working demo matters more than complete features.
 - Some of the team are new to coding. Keep code simple, keep files small, and say briefly why a choice was made.
 
@@ -21,6 +21,7 @@ HackRU project. A Chrome extension (Manifest V3) for annotating web pages for la
 - `PROGRESS.md`: checklist of what is done, grouped by stage. The current stage is stated at the top.
 - `BACKLOG.md`: bugs to fix, things to add, and open decisions.
 - `docs/DIVIDING_WORK.md`: jobs that can be handed to different people or helper agents at the same time, with their folders, dependencies and suggested models.
+- `docs/TWO_SESSIONS.md`: how two people with their own Claude sessions split Stage 2 into a page lane and a viewer lane, the model and effort to use, and the prompt to paste.
 - `docs/THEME.md`: the palette and the rules for every color and style. Read it before you write any CSS, Tailwind classes or inline styles.
 
 ## Vocabulary (use these exact names in code and UI)
@@ -35,6 +36,7 @@ HackRU project. A Chrome extension (Manifest V3) for annotating web pages for la
 - **Fruit:** a quiz the forest produces from lily pads of one color. The apple tree's single-question review is a separate thing.
 - **Frog:** the teacher. Hops between lily pads in a quiz and speaks AI summaries.
 - **Animal:** the marker on the scroll rail for where you were before you jumped.
+- **Large tree:** in the graph view, a bigger tree node for each web page that has 3 or more seeds in the forest. It sits near those seeds and is joined to them by very subtle lines. It is worked out from the seeds, never saved, and is not a seed.
 
 ## Stack
 
@@ -65,9 +67,9 @@ Reasons for each choice: `docs/SPEC.md` section 2.
 
 ## Data model
 
-- **Forest:** id, name, icon, createdAt.
+- **Forest:** id, name, icon, createdAt, and optional x and y (its spot on the forests grid in the viewer).
 - **Folder:** id, forestId, name.
-- **Seed:** id, forestId, folderId, kind (`highlight`, `sprite`, `link`, `note`, `media`), spriteType, color, growth, url, pageTitle, text, linkTarget, anchor, nextReviewAt, createdAt. Allowed values: spriteType is `sprout`, `lilypad`, `mushroom`, `flower` or `fruitsprout`; growth is `sprout` or `tree`. The source of truth is `lib/storage/types.ts`.
+- **Seed:** id, forestId, folderId, kind (`highlight`, `sprite`, `link`, `note`, `media`), spriteType, color, growth, url, pageTitle, text, linkTarget, anchor, nextReviewAt, createdAt. Allowed values: spriteType is `sprout`, `lilypad`, `mushroom`, `flower` or `fruitsprout`; growth is `sprout` or `tree`. Seeds also have optional graphX and graphY (the node's spot in the graph view). The source of truth is `lib/storage/types.ts`.
 - **Anchor:** the exact quoted text plus a few words before and after it; a selector for the nearest page element with an x and y offset inside it; scroll position as a percentage of page height.
 - **Root:** id, forestId, fromSeedId, toSeedId, source (`manual` or `ai`), reason.
 - **Fruit:** id, forestId, color, questions (seedId, type, prompt, choices, answer), createdAt.
@@ -75,19 +77,21 @@ Reasons for each choice: `docs/SPEC.md` section 2.
 
 Whether the on-page toolbar is open and where it sits is interface state, not part of this model. It has its own record in the storage module (`getToolbarState`, `updateToolbarState`) and is shared by every tab.
 
-Changing these shapes affects all four roles. Do not change them without the user confirming with the team; add a note to `BACKLOG.md` instead.
+Changing these shapes affects everyone. Do not change them without the user confirming with the team; add a note to `BACKLOG.md` instead.
 
-## Folder ownership
+## Folders by area
 
-- Page engine: `lib/engine/`
-- On-page UI and art: `lib/onpage-ui/`, `images/` (all sprite and frog art)
-- Viewer: `entrypoints/viewer/`
+These are not owned by particular people. They show which folders a job touches, so two jobs at the same time stay out of each other's way.
+
+- Page engine: `lib/engine/`, including its hooks `useSeedsOnPage` (draws highlights, jumps to a seed) and `usePlanting` (turns mouse activity into seeds)
+- On-page UI and art: `lib/onpage-ui/` (`App.tsx` only puts the pieces together; `usePageData`, `Toolbar` and `MarkerLayer` are separate files), `images/` (all sprite and frog art)
+- Viewer: `entrypoints/viewer/` (`route.ts` lists the pages; `ForestView`, `ForestHeader`, `ForestList`, `GraphView`, `SettingsPage` and `ForestGrid` are separate files)
 - Data, AI and integration: `lib/storage/`, `lib/ai/`, `lib/theme/`, `entrypoints/background.ts`, project config (`wxt.config.ts`, `package.json`, `tsconfig.json`, `.gitignore`), `scripts/`, `docs/THEME.md`
 - Shared glue, keep it tiny: `entrypoints/content/`
 
 `lib/theme/` is used by everyone: it holds the colors, the sprite art lookup and the shared `SpriteIcon`, `ForestIcon` and `ShovelIcon` components. To add art: put the PNG in `images/` as `uncolored-<name>.png` (black outline, white fill, transparent background), then name it in `lib/theme/index.ts`. The build crops the empty margin and copies it into the extension (`wxt.config.ts`, `scripts/trim-art.ts`); the originals in `images/` are never changed. Sprites are drawn through `SpriteIcon` with a palette color, which tints the white fill.
 
-Stay inside your role's folders. If a task needs a change in another role's folder, stop and tell the user.
+Stay inside the folders of the job you claimed. If your job needs a change in a folder that another job is working in, or in the data model, stop and tell the user.
 
 ## Stages
 
@@ -99,18 +103,18 @@ Build only items from the current stage. Do not start Stage 3 or anything listed
 
 ## How to work in this repo
 
-- Start of every session: read `PROGRESS.md`, including "Notes for other agents" from all four roles. Then pick an unchecked item for your role in the current stage and read the matching section of `docs/SPEC.md`.
+- Start of every session: read `PROGRESS.md`, including "Notes for other agents" from every area. Then pick an unchecked item in the current stage that nobody has claimed (see `docs/DIVIDING_WORK.md`), claim it, and read the matching section of `docs/SPEC.md`.
 - Check `BACKLOG.md` under "Open decisions" first. If your task touches one, ask the user instead of guessing.
 - Found a bug or an idea outside the current task: add it to `BACKLOG.md` and keep going.
 - Whenever the user answers an open decision, changes a plan, or asks for a new behavior, design, document or idea (for now or for later), record it in the same session so future agents can see it: `docs/SPEC.md` (what the product does), `PROGRESS.md` (checklist items, plus your note), `BACKLOG.md` (later ideas and decisions; move settled ones to Closed), `docs/DIVIDING_WORK.md` (if it is a job that could be handed out), and this file (rules, commands, folders, links to new docs). Search them for the old wording so nothing contradicts the new answer.
 
 ### Before you finish, every session (required)
 
-Update `PROGRESS.md` before your final message, every time you work, even if the task is unfinished or nothing changed in the code. The other three roles and their agents only know what you did from this file.
+Update `PROGRESS.md` before your final message, every time you work, even if the task is unfinished or nothing changed in the code. Everyone else and their agents only know what you did from this file.
 
-1. Tick each item you finished, but only after it has been tested in Chrome on a real page. Tick only your own role's items.
+1. Tick each item you finished, but only after it has been tested in Chrome on a real page. Tick only the items you did.
 2. If you started an item and did not finish it, leave the box unticked and add `(in progress: what is left)` at the end of its line.
-3. Add one entry at the top of your role's section under "Notes for other agents", using the format given there. Write what another role would need to know: functions or files they can now use, anything that is still fake or placeholder, how to test what you built, and anything you need from them.
+3. Add one entry at the top of the section for the area you worked in, under "Notes for other agents", using the format given there. Write what someone else would need to know: functions or files they can now use, anything that is still fake or placeholder, how to test what you built, and anything you need from them.
 4. If every box in the current stage is ticked, tell the user so they can run the "Done when" check. Do not change "Current stage" yourself.
 5. In your final message, tell the user which boxes you ticked and what note you added.
 
@@ -124,6 +128,6 @@ Update `PROGRESS.md` before your final message, every time you work, even if the
 
 - You choose the model with `/model`. Claude cannot switch its own model during a session. It can start helper agents on a model it picks, but only if you ask for that.
 - Sonnet 5.5 is the default for most work: toolbar, viewer, storage, docs.
-- Use a larger model (Opus 5.5 or Fable 5.1) for the hard parts: the page engine's anchoring and restoring, bugs that took more than one try, and any decision that changes the data model for all four roles.
+- Use a larger model (Opus 5.5 or Fable 5.1) for the hard parts: the page engine's anchoring and restoring, bugs that took more than one try, and any decision that changes the data model for everyone.
 - Use Haiku 4.5 for small mechanical jobs: renaming, reformatting, copying text between docs.
 - Ask for several agents at once only when the work splits into pieces in different folders that do not depend on each other. Each helper starts without your context and costs more, so one connected task is faster and cheaper in a single session.

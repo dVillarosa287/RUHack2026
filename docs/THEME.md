@@ -55,7 +55,7 @@ Seeds store a color `id` (for example `green`), never the code, so a theme can c
 | `primary-strong` | Pressed or hovered primary |
 | `primary-ink` | Text that sits on `primary` |
 | `primary-soft` | Hover and selected backgrounds |
-| `accent` | Small highlights, such as the flash when jumping to a seed |
+| `accent` | Small highlights, such as the highlight that stays and then fades when jumping to a seed |
 | `danger-soft` | Hover on delete buttons |
 | `shadow` | Shadows (see-through) |
 | `grad-primary`, `grad-surface` | Gradients for headers and panels |
@@ -76,3 +76,13 @@ The sprites in `images/` are black outlines with a white fill. `SpriteIcon` (in 
 Pass `color` to tint: `<SpriteIcon type="mushroom" color={seed.color} />`. Without `color` the sprite is drawn white.
 
 The build crops the empty margin off each image (`scripts/trim-art.ts`) so sprites fill their icon box. The originals in `images/` are not changed.
+
+## Fonts and line boil (teammates are working on these)
+
+Guidance, not final decisions. The same rule applies: no one-off styles in a component.
+
+- **Fonts** are theme tokens like colors. Define them in `lib/theme/themes.ts` (for example `font-body` and `font-title`, used as `var(--fo-font-body)`), so a new theme can change them.
+- Ship the font files inside the extension (do not load fonts from a website). Files served into web pages must be listed in `web_accessible_resources` in `wxt.config.ts`.
+- `@font-face` rules in `lib/onpage-ui/toolbar.css` are moved out of the Shadow DOM into the page automatically by WXT, which is required because a Shadow DOM ignores `@font-face`. Test on a site with a strict content security policy (such as GitHub) in case it blocks the font files.
+- **Line boil** (the lines of the art wobbling) should be applied to the outer wrapper in `SpriteIcon` (`lib/theme/SpriteIcon.tsx`), so the outline and the tint layer move together. Respect `prefers-reduced-motion`.
+
