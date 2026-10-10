@@ -47,6 +47,12 @@ Format:
 - Page where it happens: a test page with identical paragraphs; rare on real articles. Seen when testing sprites near the start of the repeated paragraphs.
 - Demo-blocking: no
 
+### F5. `npm run check:theme` always fails on Windows  [Data] (Roshan's agent)
+- What happens: it reports the 8 palette codes in `lib/theme/themes.ts`, the one file allowed to have them. On Windows the path it builds is `lib\theme\themes.ts`, which does not match the allowed `lib/theme/themes.ts`. The same happens on an unchanged `main`.
+- What should happen: it passes when only `themes.ts` has color codes. Fix in `scripts/check-theme.mjs`: compare `rel.replaceAll('\\', '/')` with the allowed list.
+- Page where it happens: the command line, on Windows.
+- Demo-blocking: no
+
 ## To add
 
 Format:

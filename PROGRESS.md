@@ -161,6 +161,11 @@ Entry format:
 
 ### Viewer notes
 
+- [Oct 10, 7:10 PM] (Roshan)
+  - Did: all six viewer-lane jobs in `entrypoints/viewer/`: graph view with large trees (`GraphView`, `GraphNodes`, `graphLayout.ts`, `graph.css`), roots, text notes (`NewNoteForm`) and the detail panel (`NodeDetail`), folder sidebar (`FolderSidebar`), draggable forest grid with icon choice, settings page with the Gemini key. A "Settings" link is in the viewer header.
+  - Others can use / need to know: text notes are seeds with `kind: 'note'` and `url: ''` (the list shows them under "Your notes"). Roots are drawn from the small dot on a sprite; select a root and press Delete to remove it. Removing a seed from the graph also removes its roots. Tested with a Playwright script in Chromium on Wikipedia; nothing was checked in Chrome by a person yet.
+  - Need from someone else: link sprites from the page lane, to test the "Open link" button in the detail panel. `npm run check:theme` fails on Windows for everyone (`BACKLOG.md` F5).
+
 - [Oct 10, 9:00 PM] (Teobobeo99)
   - Did: docs only. Added the "large tree" idea (A6) to `docs/SPEC.md`, `BACKLOG.md`, the Stage 2 checklist and the graph view row in `docs/DIVIDING_WORK.md`; nothing is built.
   - Others can use / need to know: group the forest's seeds by `url`; for each url with 3 or more seeds draw a larger `tree` node near them with subtle lines. It is worked out each time, not stored, so no data model change. Assumed to live in the graph view only; ask the user if unsure.
@@ -311,23 +316,23 @@ Goal: it looks and feels like a forest.
 
 ### Viewer
 
-- [ ] [Viewer] Forests can be dragged around the grid, and positions are remembered
-- [ ] [Viewer] User can choose each forest's icon
-- [ ] [Viewer] Double-click a forest to open it
-- [ ] [Viewer] Graph view: every annotation is a sprite node (React Flow), opened by a "Graph view" button at the top right of the forest page; nodes spread out automatically once (d3-force), then keep the positions the user gives them
-- [ ] [Viewer] Large trees in the graph: a web page with 3 or more seeds in the forest gets a bigger tree node near its seeds, joined to them by very subtle lines; worked out from the seeds, not saved (`BACKLOG.md` A6)
-- [ ] [Viewer] Roots: drag from one node to another to connect them
-- [ ] [Viewer] Left sidebar with the folders inside the forest
-- [ ] [Viewer] Text notes as nodes not tied to a web page, using the same sprites
-- [ ] [Viewer] Detail panel for a selected node
-- [ ] [Viewer] Clicking a link sprite opens the link's destination
+- [ ] [Viewer] Forests can be dragged around the grid, and positions are remembered (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [Viewer] User can choose each forest's icon (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [Viewer] Double-click a forest to open it (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [Viewer] Graph view: every annotation is a sprite node (React Flow), opened by a "Graph view" button at the top right of the forest page; nodes spread out automatically once (d3-force), then keep the positions the user gives them (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [Viewer] Large trees in the graph: a web page with 3 or more seeds in the forest gets a bigger tree node near its seeds, joined to them by very subtle lines; worked out from the seeds, not saved (`BACKLOG.md` A6) (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [Viewer] Roots: drag from one node to another to connect them (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [Viewer] Left sidebar with the folders inside the forest (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [Viewer] Text notes as nodes not tied to a web page, using the same sprites (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [Viewer] Detail panel for a selected node (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [Viewer] Clicking a link sprite opens the link's destination (in progress: the graph's detail panel shows an "Open link" button when a seed has a `linkTarget`; untested until the page lane saves link sprites)
 
 ### Data, AI and integration
 
 - [ ] [Data] One theme file that all sprites and colors load from (in progress: `lib/theme/` holds the palette, the art lookup and the tinting components; there is no theme picker yet)
 - [ ] [Data] Storage for roots, folders, forest icons and grid positions (in progress: roots, folders and forest icons have functions, untested; grid positions need a data model change, see `BACKLOG.md` A1)
-- [ ] [Data] Recent sprites saved in settings (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
-- [ ] [Data] Settings screen where the user pastes their Gemini key
+- [ ] [Data] Recent sprites saved in settings
+- [ ] [Data] Settings screen where the user pastes their Gemini key (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [Data] All four branches merged into main, and main still runs
 
 **Done when:** a forest with annotations from two different pages shows as a graph, and two nodes can be connected by hand.
