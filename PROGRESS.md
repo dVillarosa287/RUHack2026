@@ -65,6 +65,61 @@ Entry format:
 ### On-page UI and art notes
 
 - [Oct 10, 9:00 PM] (Teobobeo99)
+  - Did: halved the SVG lineboil displacement scale from 6 to 3 in `lib/engine/lineBoil.ts`.
+  - Others can use / need to know: animation timing and seeded frames are unchanged; `npm run compile` passes.
+  - Need from another role: nothing
+
+- [Oct 10, 8:55 PM] (Teobobeo99)
+  - Did: fixed continuous lineboil cycling by materializing the marker iterable before the animation loop; `Map.values()` was being consumed on the first tick.
+  - Others can use / need to know: every marker now receives each seeded SVG filter frame continuously; `npm run compile` and `npm run build` pass.
+  - Need from another role: nothing
+
+- [Oct 10, 8:50 PM] (Teobobeo99)
+  - Did: replaced the custom bitmap lineboil pipeline with a Shadow-DOM-safe SVG turbulence/displacement controller adapted from `https://github.com/tomcreighton/boil` (`lib/engine/lineBoil.ts`).
+  - Others can use / need to know: markers now animate directly at scale 6 with 8 seeded filters and a 100ms cycle; no image fetch or canvas re-encoding occurs per frame. `npm run compile` and `npm run build` pass.
+  - Need from another role: nothing
+
+- [Oct 10, 8:40 PM] (Teobobeo99)
+  - Did: scaled lineboil movement for the original 480px artwork, using an 18px wobble and 9px jitter, and clear dark source contours before drawing the shifted stroke.
+  - Others can use / need to know: the change is intended to remain visible when sprites render at 38px; `npm run compile` and `npm run build` pass.
+  - Need from another role: nothing
+
+- [Oct 10, 8:35 PM] (Teobobeo99)
+  - Did: increased the lineboil edge-strength response by 4x in `lib/engine/lineBoil.ts`.
+  - Others can use / need to know: choppy segmentation, wobble, and continuous animation are unchanged; `npm run compile` passes.
+  - Need from another role: nothing
+
+- [Oct 10, 8:30 PM] (Teobobeo99)
+  - Did: tuned lineboil to use broken contour segments and one jittered offset per pixel instead of overlapping multi-pass bands.
+  - Others can use / need to know: the effect remains continuously phased; `npm run compile` and `npm run build` pass.
+  - Need from another role: nothing
+
+- [Oct 10, 8:25 PM] (Teobobeo99)
+  - Did: lineboil now continuously regenerates marker images every 120ms with a changing wobble phase; source sprite blobs are fetched once per image URL.
+  - Others can use / need to know: the animation loop is owned by `lib/onpage-ui/App.tsx`, processing is phased in `lib/engine/lineBoil.ts`, and `npm run compile` plus `npm run build` pass.
+  - Need from another role: nothing
+
+- [Oct 10, 8:20 PM] (Teobobeo99)
+  - Did: increased lineboil visibility in `lib/engine/lineBoil.ts` with wider +/-3px passes, stronger edge detection, and higher opacity.
+  - Others can use / need to know: markers still use the same processed image and color mask; `npm run compile` and `npm run build` pass.
+  - Need from another role: nothing
+
+- [Oct 10, 8:10 PM] (Teobobeo99)
+  - Did: fixed `App.tsx` lineboil import to use the project `@/lib/engine/lineBoil` alias instead of an absolute `/lib/...` path.
+  - Others can use / need to know: `npm run compile` passes again.
+  - Need from another role: nothing
+
+- [Oct 10, 8:05 PM] (Teobobeo99)
+  - Did: added lineboil debug logging in `lib/engine/lineBoil.ts` and `lib/onpage-ui/App.tsx`.
+  - Others can use / need to know: the browser console shows queued marker ids, sprite types, source image URLs, dimensions, completions, and failures; toggle `DEBUG_LINE_BOIL` off when finished debugging.
+  - Need from another role: nothing
+
+- [Oct 10, 8:00 PM] (Teobobeo99)
+  - Did: visible anchored sprite markers now receive line-boiled bitmap art generated from each seed in `lib/onpage-ui/App.tsx`, passed through `MarkerLayer`, and rendered by `SpriteIcon`; restored `lib/engine/lineBoil.ts` as the single helper implementation.
+  - Others can use / need to know: marker rendering falls back to the normal sprite if processing fails or art is unavailable. `npm run compile` and `npm run check:theme` pass.
+  - Need from another role: nothing
+
+- [Oct 10, 9:00 PM] (Teobobeo99)
   - Did: docs only. Added the "Create new forest" button (A7) and the scroll rail look (A8: slim bar, sprites bigger than the bar and sticking out) to the Stage 2 checklist and `docs/SPEC.md`; nothing is built.
   - Others can use / need to know: the rail overhang is intentional, keep the bar slim. The existing small "+ New" in `lib/onpage-ui/Toolbar.tsx` is what the new button replaces.
   - Need from someone else: nothing

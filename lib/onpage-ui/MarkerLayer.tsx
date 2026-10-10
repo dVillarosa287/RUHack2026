@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Anchor, Seed } from '@/lib/storage';
-import { MarkerTracker, UI_HOST_TAG } from '@/lib/engine';
+import { createLineBoil, MarkerTracker, UI_HOST_TAG } from '@/lib/engine';
 import { SpriteIcon } from '@/lib/theme/SpriteIcon';
 
 interface MarkerLayerProps {
@@ -55,6 +55,14 @@ export function MarkerLayer({ seeds, digging, flashId, onDig, onMove }: MarkerLa
     return () => cancelAnimationFrame(frame);
   }, [markers]);
 
+  useEffect(() => {
+    const firstMarker = elements.current.values().next().value;
+    if (!firstMarker) return;
+    const root = firstMarker.getRootNode();
+    if (!(root instanceof Document || root instanceof ShadowRoot)) return;
+    return createLineBoil(elements.current.values(), root);
+  }, [markers]);
+
   const startDrag = (seed: Seed, e: ReactPointerEvent<HTMLDivElement>) => {
     if (digging || e.button !== 0) return;
     e.preventDefault();
@@ -107,7 +115,12 @@ export function MarkerLayer({ seeds, digging, flashId, onDig, onMove }: MarkerLa
           onPointerDown={(e) => startDrag(seed, e)}
           onClick={digging ? () => onDig(seed.id) : undefined}
         >
-          <SpriteIcon type={seed.spriteType} size={MARKER_SIZE} color={seed.color} grown={seed.growth === 'tree'} />
+          <SpriteIcon
+            type={seed.spriteType}
+            size={MARKER_SIZE}
+            color={seed.color}
+            grown={seed.growth === 'tree'}
+          />
         </div>
       ))}
     </>
