@@ -1,29 +1,40 @@
-import { getForest, getSeedsForForest } from '@/lib/storage';
+import { useState } from 'react';
+import { getFolders, getForest, getSeedsForForest } from '@/lib/storage';
+import { FolderSidebar, isUnfiled, type FolderChoice } from './FolderSidebar';
 import { ForestHeader } from './ForestHeader';
 import { ForestList } from './ForestList';
+import { graphHref } from './route';
 import { useStored } from './useStored';
 
 /**
  * A forest as a list of its annotations. This file is only the layout, so several people can work on the pieces
- * at once: the header (ForestHeader, with room for buttons on the right), a sidebar column on the left (not built
- * yet, the folder sidebar goes in the marked spot), and the list itself (ForestList).
+ * at once: the header (ForestHeader, with the "Graph view" button on the right), the folder sidebar on the left
+ * (FolderSidebar), and the list itself (ForestList).
  */
 export function ForestView({ forestId }: { forestId: string }) {
-  const data = useStored(async () => ({ forest: await getForest(forestId), seeds: await getSeedsForForest(forestId) }), [forestId]);
+  const data = useStored(async () => ({ forest: await getForest(forestId), seeds: await getSeedsForForest(forestId), folders: await getFolders(forestId) }), [forestId]);
+  const [folder, setFolder] = useState<FolderChoice>('all');
 
   if (!data) return <p>Loading…</p>;
   if (!data.forest) return <p>This forest no longer exists.</p>;
 
-  const pageCount = new Set(data.seeds.map((s) => s.url)).size;
+  // Text notes have no page, so they are not counted as one.
+  const pageCount = new Set(data.seeds.map((s) => s.url).filter(Boolean)).size;
   const summary = `${data.seeds.length} ${data.seeds.length === 1 ? 'seed' : 'seeds'} on ${pageCount} ${pageCount === 1 ? 'page' : 'pages'}`;
+
+  const shown = folder === 'all' ? data.seeds : folder === 'none' ? data.seeds.filter((s) => isUnfiled(s, data.folders)) : data.seeds.filter((s) => s.folderId === folder);
 
   return (
     <>
-      <ForestHeader forest={data.forest} summary={summary} />
+      <ForestHeader
+        forest={data.forest}
+        summary={summary}
+        actions={<a href={graphHref(forestId)} className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink hover:bg-primary-strong">Graph view</a>}
+      />
       <div className="flex gap-6">
-        {/* The folder sidebar goes here, as the first child of this row. */}
+        <FolderSidebar forestId={forestId} folders={data.folders} seeds={data.seeds} choice={folder} onChoose={setFolder} />
         <div className="min-w-0 flex-1">
-          <ForestList seeds={data.seeds} />
+          <ForestList seeds={shown} emptyText={folder === 'all' ? undefined : 'No seeds here. Drag a seed from "All seeds" onto a folder to move it.'} />
         </div>
       </div>
     </>

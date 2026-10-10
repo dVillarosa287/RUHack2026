@@ -59,6 +59,12 @@ Format:
 - Page where it happens: any page. Probably a new component in `lib/onpage-ui/`, drawn inside the Shadow DOM and in the top layer, ignoring pointer events so clicks pass through. Shares ground with the drag-from-toolbar job in `docs/DIVIDING_WORK.md`.
 - Demo-blocking: no
 
+### F5. `npm run check:theme` always fails on Windows  [Data] (Roshan's agent)
+- What happens: it reports the 8 palette codes in `lib/theme/themes.ts`, the one file allowed to have them. On Windows the path it builds is `lib\theme\themes.ts`, which does not match the allowed `lib/theme/themes.ts`. The same happens on an unchanged `main`.
+- What should happen: it passes when only `themes.ts` has color codes. Fix in `scripts/check-theme.mjs`: compare `rel.replaceAll('\\', '/')` with the allowed list.
+- Page where it happens: the command line, on Windows.
+- Demo-blocking: no
+
 ## To add
 
 Format:

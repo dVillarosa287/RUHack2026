@@ -45,12 +45,12 @@ Where two jobs share a file, "Needs first" says which goes first.
 | **Fix F4:** the selected sprite follows the mouse, on top of the cursor (`BACKLOG.md` F4). Do it together with the drag-from-toolbar job above, so both use one "sprite under the cursor" piece | `lib/onpage-ui/` (a new component) | nothing | M | Sonnet | |
 | "Create new forest" button on the toolbar (`BACKLOG.md` A7) | `lib/onpage-ui/Toolbar.tsx` | nothing | S | Sonnet | |
 | Scroll rail with markers, and the animal (placeholder art for now). The bar is slim, and the sprites on it are larger and stick out past it (`BACKLOG.md` A8) | `lib/onpage-ui/` (new components) | nothing | L | Sonnet | |
-| Forest grid: drag forests, remember positions (`Forest.x`, `Forest.y`), choose icons, double-click to open | `entrypoints/viewer/ForestGrid.tsx` | Foundation merged | M | Sonnet | |
-| **Graph view** (React Flow), opened by a "Graph view" button at the top right of the forest page. Nodes spread out automatically once (`d3-force`), then keep the user's positions in `Seed.graphX` and `graphY`. **Also the large trees:** a web page with 3 or more seeds in the forest gets a larger tree node placed near its seeds, joined to them by very subtle lines; worked out from the seeds, not saved (`BACKLOG.md` A6) | `entrypoints/viewer/GraphView.tsx` and the button in `ForestView.tsx` | Foundation merged | L | Larger | |
-| Roots: drag from one node to another | `entrypoints/viewer/` (graph files) | Graph view | M | Sonnet | |
-| Folder sidebar and folders | `entrypoints/viewer/` (a new sidebar file, plus the marked spot in `ForestView.tsx`) | Foundation merged | M | Sonnet | |
-| Text notes as nodes, and the detail panel for a node | `entrypoints/viewer/` (graph files) | Graph view | M | Sonnet | |
-| Settings screen where the user pastes their Gemini key | `entrypoints/viewer/SettingsPage.tsx` | Foundation merged | S | Sonnet | |
+| Forest grid: drag forests, remember positions (`Forest.x`, `Forest.y`), choose icons, double-click to open | `entrypoints/viewer/ForestGrid.tsx` | Foundation merged | M | Sonnet | Done (Roshan), needs a check in Chrome |
+| **Graph view** (React Flow), opened by a "Graph view" button at the top right of the forest page. Nodes spread out automatically once (`d3-force`), then keep the user's positions in `Seed.graphX` and `graphY`. **Also the large trees:** a web page with 3 or more seeds in the forest gets a larger tree node placed near its seeds, joined to them by very subtle lines; worked out from the seeds, not saved (`BACKLOG.md` A6) | `entrypoints/viewer/GraphView.tsx` and the button in `ForestView.tsx` | Foundation merged | L | Larger | Done (Roshan), needs a check in Chrome |
+| Roots: drag from one node to another | `entrypoints/viewer/` (graph files) | Graph view | M | Sonnet | Done (Roshan), needs a check in Chrome |
+| Folder sidebar and folders | `entrypoints/viewer/` (a new sidebar file, plus the marked spot in `ForestView.tsx`) | Foundation merged | M | Sonnet | Done (Roshan), needs a check in Chrome |
+| Text notes as nodes, and the detail panel for a node | `entrypoints/viewer/` (graph files) | Graph view | M | Sonnet | Done (Roshan), needs a check in Chrome |
+| Settings screen where the user pastes their Gemini key | `entrypoints/viewer/SettingsPage.tsx` | Foundation merged | S | Sonnet | Done (Roshan), needs a check in Chrome |
 | A second theme, then the custom style dropdown (a menu in the toolbar and viewer header that saves `Settings.theme`) | `lib/theme/`, then `lib/onpage-ui/` and `entrypoints/viewer/` | nothing for the theme; the dropdown needs the theme | S + S | Sonnet | |
 | Create the Gemini key and write the model name in `BACKLOG.md` D5 | none | nothing | S | not code | |
 
