@@ -20,6 +20,7 @@ HackRU project. A Chrome extension (Manifest V3) for annotating web pages for la
 - `docs/SPEC.md`: the full spec. Read only the section for the feature you are about to build, before building it.
 - `PROGRESS.md`: checklist of what is done, grouped by stage. The current stage is stated at the top.
 - `BACKLOG.md`: bugs to fix, things to add, and open decisions.
+- `docs/THEME.md`: the palette and the rules for every color and style. Read it before you write any CSS, Tailwind classes or inline styles.
 
 ## Vocabulary (use these exact names in code and UI)
 
@@ -52,11 +53,12 @@ Reasons for each choice: `docs/SPEC.md` section 2.
 - Never use IndexedDB or `localStorage` from the page script. There they belong to the website being viewed, so data would not be shared across sites.
 - All on-page UI (toolbar, palette, scroll rail) is mounted inside a Shadow DOM with WXT's `createShadowRootUi`.
 - Draw highlights with the CSS Custom Highlight API. Do not wrap page text in new elements.
-- Never store raw pixel coordinates as the only location. Use the anchor shape in the data model.
+- Never store raw pixel coordinates as the only location. Use the anchor shape in the data model. A marker is attached to the text under it (with the element and scroll position as fallbacks) and is drawn from that anchor on every frame by `MarkerTracker`, so it follows the page when it scrolls, resizes or reflows. Never position a marker from a saved screen or page coordinate.
 - Clean URLs (strip tracking parameters and the `#` part) before using them as keys.
 - Gemini is called only from the background service worker, only when the user asks, with one request per quiz and JSON output. The key comes from settings in local storage. Never commit a key.
 - Use `chrome.alarms` for anything that waits longer than a few seconds. The background worker sleeps after about 30 seconds idle.
-- Sprites and colors are loaded from one theme file. Do not hard-code sprite paths or colors in components.
+- Sprites and colors are loaded from the theme (`lib/theme/`). Do not hard-code sprite paths or colors in components.
+- Every color and style follows `docs/THEME.md`: only the palette's exact colors, those made brighter or darker, or gradients of them, always through theme tokens (`var(--fo-...)`). No hex codes, `rgb()` or stock Tailwind color classes outside `lib/theme/themes.ts`. Run `npm run check:theme` before you finish; it must pass.
 - Use placeholder art (colored circles) when a sprite is not ready. Art never blocks code.
 
 ## Data model
@@ -69,14 +71,16 @@ Reasons for each choice: `docs/SPEC.md` section 2.
 - **Fruit:** id, forestId, color, questions (seedId, type, prompt, choices, answer), createdAt.
 - **Settings:** currentForestId, the three most recent sprites, theme, Gemini API key, auto-connections on or off.
 
+Whether the on-page toolbar is open and where it sits is interface state, not part of this model. It has its own record in the storage module (`getToolbarState`, `updateToolbarState`) and is shared by every tab.
+
 Changing these shapes affects all four roles. Do not change them without the user confirming with the team; add a note to `BACKLOG.md` instead.
 
 ## Folder ownership
 
 - Page engine: `lib/engine/`
-- On-page UI and art: `lib/onpage-ui/`, `public/sprites/` (real sprite art goes here)
+- On-page UI and art: `lib/onpage-ui/`, `public/sprites/` (real sprite art goes here), `images/` (art as it was delivered, not yet wired in)
 - Viewer: `entrypoints/viewer/`
-- Data, AI and integration: `lib/storage/`, `lib/ai/`, `lib/theme/`, `entrypoints/background.ts`, project config (`wxt.config.ts`, `package.json`, `tsconfig.json`, `.gitignore`)
+- Data, AI and integration: `lib/storage/`, `lib/ai/`, `lib/theme/`, `entrypoints/background.ts`, project config (`wxt.config.ts`, `package.json`, `tsconfig.json`, `.gitignore`), `scripts/`, `docs/THEME.md`
 - Shared glue, keep it tiny: `entrypoints/content/`
 
 `lib/theme/` is used by everyone: it holds the colors, the sprite stand-ins and the shared `SpriteIcon` and `ShovelIcon` components. To use real art, put the file in `public/sprites/` and write its file name in the `image` field of that sprite in `lib/theme/index.ts`.
@@ -110,6 +114,14 @@ Update `PROGRESS.md` before your final message, every time you work, even if the
 
 ### Testing and commands
 - Test on stable article pages such as Wikipedia or OpenStax. Extensions do not run on Chrome's own pages, the Chrome Web Store or the built-in PDF viewer.
-- Commands (from `package.json`): `npm install` once, `npm run dev` opens Chrome with the extension loaded and reloads on every save, `npm run build` writes the extension to `.output/chrome-mv3/` (load that folder from `chrome://extensions` with Developer mode on and "Load unpacked"), `npm run compile` type-checks.
+- Commands (from `package.json`): `npm install` once, `npm run dev` opens Chrome with the extension loaded and reloads on every save, `npm run build` writes the extension to `.output/chrome-mv3/` (load that folder from `chrome://extensions` with Developer mode on and "Load unpacked"), `npm run compile` type-checks, `npm run check:theme` fails if any color breaks the theme rules.
 - After loading or reloading the extension, reload any web page you want to test on. Pages opened earlier have no content script, and clicking the icon on them shows a "!" badge.
-- The on-page UI is plain CSS in `lib/onpage-ui/toolbar.css`, in px, on purpose: it must look the same on every site. Tailwind is used in the viewer only.
+- The on-page UI is plain CSS in `lib/onpage-ui/toolbar.css`, in px, on purpose: it must look the same on every site. Tailwind is used in the viewer only, with the theme's colors.
+
+## Models and agents
+
+- You choose the model with `/model`. Claude cannot switch its own model during a session. It can start helper agents on a model it picks, but only if you ask for that.
+- Sonnet 5.5 is the default for most work: toolbar, viewer, storage, docs.
+- Use a larger model (Opus 5.5 or Fable 5.1) for the hard parts: the page engine's anchoring and restoring, bugs that took more than one try, and any decision that changes the data model for all four roles.
+- Use Haiku 4.5 for small mechanical jobs: renaming, reformatting, copying text between docs.
+- Ask for several agents at once only when the work splits into pieces in different folders that do not depend on each other. Each helper starts without your context and costs more, so one connected task is faster and cheaper in a single session.

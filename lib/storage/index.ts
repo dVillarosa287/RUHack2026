@@ -4,7 +4,7 @@
 // same moment therefore never overwrite each other. Everything is async because chrome.storage is.
 import { browser } from 'wxt/browser';
 import { cleanUrl } from './url';
-import type { Folder, Forest, Root, Seed, SeedInput, Settings } from './types';
+import type { Folder, Forest, Root, Seed, SeedInput, Settings, ToolbarState } from './types';
 
 export * from './types';
 export { cleanUrl } from './url';
@@ -12,6 +12,7 @@ export { cleanUrl } from './url';
 const PREFIX = { forest: 'forest:', folder: 'folder:', seed: 'seed:', root: 'root:', fruit: 'fruit:' } as const;
 const SETTINGS_KEY = 'settings';
 const PENDING_JUMP_KEY = 'pendingJump';
+const TOOLBAR_KEY = 'toolbar';
 const DEFAULT_FOREST_ID = 'forest-default';
 const PENDING_JUMP_MAX_AGE_MS = 60_000;
 
@@ -189,6 +190,19 @@ export async function updateSettings(patch: Partial<Settings>): Promise<Settings
 }
 
 // ---------- extras beyond the agreed list ----------
+
+const DEFAULT_TOOLBAR: ToolbarState = { open: false, top: 16, right: 16 };
+
+/** Whether the toolbar is open and where it sits. The same in every tab. */
+export async function getToolbarState(): Promise<ToolbarState> {
+  return { ...DEFAULT_TOOLBAR, ...(await readRecord<Partial<ToolbarState>>(TOOLBAR_KEY)) };
+}
+
+export async function updateToolbarState(patch: Partial<ToolbarState>): Promise<ToolbarState> {
+  const updated = { ...(await getToolbarState()), ...patch };
+  await writeRecord(TOOLBAR_KEY, updated);
+  return updated;
+}
 
 /** Calls `callback` whenever anything in storage changes, in any tab or page. Returns a function that stops listening. */
 export function onDataChanged(callback: () => void): () => void {

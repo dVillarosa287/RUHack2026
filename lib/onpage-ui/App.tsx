@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
 import {
-  buildPointAnchor,
+  MarkerTracker,
+  buildMarkerAnchor,
   buildQuoteAnchor,
   flashHighlight,
   getHighlightRange,
   highlightIdAtPoint,
+  nearbyText,
   paintHighlights,
-  resolvePoint,
   scrollToHighlight,
   scrollToPageY,
   startDigging,
@@ -19,13 +20,17 @@ import {
   getForests,
   getSeedsForUrl,
   getSettings,
+  getToolbarState,
   onDataChanged,
   saveSeed,
   takePendingJump,
+  updateSeed,
   updateSettings,
+  updateToolbarState,
   type Forest,
   type Seed,
   type SpriteType,
+  type ToolbarState,
 } from '@/lib/storage';
 import { DEFAULT_COLOR_ID, FOREST_ICONS } from '@/lib/theme';
 import { MarkerLayer } from './MarkerLayer';
@@ -35,7 +40,7 @@ const RETRY_DELAYS_MS = [500, 1000, 2000, 4000, 8000];
 
 /** Runs on every web page. Draws the saved annotations, and the toolbar when the user opens it. */
 export function App({ shadowHost }: { shadowHost: HTMLElement }) {
-  const [visible, setVisible] = useState(false);
+  const [toolbar, setToolbar] = useState<ToolbarState | null>(null);
   const [tool, setTool] = useState<Tool>('none');
   const [spriteType, setSpriteType] = useState<SpriteType>('sprout');
   const [colorId, setColorId] = useState(DEFAULT_COLOR_ID);
@@ -57,7 +62,8 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
   // ----- load data, and reload whenever storage changes anywhere -----
   useEffect(() => {
     const refresh = async () => {
-      const [allForests, settings, pageSeeds] = await Promise.all([getForests(), getSettings(), getSeedsForUrl(window.location.href)]);
+      const [allForests, settings, pageSeeds, toolbarState] = await Promise.all([getForests(), getSettings(), getSeedsForUrl(window.location.href), getToolbarState()]);
+      setToolbar(toolbarState);
       setForests(allForests);
       setCurrentForestId(settings.currentForestId);
       setSeeds(pageSeeds);
@@ -66,14 +72,7 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
     return onDataChanged(() => void refresh());
   }, []);
 
-  // ----- the toolbar icon in Chrome sends a message to show or hide the toolbar -----
-  useEffect(() => {
-    const listener = (message: unknown) => {
-      if ((message as { type?: string } | null)?.type === 'forest:toggle-toolbar') setVisible((v) => !v);
-    };
-    browser.runtime.onMessage.addListener(listener);
-    return () => browser.runtime.onMessage.removeListener(listener);
-  }, []);
+  const visible = toolbar?.open ?? false;
 
   useEffect(() => {
     if (!visible) setTool('none');
@@ -97,9 +96,8 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
       scrollToHighlight(id);
       flashHighlight(id);
     } else {
-      const point = seed.anchor && resolvePoint(seed.anchor);
-      if (!point) return;
-      scrollToPageY(point.y);
+      if (!seed.anchor) return;
+      scrollToPageY(new MarkerTracker(seed.anchor).position().y + window.scrollY);
       setFlashId(id);
       window.setTimeout(() => setFlashId(null), 2000);
     }
@@ -152,7 +150,6 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
         say('Highlight saved');
       },
       onPlace: async ({ clientX, clientY, target }) => {
-        const nearby = (target.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 80);
         await saveSeed({
           forestId: currentForestId,
           kind: 'sprite',
@@ -160,8 +157,8 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
           color: colorId,
           url: window.location.href,
           pageTitle: document.title,
-          text: nearby,
-          anchor: buildPointAnchor(clientX, clientY, target),
+          text: nearbyText(target),
+          anchor: buildMarkerAnchor(clientX, clientY, target),
         });
         say('Marker placed');
       },
@@ -173,9 +170,18 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
 
   return (
     <>
-      <MarkerLayer seeds={seeds} digging={tool === 'dig'} flashId={flashId} onDig={(id) => void removeSeed(id)} />
-      {visible && (
+      <MarkerLayer
+        seeds={seeds}
+        digging={tool === 'dig'}
+        flashId={flashId}
+        onDig={(id) => void removeSeed(id)}
+        onMove={(id, x, y, target) => void updateSeed(id, { anchor: buildMarkerAnchor(x, y, target), text: nearbyText(target) })}
+      />
+      {toolbar && visible && (
         <Toolbar
+          position={{ top: toolbar.top, right: toolbar.right }}
+          onMoved={(position) => void updateToolbarState(position)}
+          onClose={() => void updateToolbarState({ open: false })}
           forests={forests}
           currentForestId={currentForestId}
           tool={tool}

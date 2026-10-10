@@ -21,8 +21,8 @@ export function App() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
       <header className="mb-6 flex items-center justify-between">
-        <a href="#" className="text-2xl font-bold text-moss">🌲 {APP_NAME}</a>
-        {forestId && <a href="#" className="text-sm text-bark-light underline">All forests</a>}
+        <a href="#" className="text-2xl font-bold text-primary">🌲 {APP_NAME}</a>
+        {forestId && <a href="#" className="text-sm text-ink-muted underline">All forests</a>}
       </header>
       {forestId ? <ForestView forestId={forestId} /> : <ForestGrid />}
     </div>

@@ -32,12 +32,22 @@ Entry format:
 
 ### Page engine notes
 
+- [Oct 10, 5:00 PM] (Teobobeo99)
+  - Did: markers now attach to the text under the click and are drawn from it every frame (`lib/engine/markers.ts`, `MarkerTracker`), so they follow scrolling, resizing and layout changes. Fixed markers drifting on Wikipedia.
+  - Others can use / need to know: marker anchors hold a short quote, the nearest element and the scroll percentage, tried in that order. `buildPointAnchor` and `resolvePoint` are gone; use `buildMarkerAnchor` and `MarkerTracker`.
+  - Need from another role: nothing
+
 - [Oct 10, 4:00 PM] (Teobobeo99)
   - Did: `lib/engine/` (anchors, highlights with the CSS Custom Highlight API, mouse capture, scrolling).
   - Others can use / need to know: highlights restore by quote plus nearby words, with a retry for pages that load late. Markers use nearest element plus offset. Double or triple clicks never place a marker. Not built yet: growth on reload, sturdier anchoring.
   - Need from another role: nothing
 
 ### On-page UI and art notes
+
+- [Oct 10, 5:00 PM] (Teobobeo99)
+  - Did: toolbar moved to top right, draggable from any blank spot, with a close button. It stays open in every tab until closed (saved with the storage module). Markers can be dragged to a new spot. All styling now uses theme tokens.
+  - Others can use / need to know: `images/` holds uncolored line art (sprout, tree, mushroom, icons) that is not wired in yet; see `docs/THEME.md` "Tinting art". Colors: only `var(--fo-...)` tokens, run `npm run check:theme`.
+  - Need from another role: nothing
 
 - [Oct 10, 4:00 PM] (Teobobeo99)
   - Did: `lib/onpage-ui/` (toolbar, marker layer, app) and `entrypoints/content/`. Toolbar shows when the Chrome icon is clicked; Esc puts the tool down. Shovel tool removes highlights and markers.
@@ -46,12 +56,22 @@ Entry format:
 
 ### Viewer notes
 
+- [Oct 10, 5:00 PM] (Teobobeo99)
+  - Did: restyled the viewer with theme tokens (Tailwind color names now come from the theme; stock Tailwind colors are switched off).
+  - Others can use / need to know: use `bg-surface`, `text-ink`, `border-edge`, `bg-primary-soft` and so on. A class like `bg-red-100` does nothing now. The list is in `entrypoints/viewer/style.css`.
+  - Need from another role: nothing
+
 - [Oct 10, 4:00 PM] (Teobobeo99)
   - Did: `entrypoints/viewer/` (forest grid, forest page with annotations grouped by web page, open on page, shovel to delete). Addresses are `viewer.html` and `viewer.html#/forest/<id>`.
   - Others can use / need to know: "Open on page" opens a new window and scrolls to the annotation using `setPendingJump`. Tailwind colors are in `entrypoints/viewer/style.css`.
   - Need from another role: nothing
 
 ### Data, AI and integration notes
+
+- [Oct 10, 5:00 PM] (Teobobeo99)
+  - Did: theme system (`lib/theme/themes.ts`, `apply.ts`, `docs/THEME.md`, `scripts/check-theme.mjs`) and a dark forest look from the palette. Added `getToolbarState` and `updateToolbarState` to the storage module (open or closed, and position, shared by every tab). The Chrome icon now toggles that saved state.
+  - Others can use / need to know: the user's choice of theme is `Settings.theme` and `watchTheme` applies it. The dropdown to choose a theme is not built (`BACKLOG.md` A5). Highlights and shadows use see-through palette colors, the one exception in `docs/THEME.md`.
+  - Need from another role: nothing
 
 - [Oct 10, 4:00 PM] (Teobobeo99)
   - Did: WXT, React, TypeScript and Tailwind scaffold; manifest; placeholder icon (green circle); `lib/storage/`; `lib/theme/`; `entrypoints/background.ts`; fixed `.gitignore`. Storage is real `chrome.storage.local` with one key per record, and every function in the agreed list exists.
@@ -67,6 +87,7 @@ Entry format:
 - [ ] [Data] WXT project scaffolded with React, TypeScript and Tailwind (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
 - [ ] [Data] Manifest permissions set: storage, alarms, access to web pages (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
 - [ ] [Data] Extension icon added (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
+- [ ] [Data] Theme system: one palette, themes chosen in settings, every style from theme tokens, `npm run check:theme` passes (`docs/THEME.md`) (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [Data] Storage module written with fake data so the other three can build against it (in progress: written against real `chrome.storage.local` from the start, with no fake data, because one person built every role in this session; waiting for a check in Chrome)
 - [ ] [All] Everyone can run the project and sees the extension load in Chrome
 - [ ] [All] Two or three demo pages picked (Wikipedia, OpenStax)
@@ -84,6 +105,7 @@ Goal: the core loop works from start to finish with plain visuals.
 - [ ] [Engine] Build an anchor for each annotation (quoted text with surrounding words) (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
 - [ ] [Engine] Save each annotation as a seed through the storage module (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
 - [ ] [Engine] Restore every saved annotation when the page loads again (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
+- [ ] [Engine] Markers stay attached to their text through scrolling, resizing and layout changes, and can be dragged to a new spot (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 
 ### On-page UI and art
 
@@ -93,6 +115,7 @@ Goal: the core loop works from start to finish with plain visuals.
 - [ ] [UI] Create a new forest from the toolbar (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
 - [ ] [UI] "Current Forest" button opens the forest you are in, in a new tab (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
 - [ ] [UI] "View Forests" button opens all forests, in a new tab (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
+- [ ] [UI] Toolbar opens top right, can be dragged, and stays open in the same place in every tab until the user closes it (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 
 ### Viewer
 
@@ -134,6 +157,8 @@ Goal: it looks and feels like a forest.
 - [ ] [UI] Sprite art for each sprite type
 - [ ] [UI] Forest icons
 - [ ] [UI] Forest color palette (greens and browns)
+- [ ] [UI] Theme picker (the "custom style" dropdown), see `BACKLOG.md` A5
+- [ ] [UI] Sprites tinted with the palette colors (line art from `images/`, see `docs/THEME.md`)
 
 ### Viewer
 

@@ -76,6 +76,17 @@ export interface Fruit {
   createdAt: number;
 }
 
+/**
+ * Where the on-page toolbar is and whether it is open. This is interface state, not part of the shared
+ * data model, so it has its own record. It is shared by every tab: open it in one, it opens in all.
+ */
+export interface ToolbarState {
+  open: boolean;
+  /** Distance in px from the top and right edges of the window. */
+  top: number;
+  right: number;
+}
+
 export interface Settings {
   currentForestId: string | null;
   /** The three most recently used sprites, newest first. */

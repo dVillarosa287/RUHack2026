@@ -1,31 +1,22 @@
-// The one theme file. Components never hard-code colors or sprite paths; they read them from here.
+// The theme entry point. Components never hard-code colors or sprite paths; they read them from here.
+// Color codes themselves live in ./themes.ts only. See docs/THEME.md.
 import { browser } from 'wxt/browser';
 import type { SpriteType } from '@/lib/storage';
+import { FOREST_THEME, type ThemeColor } from './themes';
 
 export const APP_NAME = 'Forest';
 
-export interface ThemeColor {
-  id: string;
-  name: string;
-  hex: string;
-}
+export { applyTheme, watchTheme } from './apply';
+export { DEFAULT_THEME_ID, FOREST_THEME, THEMES, getTheme, themeToCss, type ThemeColor, type ThemeDefinition } from './themes';
 
-/** The palette. Seeds store the `id`, so the hex codes can change without touching saved data. */
-export const COLORS: ThemeColor[] = [
-  { id: 'red', name: 'Red', hex: '#FF5555' },
-  { id: 'orange', name: 'Orange', hex: '#FFAA00' },
-  { id: 'yellow', name: 'Yellow', hex: '#FFEE88' },
-  { id: 'green', name: 'Green', hex: '#00CC99' },
-  { id: 'blue', name: 'Blue', hex: '#0099FF' },
-  { id: 'cyan', name: 'Cyan', hex: '#00FFEE' },
-  { id: 'purple', name: 'Purple', hex: '#AA00FF' },
-  { id: 'magenta', name: 'Magenta', hex: '#FF00CC' },
-];
+/** The palette seeds are colored from. Today there is one theme, so this is its palette. */
+export const COLORS: ThemeColor[] = FOREST_THEME.palette;
 
 export const DEFAULT_COLOR_ID = 'green';
 
+/** The exact color code of a palette color, for places that need a real value (such as drawing highlights on the page). */
 export function colorHex(id: string): string {
-  return COLORS.find((c) => c.id === id)?.hex ?? '#00CC99';
+  return (COLORS.find((c) => c.id === id) ?? COLORS[0])?.hex ?? '';
 }
 
 export interface ThemeSprite {

@@ -64,6 +64,11 @@ export function resolveQuote(index: TextIndex, anchor: Anchor): Range | null {
 
 // ---------- placed markers ----------
 
+/** How many characters, starting at the click, a marker's text anchor remembers. */
+const MARKER_QUOTE_CHARS = 8;
+/** A click counts as "on the text" if it lands this close to the nearest character. */
+const NEAR_TEXT_PX = 24;
+
 function selectorFor(el: Element): string {
   const parts: string[] = [];
   for (let node: Element | null = el; node && node !== document.documentElement; node = node.parentElement) {
@@ -79,10 +84,39 @@ function selectorFor(el: Element): string {
   return parts.join(' > ');
 }
 
-/** For placed markers: the element that was clicked, the spot inside it, and the scroll position. */
-export function buildPointAnchor(clientX: number, clientY: number, target: Element): Anchor {
+/** The character under (or right next to) a screen position, if there is text there. */
+function textPositionAt(clientX: number, clientY: number): { node: Text; offset: number } | null {
+  const caret = document.caretPositionFromPoint?.(clientX, clientY);
+  let node: Node | null | undefined = caret?.offsetNode;
+  let offset = caret?.offset ?? 0;
+  if (!node) {
+    const range = document.caretRangeFromPoint?.(clientX, clientY);
+    node = range?.startContainer;
+    offset = range?.startOffset ?? 0;
+  }
+  if (!node || node.nodeType !== Node.TEXT_NODE) return null;
+  const text = node as Text;
+  if (text.length === 0) return null;
+  offset = Math.min(offset, text.length - 1);
+
+  const range = document.createRange();
+  range.setStart(text, offset);
+  range.setEnd(text, offset + 1);
+  const rect = range.getClientRects()[0];
+  if (!rect) return null;
+  const dx = Math.max(rect.left - clientX, 0, clientX - rect.right);
+  const dy = Math.max(rect.top - clientY, 0, clientY - rect.bottom);
+  return Math.hypot(dx, dy) <= NEAR_TEXT_PX ? { node: text, offset } : null;
+}
+
+/**
+ * For markers. The main anchor is the text under the click, because text moves with the layout. If the
+ * click was not on text, the nearest element and the spot inside it are used instead. The scroll position is
+ * the last resort. All three are saved, so a marker survives a page change that breaks one of them.
+ */
+export function buildMarkerAnchor(clientX: number, clientY: number, target: Element): Anchor {
   const rect = target.getBoundingClientRect();
-  return {
+  const anchor: Anchor = {
     element: {
       selector: selectorFor(target),
       xRatio: (clientX - rect.left) / Math.max(1, rect.width),
@@ -90,26 +124,22 @@ export function buildPointAnchor(clientX: number, clientY: number, target: Eleme
     },
     scrollPercent: scrollPercentAt(clientY),
   };
+  const spot = textPositionAt(clientX, clientY);
+  if (!spot) return anchor;
+  const index = buildTextIndex();
+  const entry = index.nodes.find((n) => n.node === spot.node);
+  if (!entry) return anchor;
+  const start = entry.start + spot.offset;
+  const end = Math.min(index.text.length, start + MARKER_QUOTE_CHARS);
+  anchor.quote = {
+    exact: index.text.slice(start, end),
+    prefix: index.text.slice(Math.max(0, start - CONTEXT_CHARS), start),
+    suffix: index.text.slice(end, end + CONTEXT_CHARS),
+  };
+  return anchor;
 }
 
-/** Where a marker belongs, in page coordinates. Falls back to the scroll percentage if the element is gone. */
-export function resolvePoint(anchor: Anchor): { x: number; y: number } | null {
-  if (anchor.element) {
-    try {
-      const el = document.querySelector(anchor.element.selector);
-      const rect = el?.getBoundingClientRect();
-      if (rect && (rect.width > 0 || rect.height > 0)) {
-        return {
-          x: rect.left + window.scrollX + anchor.element.xRatio * rect.width,
-          y: rect.top + window.scrollY + anchor.element.yRatio * rect.height,
-        };
-      }
-    } catch {
-      // A bad selector falls through to the scroll percentage.
-    }
-  }
-  return {
-    x: document.documentElement.clientWidth / 2,
-    y: anchor.scrollPercent * document.documentElement.scrollHeight,
-  };
+/** A short piece of the text around a click, to show in the viewer. */
+export function nearbyText(target: Element): string {
+  return (target.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 80);
 }

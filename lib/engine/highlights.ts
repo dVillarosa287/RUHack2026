@@ -1,6 +1,6 @@
 // Draws highlights with the CSS Custom Highlight API, so no page text is wrapped in new elements.
 import type { Seed } from '@/lib/storage';
-import { COLORS } from '@/lib/theme';
+import { COLORS, colorHex } from '@/lib/theme';
 import { resolveQuote } from './anchor';
 import { buildTextIndex } from './textIndex';
 
@@ -13,7 +13,7 @@ const nameFor = (colorId: string) => `forest-${colorId}`;
 function ensureStyles() {
   if (stylesReady) return;
   const rules = COLORS.map((c) => `::highlight(${nameFor(c.id)}) { background-color: ${c.hex}99; }`);
-  rules.push(`::highlight(${FLASH_NAME}) { background-color: #FFAA00; color: #000; }`);
+  rules.push(`::highlight(${FLASH_NAME}) { background-color: ${colorHex('orange')}cc; }`);
   const css = rules.join('\n');
   try {
     const sheet = new CSSStyleSheet();

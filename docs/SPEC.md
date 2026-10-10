@@ -79,7 +79,7 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 ### Annotating a page
 
 - Highlight text in the color of the selected sprite. The sprite appears at the highlight for about a second to confirm the save, then fades. (Stage 1 for the highlight, Stage 2 for the sprite animation)
-- Click anywhere on the page to place the selected sprite at that exact spot. (Stage 1 with a plain marker, Stage 2 with real sprites)
+- Click anywhere on the page to place the selected sprite at that exact spot. The sprite is attached to the text it was placed on, so it follows that text when the page scrolls, resizes or reflows, and it can be dragged to a new spot. (Stage 1 with a plain marker, Stage 2 with real sprites)
 - Drag a sprite from the toolbar and drop it on the page. (Stage 2)
 - Place a sprite on a link: the user stays on the current tab, and the sprite stores the link's destination. Clicking that sprite in the viewer opens the destination. (Stage 2)
 - Annotations save per web page and reappear when the page is opened again. (Stage 1)
@@ -88,6 +88,7 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 ### Toolbar
 
 - A rectangular toolbar with the sprite icons, and a color palette under it. (Stage 2)
+- The toolbar opens in the top right corner and can be dragged anywhere in the window. It is opened and closed with the extension's icon in Chrome (or its close button), and it stays open, in the same place, in every tab until the user closes it. (Stage 1)
 - The three most recently used sprites shown on the toolbar. (Stage 2)
 - Above the toolbar, the name of the forest the annotations are going into, with a way to switch forests or create a new one. (Stage 1)
 - Two buttons: "Current Forest" opens the forest you are in, and "View Forests" opens all of your forests. (Stage 1)
@@ -123,7 +124,8 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 
 ### Custom themes
 
-- The default theme is the forest: greens and browns, natural colors, every part of the app plant themed. (All stages)
+- The default theme is the forest: deep greens and browns, natural colors, every part of the app plant themed. (All stages)
+- There is a theme system. The user will be able to choose a theme from a dropdown ("custom style", Stage 2 or later). Every color in the product is one of the eight palette colors, a brighter or darker version of one, or a gradient of those. The full rules are in `docs/THEME.md`.
 - Load sprites and colors from one theme file from the start, so other themes and texture packs can be added without changing code. (Stage 2 for the structure, Future for more themes)
 
 ### Export

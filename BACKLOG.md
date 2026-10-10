@@ -91,9 +91,15 @@ Format:
 - Stage it would belong to: Stage 2. Needs the team's OK.
 
 ### A3. Art list for Stage 2  [UI] (agent)
+- Update: a teammate added `images/` with uncolored line art for the sprout, tree and mushroom plus `icon48.png` and `icon128.png`. They are black lines to be tinted with the palette (see `docs/THEME.md`, "Tinting art"). Still missing: lily pad, flower, fruit sprout, apple tree, forest icons, frog, animal marker, and the 16, 32 and 96 px extension icons.
 - What: PNG or SVG files at 64 by 64 in `public/sprites/`, then set each file name in `lib/theme/index.ts`. Needed: sprout, tree (what the sprout grows into), lily pad, mushroom, flower, fruit sprout, apple tree. Also forest icons, the frog (sitting, jumping, talking), the animal marker, and a real extension icon (16, 32, 48, 96 and 128 px in `public/icon/`).
 - Why: everything currently uses emoji and a green circle as stand-ins.
 - Stage it would belong to: Stage 2 (frog is Stage 3).
+
+### A5. Theme picker ("custom style" dropdown)  [UI] (user)
+- What: a dropdown in the toolbar or a settings screen to choose a theme. The theme system is built (`docs/THEME.md`) and `Settings.theme` holds the choice, but there is only one theme, "Forest", so there is nothing to pick yet.
+- Why: lets users restyle the whole product, and shows the theme system working.
+- Stage it would belong to: Stage 2 or later, after a second theme exists.
 
 ### A4. Growth from sprout to tree on page reload  [Data] (agent)
 - What: the decision is made (see `PROGRESS.md` Stage 3 priority 2) but nothing builds it yet. A `growth` field already exists on every seed and starts at `sprout`.

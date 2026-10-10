@@ -1,30 +1,33 @@
-/* On-page styles. Plain CSS in px, because this lives inside a web page whose own
-   font size and CSS must not change how the toolbar looks. Colors match lib/theme. */
+/* On-page styles. Plain CSS in px, because this lives inside a web page whose own font size and CSS must
+   not change how the toolbar looks. Colors come only from theme tokens, var(--fo-...), never from color
+   codes. See docs/THEME.md. */
 :host {
   all: initial;
   display: block;
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 0;
   height: 0;
-  overflow: visible;
   z-index: 2147483647;
   pointer-events: none;
 }
 
 .fo-toolbar {
   position: fixed;
-  left: 50%;
-  bottom: 20px;
-  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 6px;
   pointer-events: auto;
+  cursor: grab;
+  user-select: none;
   font: 13px/1.3 system-ui, -apple-system, 'Segoe UI', sans-serif;
-  color: #3b2f1e;
+  color: var(--fo-ink);
+}
+
+.fo-toolbar.fo-dragging {
+  cursor: grabbing;
 }
 
 .fo-toolbar *,
@@ -36,21 +39,31 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 8px;
+  padding: 4px 6px 4px 8px;
   border-radius: 10px;
-  background: #2f6b3a;
-  color: #fff;
+  background: var(--fo-grad-primary);
+  color: var(--fo-primary-ink);
+  box-shadow: 0 4px 12px var(--fo-shadow);
+}
+
+.fo-grip {
+  font-size: 16px;
+  line-height: 1;
+  opacity: 0.8;
 }
 
 .fo-forest-row select,
 .fo-forest-row input {
-  font: inherit;
-  max-width: 180px;
+  flex: 1;
+  min-width: 0;
+  max-width: 190px;
   padding: 3px 6px;
   border: 0;
   border-radius: 6px;
-  background: #f4efe4;
-  color: #3b2f1e;
+  background: var(--fo-surface);
+  color: var(--fo-ink);
+  font: inherit;
+  cursor: auto;
 }
 
 .fo-panel {
@@ -59,10 +72,10 @@
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  border: 2px solid #6b4a2b;
+  border: 2px solid var(--fo-edge);
   border-radius: 12px;
-  background: #f4efe4;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  background: var(--fo-grad-surface);
+  box-shadow: 0 4px 16px var(--fo-shadow);
 }
 
 .fo-row {
@@ -74,7 +87,7 @@
 .fo-divider {
   width: 1px;
   height: 28px;
-  background: #6b4a2b;
+  background: var(--fo-edge);
   opacity: 0.4;
 }
 
@@ -87,64 +100,82 @@
   padding: 0;
   border: 2px solid transparent;
   border-radius: 8px;
-  background: #fff;
-  color: #3b2f1e;
+  background: var(--fo-surface);
+  color: var(--fo-ink);
   cursor: pointer;
 }
 
 .fo-tool:hover {
-  background: #eef5e8;
+  background: var(--fo-primary-soft);
 }
 
 .fo-tool[aria-pressed='true'] {
-  border-color: #2f6b3a;
-  background: #dcebd2;
+  border-color: var(--fo-primary);
+  background: var(--fo-primary-soft);
 }
 
 .fo-swatch {
   width: 22px;
   height: 22px;
   padding: 0;
-  border: 2px solid #fff;
+  border: 2px solid var(--fo-surface);
   border-radius: 50%;
-  box-shadow: 0 0 0 1px #6b4a2b;
+  box-shadow: 0 0 0 1px var(--fo-edge);
   cursor: pointer;
 }
 
 .fo-swatch[aria-pressed='true'] {
-  box-shadow: 0 0 0 3px #3b2f1e;
+  box-shadow: 0 0 0 3px var(--fo-ink);
 }
 
 .fo-button {
   padding: 5px 10px;
-  border: 1px solid #6b4a2b;
+  border: 1px solid var(--fo-edge);
   border-radius: 8px;
-  background: #fff;
-  color: #3b2f1e;
+  background: var(--fo-surface);
+  color: var(--fo-ink);
   font: inherit;
   cursor: pointer;
 }
 
 .fo-button:hover {
-  background: #eef5e8;
+  background: var(--fo-primary-soft);
 }
 
 .fo-small-button {
   padding: 2px 8px;
   border: 0;
   border-radius: 6px;
-  background: #f4efe4;
-  color: #2f6b3a;
+  background: var(--fo-surface);
+  color: var(--fo-primary);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+}
+
+.fo-close {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fo-primary-ink);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fo-close:hover {
+  background: var(--fo-primary-strong);
 }
 
 .fo-hint {
   max-width: 330px;
   text-align: center;
   font-size: 12px;
-  color: #6b4a2b;
+  color: var(--fo-ink-muted);
 }
 
 .fo-status {
@@ -152,22 +183,34 @@
   margin-top: -4px;
   font-size: 12px;
   font-weight: 600;
-  color: #2f6b3a;
+  color: var(--fo-primary);
 }
 
+/* Markers are positioned on every frame by MarkerLayer, from the text or element they are attached to. */
 .fo-marker {
-  position: absolute;
+  position: fixed;
+  top: 0;
+  left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 28px;
   height: 28px;
   margin: -14px 0 0 -14px;
-  border: 2px solid #fff;
+  border: 2px solid var(--fo-surface);
   border-radius: 50%;
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1px 5px var(--fo-shadow);
   pointer-events: auto;
-  cursor: default;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  will-change: transform;
+}
+
+.fo-marker.fo-marker-dragging {
+  cursor: grabbing;
+  pointer-events: none;
+  box-shadow: 0 4px 12px var(--fo-shadow);
 }
 
 .fo-marker.fo-dig {
@@ -180,6 +223,6 @@
 
 @keyframes fo-pulse {
   50% {
-    transform: scale(1.7);
+    outline: 3px solid var(--fo-accent);
   }
 }

@@ -1,16 +1,31 @@
 @import 'tailwindcss';
 
-/* Greens and browns. These match the colors in lib/onpage-ui/toolbar.css. */
+/* Colors come only from the theme (lib/theme/themes.ts, rules in docs/THEME.md).
+   First, remove Tailwind's built-in color names, so a stock color class does nothing. */
 @theme {
-  --color-parchment: #f4efe4;
-  --color-bark: #3b2f1e;
-  --color-bark-light: #6b4a2b;
-  --color-moss: #2f6b3a;
-  --color-moss-light: #dcebd2;
+  --color-*: initial;
+}
+
+/* Then give the theme's tokens Tailwind names: bg-surface, text-ink, border-edge, and so on.
+   `inline` makes them follow the theme at runtime, so a new theme restyles the viewer with no changes here. */
+@theme inline {
+  --color-page: var(--fo-page);
+  --color-surface: var(--fo-surface);
+  --color-surface-alt: var(--fo-surface-alt);
+  --color-ink: var(--fo-ink);
+  --color-ink-muted: var(--fo-ink-muted);
+  --color-edge: var(--fo-edge);
+  --color-primary: var(--fo-primary);
+  --color-primary-strong: var(--fo-primary-strong);
+  --color-primary-ink: var(--fo-primary-ink);
+  --color-primary-soft: var(--fo-primary-soft);
+  --color-accent: var(--fo-accent);
+  --color-danger-soft: var(--fo-danger-soft);
+  --color-drop: var(--fo-shadow);
 }
 
 body {
-  background: var(--color-parchment);
-  color: var(--color-bark);
+  background: var(--fo-page);
+  color: var(--fo-ink);
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
 }

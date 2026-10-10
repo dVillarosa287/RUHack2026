@@ -9,7 +9,8 @@
     "build": "wxt build",
     "zip": "wxt zip",
     "compile": "tsc --noEmit",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "check:theme": "node scripts/check-theme.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
