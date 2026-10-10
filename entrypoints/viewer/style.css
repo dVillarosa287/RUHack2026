@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+
+/* Greens and browns. These match the colors in lib/onpage-ui/toolbar.css. */
+@theme {
+  --color-parchment: #f4efe4;
+  --color-bark: #3b2f1e;
+  --color-bark-light: #6b4a2b;
+  --color-moss: #2f6b3a;
+  --color-moss-light: #dcebd2;
+}
+
+body {
+  background: var(--color-parchment);
+  color: var(--color-bark);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}

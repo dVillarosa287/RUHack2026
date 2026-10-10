@@ -1,0 +1,213 @@
+// The one storage module. Nothing else in the project calls chrome.storage directly.
+//
+// Every record lives under its own key ("seed:abc123", "forest:xyz", ...). Two tabs saving at the
+// same moment therefore never overwrite each other. Everything is async because chrome.storage is.
+import { browser } from 'wxt/browser';
+import { cleanUrl } from './url';
+import type { Folder, Forest, Root, Seed, SeedInput, Settings } from './types';
+
+export * from './types';
+export { cleanUrl } from './url';
+
+const PREFIX = { forest: 'forest:', folder: 'folder:', seed: 'seed:', root: 'root:', fruit: 'fruit:' } as const;
+const SETTINGS_KEY = 'settings';
+const PENDING_JUMP_KEY = 'pendingJump';
+const DEFAULT_FOREST_ID = 'forest-default';
+const PENDING_JUMP_MAX_AGE_MS = 60_000;
+
+const DEFAULT_SETTINGS: Settings = {
+  currentForestId: null,
+  recentSprites: [],
+  theme: 'forest',
+  geminiKey: '',
+  autoConnections: true,
+};
+
+// ---------- small helpers ----------
+
+// crypto.randomUUID only exists on https pages, and the content script runs on http pages too.
+function newId(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function listRecords<T>(prefix: string): Promise<T[]> {
+  const all = await browser.storage.local.get(null);
+  return Object.entries(all)
+    .filter(([key]) => key.startsWith(prefix))
+    .map(([, value]) => value as T);
+}
+
+async function readRecord<T>(key: string): Promise<T | undefined> {
+  const found = await browser.storage.local.get(key);
+  return found[key] as T | undefined;
+}
+
+async function writeRecord(key: string, value: unknown): Promise<void> {
+  await browser.storage.local.set({ [key]: value });
+}
+
+const byCreatedAt = (a: { createdAt: number }, b: { createdAt: number }) => a.createdAt - b.createdAt;
+
+// ---------- forests ----------
+
+/** Always returns at least one forest: a default one is created on first use. */
+export async function getForests(): Promise<Forest[]> {
+  const forests = await listRecords<Forest>(PREFIX.forest);
+  if (forests.length > 0) return forests.sort(byCreatedAt);
+  const fallback: Forest = { id: DEFAULT_FOREST_ID, name: 'My First Forest', icon: '🌲', createdAt: Date.now() };
+  await writeRecord(PREFIX.forest + fallback.id, fallback);
+  return [fallback];
+}
+
+export async function getForest(id: string): Promise<Forest | undefined> {
+  return readRecord<Forest>(PREFIX.forest + id);
+}
+
+export async function createForest(input: { name: string; icon: string }): Promise<Forest> {
+  const forest: Forest = { id: newId(), name: input.name, icon: input.icon, createdAt: Date.now() };
+  await writeRecord(PREFIX.forest + forest.id, forest);
+  return forest;
+}
+
+export async function updateForest(id: string, patch: Partial<Omit<Forest, 'id'>>): Promise<Forest> {
+  const current = await getForest(id);
+  if (!current) throw new Error(`Forest ${id} not found`);
+  const updated = { ...current, ...patch };
+  await writeRecord(PREFIX.forest + id, updated);
+  return updated;
+}
+
+/** Also removes the forest's folders, seeds and roots. */
+export async function deleteForest(id: string): Promise<void> {
+  const all = await browser.storage.local.get(null);
+  const keys = Object.entries(all)
+    .filter(([key, value]) => key !== PREFIX.forest + id && key !== SETTINGS_KEY && (value as { forestId?: string })?.forestId === id)
+    .map(([key]) => key);
+  await browser.storage.local.remove([PREFIX.forest + id, ...keys]);
+}
+
+// ---------- folders ----------
+
+export async function getFolders(forestId: string): Promise<Folder[]> {
+  const folders = await listRecords<Folder>(PREFIX.folder);
+  return folders.filter((f) => f.forestId === forestId);
+}
+
+export async function createFolder(input: { forestId: string; name: string }): Promise<Folder> {
+  const folder: Folder = { id: newId(), forestId: input.forestId, name: input.name };
+  await writeRecord(PREFIX.folder + folder.id, folder);
+  return folder;
+}
+
+export async function deleteFolder(id: string): Promise<void> {
+  await browser.storage.local.remove(PREFIX.folder + id);
+}
+
+// ---------- seeds ----------
+
+/** Makes the id and createdAt, cleans the url, and returns the saved seed. */
+export async function saveSeed(input: SeedInput): Promise<Seed> {
+  const seed: Seed = {
+    folderId: null,
+    growth: 'sprout',
+    linkTarget: null,
+    anchor: null,
+    nextReviewAt: null,
+    ...input,
+    url: cleanUrl(input.url),
+    id: newId(),
+    createdAt: Date.now(),
+  };
+  await writeRecord(PREFIX.seed + seed.id, seed);
+  return seed;
+}
+
+export async function getSeed(id: string): Promise<Seed | undefined> {
+  return readRecord<Seed>(PREFIX.seed + id);
+}
+
+export async function updateSeed(id: string, patch: Partial<Omit<Seed, 'id'>>): Promise<Seed> {
+  const current = await getSeed(id);
+  if (!current) throw new Error(`Seed ${id} not found`);
+  const updated = { ...current, ...patch, url: patch.url ? cleanUrl(patch.url) : current.url };
+  await writeRecord(PREFIX.seed + id, updated);
+  return updated;
+}
+
+export async function deleteSeed(id: string): Promise<void> {
+  await browser.storage.local.remove(PREFIX.seed + id);
+}
+
+/** Seeds on one page, across all forests. Pass any form of the address: it is cleaned first. */
+export async function getSeedsForUrl(url: string): Promise<Seed[]> {
+  const clean = cleanUrl(url);
+  const seeds = await listRecords<Seed>(PREFIX.seed);
+  return seeds.filter((s) => s.url === clean).sort(byCreatedAt);
+}
+
+export async function getSeedsForForest(forestId: string): Promise<Seed[]> {
+  const seeds = await listRecords<Seed>(PREFIX.seed);
+  return seeds.filter((s) => s.forestId === forestId).sort(byCreatedAt);
+}
+
+// ---------- roots ----------
+
+export async function getRoots(forestId: string): Promise<Root[]> {
+  const roots = await listRecords<Root>(PREFIX.root);
+  return roots.filter((r) => r.forestId === forestId);
+}
+
+export async function addRoot(input: Omit<Root, 'id'>): Promise<Root> {
+  const root: Root = { ...input, id: newId() };
+  await writeRecord(PREFIX.root + root.id, root);
+  return root;
+}
+
+export async function deleteRoot(id: string): Promise<void> {
+  await browser.storage.local.remove(PREFIX.root + id);
+}
+
+// ---------- settings ----------
+
+/** If the saved current forest is missing, falls back to the first forest. */
+export async function getSettings(): Promise<Settings> {
+  const saved = (await readRecord<Partial<Settings>>(SETTINGS_KEY)) ?? {};
+  const settings: Settings = { ...DEFAULT_SETTINGS, ...saved };
+  const forests = await getForests();
+  if (!forests.some((f) => f.id === settings.currentForestId)) {
+    settings.currentForestId = forests[0]?.id ?? null;
+    await writeRecord(SETTINGS_KEY, settings);
+  }
+  return settings;
+}
+
+export async function updateSettings(patch: Partial<Settings>): Promise<Settings> {
+  const updated = { ...(await getSettings()), ...patch };
+  await writeRecord(SETTINGS_KEY, updated);
+  return updated;
+}
+
+// ---------- extras beyond the agreed list ----------
+
+/** Calls `callback` whenever anything in storage changes, in any tab or page. Returns a function that stops listening. */
+export function onDataChanged(callback: () => void): () => void {
+  const listener = (_changes: unknown, area: string) => {
+    if (area === 'local') callback();
+  };
+  browser.storage.onChanged.addListener(listener);
+  return () => browser.storage.onChanged.removeListener(listener);
+}
+
+/** The viewer calls this before opening a seed's page, so that page can scroll to the seed. */
+export async function setPendingJump(seed: Seed): Promise<void> {
+  await writeRecord(PENDING_JUMP_KEY, { seedId: seed.id, url: seed.url, at: Date.now() });
+}
+
+/** Returns the seed id to scroll to if one is waiting for this page, and clears it. */
+export async function takePendingJump(url: string): Promise<string | null> {
+  const jump = await readRecord<{ seedId: string; url: string; at: number }>(PENDING_JUMP_KEY);
+  if (!jump || jump.url !== cleanUrl(url)) return null;
+  await browser.storage.local.remove(PENDING_JUMP_KEY);
+  return Date.now() - jump.at < PENDING_JUMP_MAX_AGE_MS ? jump.seedId : null;
+}
