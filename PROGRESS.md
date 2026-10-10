@@ -32,6 +32,11 @@ Entry format:
 
 ### Page engine notes
 
+- [Oct 10, 11:00 PM] (Teobobeo99)
+  - Did: F2 (jump highlight holds 2.5s, fades over 1.5s: `flashHighlight`, `JUMP_HIGHLIGHT_MS`), F3 (sprites centered on the mouse: `MarkerTracker` returns the middle of the text line), drop from toolbar (`useDropSprite`, `placeMarker`), sprites on links (`placeMarker` saves `kind: 'link'` with `linkTarget`), `jumpToSeed` from `useSeedsOnPage`.
+  - Others can use / need to know: both a click and a drop go through `placeMarker` (`lib/engine/placeMarker.ts`). Link seeds are drawn as markers like `sprite` ones. Tested only in Chromium with Playwright, not in Chrome.
+  - Need from someone else: viewer lane: a `link` seed has `linkTarget`; the viewer item "Clicking a link sprite opens the link's destination" can use it. A person to check all of this in Chrome.
+
 - [Oct 10, 9:00 PM] (Teobobeo99)
   - Did: docs only. New placement fixes F2 (jump highlight stays yellow then fades), F3 (sprite centered on the mouse) and F4 (selected sprite follows the cursor) are in `BACKLOG.md` and ticked as items above; nothing is built.
   - Others can use / need to know: F4 and the drag-from-toolbar job should share one "sprite under the cursor" piece. Two people working Stage 2 together split by lane in `docs/TWO_SESSIONS.md`; the page lane is `lib/engine/` and `lib/onpage-ui/`.
@@ -63,6 +68,11 @@ Entry format:
   - Need from someone else: nothing
 
 ### On-page UI and art notes
+
+- [Oct 10, 11:00 PM] (Teobobeo99)
+  - Did: F4 (`CursorSprite`: chosen sprite follows the mouse; `useSpriteDrag`: carry a sprite from the toolbar onto the page), recent sprites (a "Recent" row, `Settings.recentSprites`), "Create new forest" button (replaced "+ New"), scroll rail (`ScrollRail.tsx`: slim bar, sprites stick out, shaded block for the visible part, animal).
+  - Others can use / need to know: the animal is an orange circle until the artist adds `images/uncolored-animal.png` and it is named in `lib/theme/index.ts` (`ScrollRail` already checks `artUrl('uncolored-animal.png')`). Sprites at the same height fan out sideways into up to 4 lanes. The rail only shows while the toolbar is open and the page has seeds.
+  - Need from someone else: the artist's animal art; a person to check all of this in Chrome.
 
 - [Oct 10, 9:00 PM] (Teobobeo99)
   - Did: docs only. Added the "Create new forest" button (A7) and the scroll rail look (A8: slim bar, sprites bigger than the bar and sticking out) to the Stage 2 checklist and `docs/SPEC.md`; nothing is built.
@@ -221,23 +231,23 @@ Goal: it looks and feels like a forest.
 ### Page engine
 
 - [ ] [Engine] Placed sprites render as real sprites at their saved locations (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
-- [ ] [Engine] Drag a sprite from the toolbar and drop it on the page
-- [ ] [Engine] Sprite on a link: user stays on the same tab, the sprite stores the link's destination
+- [ ] [Engine] Drag a sprite from the toolbar and drop it on the page (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [Engine] Sprite on a link: user stays on the same tab, the sprite stores the link's destination (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [Engine] Sturdier anchoring: nearest element with an offset, scroll percentage as the last resort (in progress: markers already use text, then element, then scroll percentage, tested on Wikipedia; a person needs to check it in Chrome)
-- [ ] [Engine] Fix F2: when you jump to a seed, its highlight turns yellow, stays yellow for a while, then fades smoothly (`BACKLOG.md` F2)
-- [ ] [Engine] Fix F3: a placed sprite is centered on the mouse (`BACKLOG.md` F3)
-- [ ] [UI] Fix F4: the selected sprite follows the mouse, on top of the cursor, like it is being dragged (`BACKLOG.md` F4)
+- [ ] [Engine] Fix F2: when you jump to a seed, its highlight turns yellow, stays yellow for a while, then fades smoothly (`BACKLOG.md` F2) (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [Engine] Fix F3: a placed sprite is centered on the mouse (`BACKLOG.md` F3) (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [UI] Fix F4: the selected sprite follows the mouse, on top of the cursor, like it is being dragged (`BACKLOG.md` F4) (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 
 ### On-page UI and art
 
 - [ ] [UI] Rectangular toolbar with the sprite icons (sprout, lily pad, mushroom, flower, apple tree) (in progress: toolbar shows all five sprites as real art, tinted in the chosen color; the final look is still to do, and a person needs to check it in Chrome)
-- [ ] [UI] The three most recently used sprites shown on the toolbar
+- [ ] [UI] The three most recently used sprites shown on the toolbar (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [UI] Color palette under the toolbar (in progress: the eight colors are on the toolbar and work; styling is basic)
 - [ ] [UI] On highlight, the sprite appears at the highlight for about a second, then fades
-- [ ] [UI] "Create new forest" button on the toolbar, clearly labelled (today a small "+ New"; `BACKLOG.md` A7)
-- [ ] [UI] Scroll rail on the right edge with a marker for every annotation on the page; a slim bar whose sprites are larger than the bar and stick out past it (`BACKLOG.md` A8)
-- [ ] [UI] Clicking a rail marker scrolls to that annotation
-- [ ] [UI] The animal: the rail saves where you were before the jump, and clicking it takes you back (use a placeholder until the artist's animal art arrives, see Stage 3)
+- [ ] [UI] "Create new forest" button on the toolbar, clearly labelled (today a small "+ New"; `BACKLOG.md` A7) (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [UI] Scroll rail on the right edge with a marker for every annotation on the page; a slim bar whose sprites are larger than the bar and stick out past it (`BACKLOG.md` A8) (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [UI] Clicking a rail marker scrolls to that annotation (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [UI] The animal: the rail saves where you were before the jump, and clicking it takes you back (use a placeholder until the artist's animal art arrives, see Stage 3) (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [UI] Sprite art for each sprite type (in progress: sprout, tree, lily pad, mushroom, flower, apple and shovel are in; the apple tree and the animal marker are not drawn yet)
 - [ ] [UI] Forest icons (in progress: forests use the sprite art as their icon; no dedicated forest art, and the user cannot choose one yet)
 - [ ] [UI] Forest color palette (greens and browns) (in progress: covered by the theme system, `docs/THEME.md`; a person needs to check it in Chrome)
@@ -261,7 +271,7 @@ Goal: it looks and feels like a forest.
 
 - [ ] [Data] One theme file that all sprites and colors load from (in progress: `lib/theme/` holds the palette, the art lookup and the tinting components; there is no theme picker yet)
 - [ ] [Data] Storage for roots, folders, forest icons and grid positions (in progress: roots, folders and forest icons have functions, untested; grid positions need a data model change, see `BACKLOG.md` A1)
-- [ ] [Data] Recent sprites saved in settings
+- [ ] [Data] Recent sprites saved in settings (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [Data] Settings screen where the user pastes their Gemini key
 - [ ] [Data] All four branches merged into main, and main still runs
 

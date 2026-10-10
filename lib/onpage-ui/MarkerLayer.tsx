@@ -22,7 +22,7 @@ const HOLD_AFTER_DROP_MS = 1500;
  * right place when the page scrolls, resizes, reflows, or a section opens or closes.
  */
 export function MarkerLayer({ seeds, digging, flashId, onDig, onMove }: MarkerLayerProps) {
-  const markers = useMemo(() => seeds.filter((s) => s.kind === 'sprite' && s.anchor), [seeds]);
+  const markers = useMemo(() => seeds.filter((s) => (s.kind === 'sprite' || s.kind === 'link') && s.anchor), [seeds]);
   const elements = useRef(new Map<string, HTMLDivElement>());
   const trackers = useRef(new Map<string, { anchor: Anchor; tracker: MarkerTracker }>());
   // A marker being dragged, or just dropped and waiting for its new anchor to arrive from storage.
@@ -103,7 +103,7 @@ export function MarkerLayer({ seeds, digging, flashId, onDig, onMove }: MarkerLa
           }}
           className={`fo-marker${digging ? ' fo-dig' : ''}${flashId === seed.id ? ' fo-flash' : ''}`}
           style={{ visibility: 'hidden' }}
-          title={seed.text}
+          title={seed.linkTarget ? `${seed.text} → ${seed.linkTarget}` : seed.text}
           onPointerDown={(e) => startDrag(seed, e)}
           onClick={digging ? () => onDig(seed.id) : undefined}
         >

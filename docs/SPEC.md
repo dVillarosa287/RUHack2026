@@ -93,7 +93,7 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 
 - A rectangular toolbar with the sprite icons, and a color palette under it. (Stage 2)
 - The toolbar opens in the top right corner and can be dragged anywhere in the window. It can be resized by dragging its bottom-left corner. It is opened and closed with the extension's icon in Chrome (or its close button), and it stays open, in the same place and size, in every tab until the user closes it. It is drawn above everything on the page, including a site's own pop-ups. (Stage 1)
-- The three most recently used sprites shown on the toolbar. (Stage 2)
+- The three most recently used sprites shown on the toolbar, as a small "Recent" row under the main sprites (newest first, saved in `Settings.recentSprites`). A sprite counts as used when it is picked or dropped. (Stage 2)
 - Above the toolbar, the name of the forest the annotations are going into, with a way to switch forests or create a new one. (Stage 1)
 - A clearly labelled "Create new forest" button on the toolbar. Stage 1 has only a small "+ New" next to the forest picker; this replaces it with a button that says what it does. (Stage 2)
 - Two buttons: "Current Forest" opens the forest you are in, and "View Forests" opens all of your forests. (Stage 1)
@@ -101,7 +101,7 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 ### Scroll rail
 
 - A thin rail on the right edge of the page with a small marker for every annotation on that page. Clicking a marker scrolls to it. (Stage 2)
-- Look: the rail is a smallish, slim bar, but the sprites on it are larger than the bar and stick out past its edge. This is on purpose; keep the bar slim and let the sprites overhang. (Stage 2)
+- Look: the rail is a smallish, slim bar, but the sprites on it are larger than the bar and stick out past its edge. This is on purpose; keep the bar slim and let the sprites overhang. Sprites at nearly the same height fan out sideways so none is hidden. A shaded block shows which part of the page is on screen. The animal is a plain circle until the artist's art arrives. (Stage 2)
 - When you jump, the rail saves where you were. That saved spot is the "animal", because the animal follows you around. Clicking it takes you back. (Stage 2)
 - Option to show the animal as a visible sprite on the page. (Future)
 

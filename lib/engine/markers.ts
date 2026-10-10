@@ -34,7 +34,8 @@ export class MarkerTracker {
         this.backOff(this.range !== null);
       }
       const rect = this.range && firstRect(this.range);
-      if (rect) return { x: rect.left, y: rect.top };
+      // Left edge and middle of the line: the sprite is centered here, which is close to where the user clicked.
+      if (rect) return { x: rect.left, y: rect.top + rect.height / 2 };
     }
 
     if (element) {

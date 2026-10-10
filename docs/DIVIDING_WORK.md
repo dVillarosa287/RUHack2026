@@ -35,16 +35,16 @@ Where two jobs share a file, "Needs first" says which goes first.
 | --- | --- | --- | --- | --- | --- |
 | **Line boil** (the lines of the art wobble) | `lib/theme/SpriteIcon.tsx` | nothing; see `docs/THEME.md` | S | Sonnet | David (in progress) |
 | **Fonts** (as theme tokens) | `lib/theme/themes.ts`, `lib/onpage-ui/toolbar.css`, `entrypoints/viewer/style.css` | nothing; see `docs/THEME.md` | M | Sonnet | Aryan (in progress) |
-| Drop a sprite onto the page by dragging it from the toolbar | `lib/engine/` (a new hook), and the buttons in `lib/onpage-ui/Toolbar.tsx` | Foundation merged. The toolbar calls `onDropSprite(type, clientX, clientY)` and the engine decides what to place | L | Larger | |
-| Sprites on links: stay on the page, store the destination | `lib/engine/` | Foundation merged | M | Sonnet | |
+| Drop a sprite onto the page by dragging it from the toolbar | `lib/engine/` (a new hook), and the buttons in `lib/onpage-ui/Toolbar.tsx` | Foundation merged. The toolbar calls `onDropSprite(type, clientX, clientY)` and the engine decides what to place | L | Larger | Done: Teobobeo99 (tested in Chromium, still needs a check in Chrome) |
+| Sprites on links: stay on the page, store the destination | `lib/engine/` | Foundation merged | M | Sonnet | Done: Teobobeo99 (tested in Chromium, still needs a check in Chrome) |
 | Check the sturdier-anchoring items in Chrome and tick them | none (testing) | nothing | S | Sonnet | |
-| Recent sprites on the toolbar (saved in `Settings.recentSprites`) | `lib/onpage-ui/Toolbar.tsx` | nothing | S | Sonnet | |
+| Recent sprites on the toolbar (saved in `Settings.recentSprites`) | `lib/onpage-ui/Toolbar.tsx` | nothing | S | Sonnet | Done: Teobobeo99 (tested in Chromium, still needs a check in Chrome) |
 | Highlight sprite appears for a second, then fades | `lib/onpage-ui/` (a new component) | nothing | S | Sonnet | |
-| **Fix F2:** jump highlight stays yellow for a while, then fades smoothly (`BACKLOG.md` F2) | `lib/engine/` (`useSeedsOnPage`, highlights) | nothing | S | Sonnet | |
-| **Fix F3:** placed sprites centered on the mouse (`BACKLOG.md` F3) | `lib/onpage-ui/MarkerLayer.tsx`, `lib/engine/markers.ts` | nothing | S | Sonnet | |
-| **Fix F4:** the selected sprite follows the mouse, on top of the cursor (`BACKLOG.md` F4). Do it together with the drag-from-toolbar job above, so both use one "sprite under the cursor" piece | `lib/onpage-ui/` (a new component) | nothing | M | Sonnet | |
-| "Create new forest" button on the toolbar (`BACKLOG.md` A7) | `lib/onpage-ui/Toolbar.tsx` | nothing | S | Sonnet | |
-| Scroll rail with markers, and the animal (placeholder art for now). The bar is slim, and the sprites on it are larger and stick out past it (`BACKLOG.md` A8) | `lib/onpage-ui/` (new components) | nothing | L | Sonnet | |
+| **Fix F2:** jump highlight stays yellow for a while, then fades smoothly (`BACKLOG.md` F2) | `lib/engine/` (`useSeedsOnPage`, highlights) | nothing | S | Sonnet | Done: Teobobeo99 (tested in Chromium, still needs a check in Chrome) |
+| **Fix F3:** placed sprites centered on the mouse (`BACKLOG.md` F3) | `lib/onpage-ui/MarkerLayer.tsx`, `lib/engine/markers.ts` | nothing | S | Sonnet | Done: Teobobeo99 (tested in Chromium, still needs a check in Chrome) |
+| **Fix F4:** the selected sprite follows the mouse, on top of the cursor (`BACKLOG.md` F4). Do it together with the drag-from-toolbar job above, so both use one "sprite under the cursor" piece | `lib/onpage-ui/` (a new component) | nothing | M | Sonnet | Done: Teobobeo99 (tested in Chromium, still needs a check in Chrome) |
+| "Create new forest" button on the toolbar (`BACKLOG.md` A7) | `lib/onpage-ui/Toolbar.tsx` | nothing | S | Sonnet | Done: Teobobeo99 (tested in Chromium, still needs a check in Chrome) |
+| Scroll rail with markers, and the animal (placeholder art for now). The bar is slim, and the sprites on it are larger and stick out past it (`BACKLOG.md` A8) | `lib/onpage-ui/` (new components) | nothing | L | Sonnet | Done: Teobobeo99 (tested in Chromium, still needs a check in Chrome) |
 | Forest grid: drag forests, remember positions (`Forest.x`, `Forest.y`), choose icons, double-click to open | `entrypoints/viewer/ForestGrid.tsx` | Foundation merged | M | Sonnet | |
 | **Graph view** (React Flow), opened by a "Graph view" button at the top right of the forest page. Nodes spread out automatically once (`d3-force`), then keep the user's positions in `Seed.graphX` and `graphY`. **Also the large trees:** a web page with 3 or more seeds in the forest gets a larger tree node placed near its seeds, joined to them by very subtle lines; worked out from the seeds, not saved (`BACKLOG.md` A6) | `entrypoints/viewer/GraphView.tsx` and the button in `ForestView.tsx` | Foundation merged | L | Larger | |
 | Roots: drag from one node to another | `entrypoints/viewer/` (graph files) | Graph view | M | Sonnet | |

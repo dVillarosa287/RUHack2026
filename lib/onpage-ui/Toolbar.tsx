@@ -11,6 +11,8 @@ interface ToolbarProps {
   tool: Tool;
   spriteType: SpriteType;
   colorId: string;
+  /** The three sprites used last, newest first. */
+  recentSprites: SpriteType[];
   status: string;
   /** Distance in px from the top and right edges of the window. */
   position: { top: number; right: number };
@@ -20,6 +22,8 @@ interface ToolbarProps {
   onResized(scale: number): void;
   onClose(): void;
   onPickSprite(type: SpriteType): void;
+  /** The user pressed a sprite button. If they then move the mouse, they are carrying the sprite onto the page. */
+  onSpritePointerDown(type: SpriteType, e: ReactPointerEvent<HTMLElement>): void;
   onPickShovel(): void;
   onPickColor(id: string): void;
   onSwitchForest(id: string): void;
@@ -145,7 +149,6 @@ export function Toolbar(props: ToolbarProps) {
                   <option key={f.id} value={f.id}>{f.name}</option>
                 ))}
               </select>
-              <button className="fo-small-button" title="Create a new forest" onClick={() => setNaming(true)}>+ New</button>
             </>
           )}
           <button className="fo-close" title="Close the toolbar" aria-label="Close the toolbar" onClick={props.onClose}>✕</button>
@@ -154,7 +157,7 @@ export function Toolbar(props: ToolbarProps) {
         <div className="fo-panel">
           <div className="fo-row">
             {SPRITE_ORDER.map((type) => (
-              <button key={type} className="fo-tool" title={SPRITES[type].label} aria-pressed={props.tool === 'plant' && props.spriteType === type} onClick={() => props.onPickSprite(type)}>
+              <button key={type} className="fo-tool" title={SPRITES[type].label} aria-pressed={props.tool === 'plant' && props.spriteType === type} onClick={() => props.onPickSprite(type)} onPointerDown={(e) => props.onSpritePointerDown(type, e)}>
                 <SpriteIcon type={type} size={30} color={props.colorId} />
               </button>
             ))}
@@ -163,6 +166,17 @@ export function Toolbar(props: ToolbarProps) {
               <ShovelIcon size={30} />
             </button>
           </div>
+
+          {props.recentSprites.length > 0 && (
+            <div className="fo-row fo-recent">
+              <span className="fo-recent-label">Recent</span>
+              {props.recentSprites.map((type) => (
+                <button key={type} className="fo-recent-tool" title={`Recent: ${SPRITES[type].label}`} aria-pressed={props.tool === 'plant' && props.spriteType === type} onClick={() => props.onPickSprite(type)} onPointerDown={(e) => props.onSpritePointerDown(type, e)}>
+                  <SpriteIcon type={type} size={22} color={props.colorId} />
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="fo-row">
             {COLORS.map((c) => (
@@ -173,13 +187,15 @@ export function Toolbar(props: ToolbarProps) {
           <div className="fo-hint">
             {props.tool === 'plant' && 'Drag over text to highlight it, or click to place a marker. Esc to stop.'}
             {props.tool === 'dig' && 'Click a highlight or a marker to remove it. Esc to stop.'}
-            {props.tool === 'none' && 'Pick a sprite, then drag over text or click the page. Drag markers to move them.'}
+            {props.tool === 'none' && 'Pick a sprite, or drag one onto the page. Drag markers to move them.'}
           </div>
 
           <div className="fo-row">
             <button className="fo-button" onClick={props.onOpenCurrentForest}>Current Forest</button>
             <button className="fo-button" onClick={props.onOpenAllForests}>View Forests</button>
           </div>
+
+          <button className="fo-button fo-wide" onClick={() => setNaming(true)}>Create new forest</button>
 
           <div className="fo-status" role="status">{props.status}</div>
         </div>

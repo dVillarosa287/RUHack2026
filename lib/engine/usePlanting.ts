@@ -1,8 +1,9 @@
 import { useCallback, useEffect } from 'react';
 import { deleteSeed, saveSeed, type SpriteType } from '@/lib/storage';
-import { buildMarkerAnchor, buildQuoteAnchor, nearbyText } from './anchor';
+import { buildQuoteAnchor } from './anchor';
 import { startDigging, startPlanting } from './capture';
 import { highlightIdAtPoint } from './highlights';
+import { placeMarker } from './placeMarker';
 import type { Tool } from './types';
 
 interface PlantingOptions {
@@ -45,16 +46,7 @@ export function usePlanting({ tool, spriteType, colorId, forestId, isInsideUi, s
         say('Highlight saved');
       },
       onPlace: async ({ clientX, clientY, target }) => {
-        await saveSeed({
-          forestId,
-          kind: 'sprite',
-          spriteType,
-          color: colorId,
-          url: window.location.href,
-          pageTitle: document.title,
-          text: nearbyText(target),
-          anchor: buildMarkerAnchor(clientX, clientY, target),
-        });
+        await placeMarker({ forestId, spriteType, colorId, clientX, clientY, target });
         say('Marker placed');
       },
     });

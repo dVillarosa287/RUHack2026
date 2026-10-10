@@ -41,22 +41,10 @@ Format:
 - Page where it happens: the viewer, only when the address is typed by hand. The toolbar buttons and the forest grid always create it first.
 - Demo-blocking: no
 
-### F2. Jump highlight flashes yellow for one second  [UI] (user)
-- What happens: when you click a sprite in the viewer or the rail to jump to a seed, its highlight flashes yellow for about a second and goes back.
-- What should happen: it turns yellow, stays yellow for a bit, then fades smoothly back to its normal look.
-- Page where it happens: any page, after "Open on page" or a jump. The code is in `lib/engine/` (`useSeedsOnPage`, highlights).
-- Demo-blocking: no
-
-### F3. Sprites land off-center from the mouse  [Engine] (user)
-- What happens: a placed sprite ends up to one side of where the mouse was, because the sprite stands on its anchor point (bottom middle).
-- What should happen: the sprite is placed around the mouse, centered on it, or close to it ("around the mouse-ish").
-- Page where it happens: any page, when clicking to place a sprite. Related code: `lib/onpage-ui/MarkerLayer.tsx`, `lib/engine/markers.ts`. Keep the marker attached to its text.
-- Demo-blocking: no
-
-### F4. A selected sprite does not follow the mouse  [UI] (user)
-- What happens: choosing a sprite in the toolbar only changes the cursor tool; nothing shows on the page.
-- What should happen: a copy of the sprite sits on top of the mouse while it is selected, so it looks like the user is dragging it onto the page. Esc or the shovel removes it.
-- Page where it happens: any page. Probably a new component in `lib/onpage-ui/`, drawn inside the Shadow DOM and in the top layer, ignoring pointer events so clicks pass through. Shares ground with the drag-from-toolbar job in `docs/DIVIDING_WORK.md`.
+### F5. A marker can land on another copy of repeated text  [Engine] (agent)
+- What happens: a marker's text anchor is the 8 characters under the click plus 32 characters either side. On a page where the same text appears several times (such as identical paragraphs), those can match more than one place, and the marker may be drawn at the wrong copy.
+- What should happen: the marker stays on the copy that was clicked.
+- Page where it happens: a test page with identical paragraphs; rare on real articles. Seen when testing sprites near the start of the repeated paragraphs.
 - Demo-blocking: no
 
 ## To add
@@ -93,16 +81,6 @@ Format:
 - Stage it would belong to: Stage 2, part of the graph view job.
 - Open question: this assumes the large tree lives in the graph view. If the user meant something on the web page itself, ask before building.
 
-### A7. "Create new forest" button on the toolbar  [UI] (user)
-- What: a clearly labelled "Create new forest" button. Today there is a small "+ New" beside the forest picker in `lib/onpage-ui/Toolbar.tsx`.
-- Why: easier to find, and says what it does.
-- Stage it would belong to: Stage 2.
-
-### A8. Rail sprites stick out past the bar  [UI] (user)
-- What: the scroll rail is a slim bar, but its sprites are larger than the bar and stick out past it. The user likes this look and wants it kept.
-- Why: it is the intended look of the rail (`docs/SPEC.md` section 4).
-- Stage it would belong to: Stage 2, part of the scroll rail job.
-
 ## Known risks to test for
 
 These are expected problems from SPEC section 6. Turn one into a "Needs fixing" entry when it shows up.
@@ -118,6 +96,11 @@ These are expected problems from SPEC section 6. Turn one into a "Needs fixing" 
 
 ## Closed
 
+- F2. Jump highlight flashed for one second: fixed (2026-10-10). It now stays lit 2.5s and fades over 1.5s (`lib/engine/highlights.ts`); marker glow does the same in `toolbar.css`. Tested in Chromium; needs a check in Chrome.
+- F3. Sprites landed off-center from the mouse: fixed (2026-10-10). Sprites are centered on the spot and text anchors use the middle of the line. Tested in Chromium; needs a check in Chrome.
+- F4. Selected sprite did not follow the mouse: fixed (2026-10-10) with `CursorSprite`. Tested in Chromium; needs a check in Chrome.
+- A7. "Create new forest" button: done (2026-10-10), replaced "+ New" in the toolbar. Tested in Chromium.
+- A8. Rail sprites stick out past the bar: done (2026-10-10) in `ScrollRail`. Tested in Chromium.
 - D6. Who has which role: there are no fixed roles; people just take jobs (2026-10-10). Jobs are claimed in `docs/DIVIDING_WORK.md`.
 - A1. Forest grid positions: approved. `Forest` has optional `x` and `y`, added to `lib/storage/types.ts` (2026-10-10).
 - A2. Graph node positions: approved. `Seed` has optional `graphX` and `graphY`. The graph spreads nodes out automatically once (d3-force), then keeps the positions the user gives them (2026-10-10).

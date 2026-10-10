@@ -139,6 +139,39 @@
   background: var(--fo-primary-soft);
 }
 
+/* The three sprites used last: smaller copies of the main sprite buttons. */
+.fo-recent {
+  gap: 4px;
+}
+
+.fo-recent-label {
+  margin-right: 2px;
+  font-size: 12px;
+  color: var(--fo-ink-muted);
+}
+
+.fo-recent-tool {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: var(--fo-surface);
+  cursor: pointer;
+}
+
+.fo-recent-tool:hover {
+  background: var(--fo-primary-soft);
+}
+
+.fo-recent-tool[aria-pressed='true'] {
+  border-color: var(--fo-primary);
+  background: var(--fo-primary-soft);
+}
+
 .fo-swatch {
   width: 22px;
   height: 22px;
@@ -165,6 +198,10 @@
 
 .fo-button:hover {
   background: var(--fo-primary-soft);
+}
+
+.fo-wide {
+  align-self: stretch;
 }
 
 .fo-small-button {
@@ -212,7 +249,7 @@
 }
 
 /* Markers are positioned on every frame by MarkerLayer, from the text or element they are attached to.
-   The sprite stands on the spot: its bottom middle is the anchor point. */
+   The sprite is centered on the spot, so it lands around the mouse when placed. */
 .fo-marker {
   position: fixed;
   top: 0;
@@ -220,7 +257,7 @@
   display: block;
   width: 38px;
   height: 38px;
-  margin: -38px 0 0 -19px;
+  margin: -19px 0 0 -19px;
   filter: drop-shadow(0 2px 3px var(--fo-shadow));
   pointer-events: auto;
   cursor: grab;
@@ -239,12 +276,88 @@
   cursor: pointer;
 }
 
-.fo-marker.fo-flash {
-  animation: fo-pulse 0.6s ease-in-out 3;
+/* A copy of the chosen sprite that rides on the mouse. It is centered on the mouse and ignores it, so
+   clicks reach the page. CursorSprite moves it on every mouse move. */
+.fo-cursor-sprite {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 38px;
+  height: 38px;
+  margin: -19px 0 0 -19px;
+  opacity: 0.85;
+  filter: drop-shadow(0 4px 6px var(--fo-shadow));
+  pointer-events: none;
+  visibility: hidden;
+  will-change: transform;
 }
 
-@keyframes fo-pulse {
-  50% {
-    filter: drop-shadow(0 0 3px var(--fo-accent)) drop-shadow(0 0 8px var(--fo-accent));
+/* After a jump the glow stays on for a while, then fades out. 4s matches JUMP_HIGHLIGHT_MS in lib/engine/highlights.ts. */
+.fo-marker.fo-flash {
+  animation: fo-glow 4s linear forwards;
+}
+
+@keyframes fo-glow {
+  0%,
+  62% {
+    filter: drop-shadow(0 2px 3px var(--fo-shadow)) drop-shadow(0 0 3px var(--fo-accent)) drop-shadow(0 0 8px var(--fo-accent));
   }
+  100% {
+    filter: drop-shadow(0 2px 3px var(--fo-shadow)) drop-shadow(0 0 3px transparent) drop-shadow(0 0 8px transparent);
+  }
+}
+
+/* The scroll rail: a slim bar down the right edge, standing for the whole page. Its sprites (32px) are bigger than
+   the bar (10px) and stick out past it on purpose. It is drawn after the toolbar, so it stays visible if they overlap. */
+.fo-rail {
+  position: fixed;
+  top: 24px;
+  right: 10px;
+  bottom: 24px;
+  width: 10px;
+  border: 2px solid var(--fo-edge);
+  border-radius: 8px;
+  background: var(--fo-grad-surface);
+  box-shadow: 0 2px 8px var(--fo-shadow);
+  pointer-events: none;
+}
+
+.fo-rail-thumb {
+  position: absolute;
+  left: 0;
+  right: 0;
+  min-height: 4px;
+  border-radius: 6px;
+  background: var(--fo-primary-soft);
+  opacity: 0.7;
+}
+
+.fo-rail-stop {
+  position: absolute;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  filter: drop-shadow(0 2px 3px var(--fo-shadow));
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.12s ease-out;
+}
+
+.fo-rail-stop:hover {
+  z-index: 1;
+  transform: scale(1.25);
+}
+
+.fo-rail-animal-stand-in {
+  display: block;
+  width: 22px;
+  height: 22px;
+  margin: 0 auto;
+  border: 2px solid var(--fo-edge);
+  border-radius: 50%;
+  background: var(--fo-accent);
 }
