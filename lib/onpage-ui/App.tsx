@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
 import {
   MarkerTracker,
@@ -46,9 +46,12 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
   const [colorId, setColorId] = useState(DEFAULT_COLOR_ID);
   const [forests, setForests] = useState<Forest[]>([]);
   const [currentForestId, setCurrentForestId] = useState<string | null>(null);
-  const [seeds, setSeeds] = useState<Seed[]>([]);
+  const [allPageSeeds, setAllPageSeeds] = useState<Seed[]>([]);
   const [status, setStatus] = useState('');
   const [flashId, setFlashId] = useState<string | null>(null);
+
+  // Only the current forest's seeds are shown. Seeds from other forests on this page stay hidden until that forest is chosen.
+  const seeds = useMemo(() => allPageSeeds.filter((s) => s.forestId === currentForestId), [allPageSeeds, currentForestId]);
 
   const seedsRef = useRef<Seed[]>([]);
   const jumpRef = useRef<string | null>(null);
@@ -66,7 +69,7 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
       setToolbar(toolbarState);
       setForests(allForests);
       setCurrentForestId(settings.currentForestId);
-      setSeeds(pageSeeds);
+      setAllPageSeeds(pageSeeds);
     };
     void refresh();
     return onDataChanged(() => void refresh());
@@ -180,7 +183,9 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
       {toolbar && visible && (
         <Toolbar
           position={{ top: toolbar.top, right: toolbar.right }}
+          scale={toolbar.scale}
           onMoved={(position) => void updateToolbarState(position)}
+          onResized={(scale) => void updateToolbarState({ scale })}
           onClose={() => void updateToolbarState({ open: false })}
           forests={forests}
           currentForestId={currentForestId}
@@ -198,7 +203,7 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
           onPickColor={setColorId}
           onSwitchForest={(id) => void updateSettings({ currentForestId: id })}
           onCreateForest={async (name) => {
-            const forest = await createForest({ name, icon: FOREST_ICONS[forests.length % FOREST_ICONS.length] ?? '🌲' });
+            const forest = await createForest({ name, icon: FOREST_ICONS[forests.length % FOREST_ICONS.length] ?? 'tree' });
             await updateSettings({ currentForestId: forest.id });
             say(`Created ${name}`);
           }}

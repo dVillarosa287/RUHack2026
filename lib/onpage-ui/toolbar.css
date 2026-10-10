@@ -26,6 +26,31 @@
   color: var(--fo-ink);
 }
 
+/* Everything inside is scaled together when the user resizes the toolbar. */
+.fo-scale {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.fo-resize {
+  position: absolute;
+  left: -2px;
+  bottom: -2px;
+  width: 18px;
+  height: 18px;
+  border-bottom: 3px solid var(--fo-edge);
+  border-left: 3px solid var(--fo-edge);
+  border-bottom-left-radius: 10px;
+  cursor: nesw-resize;
+  touch-action: none;
+}
+
+.fo-resize:hover {
+  border-color: var(--fo-accent);
+}
+
 .fo-toolbar.fo-dragging {
   cursor: grabbing;
 }
@@ -95,8 +120,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 2px solid transparent;
   border-radius: 8px;
@@ -186,20 +211,17 @@
   color: var(--fo-primary);
 }
 
-/* Markers are positioned on every frame by MarkerLayer, from the text or element they are attached to. */
+/* Markers are positioned on every frame by MarkerLayer, from the text or element they are attached to.
+   The sprite stands on the spot: its bottom middle is the anchor point. */
 .fo-marker {
   position: fixed;
   top: 0;
   left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin: -14px 0 0 -14px;
-  border: 2px solid var(--fo-surface);
-  border-radius: 50%;
-  box-shadow: 0 1px 5px var(--fo-shadow);
+  display: block;
+  width: 38px;
+  height: 38px;
+  margin: -38px 0 0 -19px;
+  filter: drop-shadow(0 2px 3px var(--fo-shadow));
   pointer-events: auto;
   cursor: grab;
   user-select: none;
@@ -210,7 +232,7 @@
 .fo-marker.fo-marker-dragging {
   cursor: grabbing;
   pointer-events: none;
-  box-shadow: 0 4px 12px var(--fo-shadow);
+  filter: drop-shadow(0 6px 8px var(--fo-shadow));
 }
 
 .fo-marker.fo-dig {
@@ -223,6 +245,6 @@
 
 @keyframes fo-pulse {
   50% {
-    outline: 3px solid var(--fo-accent);
+    filter: drop-shadow(0 0 3px var(--fo-accent)) drop-shadow(0 0 8px var(--fo-accent));
   }
 }

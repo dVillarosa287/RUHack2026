@@ -2,6 +2,7 @@
 import ReactDOM from 'react-dom/client';
 import { UI_HOST_TAG } from '@/lib/engine';
 import { App } from '@/lib/onpage-ui/App';
+import { keepOnTop } from '@/lib/onpage-ui/topLayer';
 import { watchTheme } from '@/lib/theme';
 import '@/lib/onpage-ui/toolbar.css';
 
@@ -17,13 +18,15 @@ export default defineContentScript({
       isolateEvents: true,
       onMount(container, shadow, shadowHost) {
         const stopTheme = watchTheme(shadow);
+        const stopOnTop = keepOnTop(shadowHost);
         const root = ReactDOM.createRoot(container);
         root.render(<App shadowHost={shadowHost} />);
-        return { root, stopTheme };
+        return { root, stopTheme, stopOnTop };
       },
       onRemove(mounted) {
         mounted?.root.unmount();
         mounted?.stopTheme();
+        mounted?.stopOnTop();
       },
     });
     ui.mount();

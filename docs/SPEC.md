@@ -83,12 +83,13 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 - Drag a sprite from the toolbar and drop it on the page. (Stage 2)
 - Place a sprite on a link: the user stays on the current tab, and the sprite stores the link's destination. Clicking that sprite in the viewer opens the destination. (Stage 2)
 - Annotations save per web page and reappear when the page is opened again. (Stage 1)
+- On a page, only the seeds of the current forest are shown. Switching forest from the toolbar shows that forest's seeds instead. "Open on page" in the viewer switches to the seed's forest first. (Stage 1)
 - Circle or draw around a region of a page. (Future)
 
 ### Toolbar
 
 - A rectangular toolbar with the sprite icons, and a color palette under it. (Stage 2)
-- The toolbar opens in the top right corner and can be dragged anywhere in the window. It is opened and closed with the extension's icon in Chrome (or its close button), and it stays open, in the same place, in every tab until the user closes it. (Stage 1)
+- The toolbar opens in the top right corner and can be dragged anywhere in the window. It can be resized by dragging its bottom-left corner. It is opened and closed with the extension's icon in Chrome (or its close button), and it stays open, in the same place and size, in every tab until the user closes it. It is drawn above everything on the page, including a site's own pop-ups. (Stage 1)
 - The three most recently used sprites shown on the toolbar. (Stage 2)
 - Above the toolbar, the name of the forest the annotations are going into, with a way to switch forests or create a new one. (Stage 1)
 - Two buttons: "Current Forest" opens the forest you are in, and "View Forests" opens all of your forests. (Stage 1)
@@ -103,7 +104,7 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 
 - View Forests: a Finder-style window with one icon per forest. New forests land in a tidy grid by default, the user can drag them around, choose each forest's icon, and double-click to open one. (Grid and open in Stage 1, dragging and icon choice in Stage 2)
 - A list of every annotation in a forest, grouped by web page, each one linking back to its page which opens in another window. (Stage 1)
-- Graph view: every annotation is a sprite node, as in Obsidian. (Stage 2)
+- Graph view: every annotation is a sprite node, as in Obsidian. The forest page keeps its list of annotations, and a "Graph view" button at the top right of it opens the graph. (Stage 2)
 - Manual connections ("roots"): drag from one node to another to draw a root between them. (Stage 2)
 - A left sidebar with the folders inside the forest. (Stage 2)
 - The user's own notes and media as nodes that are not tied to a web page. (Stage 2 for text notes, Stage 3 for images)
@@ -200,7 +201,7 @@ This works like opening a folder in Finder. Each forest is an icon inside a rect
 
 ### Inside a forest
 
-A forest looks like an Obsidian graph, with a sprite icon for each node. The folders inside the forest are listed in a sidebar on the left. You connect two nodes by dragging from one to the other, which draws a root between them, or you ask the AI to suggest connections and accept the ones you agree with. You can add your own notes and media as nodes that did not come from a web page, using the same sprites. Nodes from the same page or website are linked automatically in a lighter style, and this can be switched off.
+A forest opens as a list of its annotations, with a "Graph view" button at the top right. That button opens the forest as an Obsidian-style graph, with a sprite icon for each node. The folders inside the forest are listed in a sidebar on the left. You connect two nodes by dragging from one to the other, which draws a root between them, or you ask the AI to suggest connections and accept the ones you agree with. You can add your own notes and media as nodes that did not come from a web page, using the same sprites. Nodes from the same page or website are linked automatically in a lighter style, and this can be switched off.
 
 ### Quizzes
 
@@ -214,10 +215,10 @@ There are two kinds of quiz. A fruit sprout planted over text grows into an appl
 | --- | --- |
 | Seed | One saved annotation: highlighted, marked or circled information from a page, stored with its URL and the specific text or location. Every annotation starts as a seed. |
 | Sprite | The icon a seed is shown as, on the page and in the graph. |
-| Growth | Two stages: sprout, then tree. A sprout becomes a tree when the user reloads the page. The fruit sprout becomes an apple tree five minutes after planting. Quiz answers never change growth. |
+| Growth | Two stages: sprout, then tree. A sprout becomes a tree when the user reloads the page. The fruit sprout becomes an apple tree five minutes after planting and stays one. Only the sprout and the fruit sprout grow: the lily pad, mushroom and flower never change. Quiz answers never change growth. |
 | Forest | A collection of seeds that forms a specific project. A forest is a folder. |
 | Root | A connection between two nodes in a forest. |
-| Fruit | What the forest produces: a series of questions for active recall, made from the lily pads of one color. The apple tree's single-question review is a separate thing. |
+| Fruit | What the forest produces: a series of questions for active recall, made from the lily pads of one color. The apple tree's single-question review is a separate thing, stored as a Fruit with one question. |
 | Frog | The teacher. It hops between lily pads during a quiz and speaks the AI summaries. |
 | Animal | The marker for where you were before you jumped along the scroll rail. |
 

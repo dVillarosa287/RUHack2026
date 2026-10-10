@@ -32,6 +32,16 @@ Entry format:
 
 ### Page engine notes
 
+- [Oct 10, 7:00 PM] (Teobobeo99)
+  - Did: markers are now drawn as the real sprite art, tinted with the seed's color. A marker's sprite stands on its anchor point (bottom middle), instead of being centered on it.
+  - Others can use / need to know: `MarkerLayer` takes the seed's `growth`, so a seed with growth `tree` already shows the grown art.
+  - Need from another role: nothing
+
+- [Oct 10, 6:00 PM] (Teobobeo99)
+  - Did: pages now show only the current forest's seeds (filter in `lib/onpage-ui/App.tsx`).
+  - Others can use / need to know: `getSeedsForUrl` still returns every forest's seeds on a page; filter by `forestId` as the app does.
+  - Need from another role: nothing
+
 - [Oct 10, 5:00 PM] (Teobobeo99)
   - Did: markers now attach to the text under the click and are drawn from it every frame (`lib/engine/markers.ts`, `MarkerTracker`), so they follow scrolling, resizing and layout changes. Fixed markers drifting on Wikipedia.
   - Others can use / need to know: marker anchors hold a short quote, the nearest element and the scroll percentage, tried in that order. `buildPointAnchor` and `resolvePoint` are gone; use `buildMarkerAnchor` and `MarkerTracker`.
@@ -43,6 +53,16 @@ Entry format:
   - Need from another role: nothing
 
 ### On-page UI and art notes
+
+- [Oct 10, 7:00 PM] (Teobobeo99)
+  - Did: the toolbar, markers, viewer and forest icons now use the art in `images/` instead of emoji. Sprites are tinted with a palette color (`SpriteIcon color`). The toolbar's sprites show the currently chosen color.
+  - Others can use / need to know: art goes in `images/` as `uncolored-<name>.png`, then is named in `lib/theme/index.ts`; the build crops its margin. Emoji only appear if an image is missing. Still to draw: the apple tree and the animal marker (`BACKLOG.md` A3).
+  - Need from another role: nothing
+
+- [Oct 10, 6:00 PM] (Teobobeo99)
+  - Did: toolbar is drawn in the browser's top layer (`lib/onpage-ui/topLayer.ts`, `keepOnTop`), and can be resized from its bottom-left corner (saved as `scale`).
+  - Others can use / need to know: it draws over page pop-ups and modal dialogs. While a site's modal is open the browser makes everything outside it unclickable, so the toolbar is visible but not clickable then.
+  - Need from another role: nothing
 
 - [Oct 10, 5:00 PM] (Teobobeo99)
   - Did: toolbar moved to top right, draggable from any blank spot, with a close button. It stays open in every tab until closed (saved with the storage module). Markers can be dragged to a new spot. All styling now uses theme tokens.
@@ -56,6 +76,16 @@ Entry format:
 
 ### Viewer notes
 
+- [Oct 10, 7:00 PM] (Teobobeo99)
+  - Did: viewer header, forest titles, forest grid and seed rows use `ForestIcon` and the tinted `SpriteIcon`.
+  - Others can use / need to know: for graph nodes use `<SpriteIcon type color grown />` from `lib/theme/SpriteIcon`. Forest icons are art ids such as `tree`; older forests may hold an emoji, which `ForestIcon` still shows.
+  - Need from another role: nothing
+
+- [Oct 10, 6:00 PM] (Teobobeo99)
+  - Did: "Open on page" now makes the seed's forest the current one, so the seed shows on the page.
+  - Others can use / need to know: planned for Stage 2, a "Graph view" button at the top right of the forest page opens the graph (`docs/SPEC.md` section 4).
+  - Need from another role: nothing
+
 - [Oct 10, 5:00 PM] (Teobobeo99)
   - Did: restyled the viewer with theme tokens (Tailwind color names now come from the theme; stock Tailwind colors are switched off).
   - Others can use / need to know: use `bg-surface`, `text-ink`, `border-edge`, `bg-primary-soft` and so on. A class like `bg-red-100` does nothing now. The list is in `entrypoints/viewer/style.css`.
@@ -67,6 +97,16 @@ Entry format:
   - Need from another role: nothing
 
 ### Data, AI and integration notes
+
+- [Oct 10, 7:00 PM] (Teobobeo99)
+  - Did: art pipeline: `wxt.config.ts` copies `images/` into the extension and `scripts/trim-art.ts` crops the empty margin (the originals are untouched). Extension icons replaced with the delivered icon. Closed D1 in `BACKLOG.md`.
+  - Others can use / need to know: the default forest icon is now `tree` (an art id). The one-question fruit review will be stored as a `Fruit` with a single question. Stage 2 plan for splitting work is in `docs/DIVIDING_WORK.md`.
+  - Need from another role: team OK on `BACKLOG.md` A1 and A2 (new optional position fields) before Stage 2 viewer work.
+
+- [Oct 10, 6:00 PM] (Teobobeo99)
+  - Did: added `scale` to the saved toolbar state, and the new `docs/DIVIDING_WORK.md` (jobs that can be handed out in parallel).
+  - Others can use / need to know: the custom style dropdown is listed there and in `BACKLOG.md` A5.
+  - Need from another role: nothing
 
 - [Oct 10, 5:00 PM] (Teobobeo99)
   - Did: theme system (`lib/theme/themes.ts`, `apply.ts`, `docs/THEME.md`, `scripts/check-theme.mjs`) and a dark forest look from the palette. Added `getToolbarState` and `updateToolbarState` to the storage module (open or closed, and position, shared by every tab). The Chrome icon now toggles that saved state.
@@ -106,6 +146,7 @@ Goal: the core loop works from start to finish with plain visuals.
 - [ ] [Engine] Save each annotation as a seed through the storage module (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
 - [ ] [Engine] Restore every saved annotation when the page loads again (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
 - [ ] [Engine] Markers stay attached to their text through scrolling, resizing and layout changes, and can be dragged to a new spot (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [Engine] Only the current forest's seeds are shown on a page (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 
 ### On-page UI and art
 
@@ -116,6 +157,7 @@ Goal: the core loop works from start to finish with plain visuals.
 - [ ] [UI] "Current Forest" button opens the forest you are in, in a new tab (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
 - [ ] [UI] "View Forests" button opens all forests, in a new tab (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
 - [ ] [UI] Toolbar opens top right, can be dragged, and stays open in the same place in every tab until the user closes it (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [UI] Toolbar can be resized, and is drawn above everything on a page, including site pop-ups (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 
 ### Viewer
 
@@ -140,32 +182,32 @@ Goal: it looks and feels like a forest.
 
 ### Page engine
 
-- [ ] [Engine] Placed sprites render as real sprites at their saved locations
+- [ ] [Engine] Placed sprites render as real sprites at their saved locations (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [Engine] Drag a sprite from the toolbar and drop it on the page
 - [ ] [Engine] Sprite on a link: user stays on the same tab, the sprite stores the link's destination
-- [ ] [Engine] Sturdier anchoring: nearest element with an offset, scroll percentage as the last resort
+- [ ] [Engine] Sturdier anchoring: nearest element with an offset, scroll percentage as the last resort (in progress: markers already use text, then element, then scroll percentage, tested on Wikipedia; a person needs to check it in Chrome)
 
 ### On-page UI and art
 
-- [ ] [UI] Rectangular toolbar with the sprite icons (sprout, lily pad, mushroom, flower, apple tree) (in progress: toolbar has all five sprites with emoji stand-ins; real art and the final look are still to do)
+- [ ] [UI] Rectangular toolbar with the sprite icons (sprout, lily pad, mushroom, flower, apple tree) (in progress: toolbar shows all five sprites as real art, tinted in the chosen color; the final look is still to do, and a person needs to check it in Chrome)
 - [ ] [UI] The three most recently used sprites shown on the toolbar
 - [ ] [UI] Color palette under the toolbar (in progress: the eight colors are on the toolbar and work; styling is basic)
 - [ ] [UI] On highlight, the sprite appears at the highlight for about a second, then fades
 - [ ] [UI] Scroll rail on the right edge with a marker for every annotation on the page
 - [ ] [UI] Clicking a rail marker scrolls to that annotation
 - [ ] [UI] The animal: the rail saves where you were before the jump, and clicking it takes you back
-- [ ] [UI] Sprite art for each sprite type
-- [ ] [UI] Forest icons
-- [ ] [UI] Forest color palette (greens and browns)
+- [ ] [UI] Sprite art for each sprite type (in progress: sprout, tree, lily pad, mushroom, flower, apple and shovel are in; the apple tree and the animal marker are not drawn yet)
+- [ ] [UI] Forest icons (in progress: forests use the sprite art as their icon; no dedicated forest art, and the user cannot choose one yet)
+- [ ] [UI] Forest color palette (greens and browns) (in progress: covered by the theme system, `docs/THEME.md`; a person needs to check it in Chrome)
 - [ ] [UI] Theme picker (the "custom style" dropdown), see `BACKLOG.md` A5
-- [ ] [UI] Sprites tinted with the palette colors (line art from `images/`, see `docs/THEME.md`)
+- [ ] [UI] Sprites tinted with the palette colors (line art from `images/`, see `docs/THEME.md`) (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 
 ### Viewer
 
 - [ ] [Viewer] Forests can be dragged around the grid, and positions are remembered
 - [ ] [Viewer] User can choose each forest's icon
 - [ ] [Viewer] Double-click a forest to open it
-- [ ] [Viewer] Graph view: every annotation is a sprite node (React Flow)
+- [ ] [Viewer] Graph view: every annotation is a sprite node (React Flow), opened by a "Graph view" button at the top right of the forest page
 - [ ] [Viewer] Roots: drag from one node to another to connect them
 - [ ] [Viewer] Left sidebar with the folders inside the forest
 - [ ] [Viewer] Text notes as nodes not tied to a web page, using the same sprites
@@ -174,7 +216,7 @@ Goal: it looks and feels like a forest.
 
 ### Data, AI and integration
 
-- [ ] [Data] One theme file that all sprites and colors load from (in progress: `lib/theme/index.ts` holds colors, sprites and forest icons; theme switching is not built)
+- [ ] [Data] One theme file that all sprites and colors load from (in progress: `lib/theme/` holds the palette, the art lookup and the tinting components; there is no theme picker yet)
 - [ ] [Data] Storage for roots, folders, forest icons and grid positions (in progress: roots, folders and forest icons have functions, untested; grid positions need a data model change, see `BACKLOG.md` A1)
 - [ ] [Data] Recent sprites saved in settings
 - [ ] [Data] Settings screen where the user pastes their Gemini key

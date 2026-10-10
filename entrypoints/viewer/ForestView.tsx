@@ -1,12 +1,16 @@
 import { browser } from 'wxt/browser';
-import { deleteSeed, getForest, getSeedsForForest, setPendingJump, type Seed } from '@/lib/storage';
+import { deleteSeed, getForest, getSeedsForForest, setPendingJump, updateSettings, type Seed } from '@/lib/storage';
 import { SPRITES } from '@/lib/theme';
 import { ShovelIcon } from '@/lib/theme/ShovelIcon';
-import { SpriteIcon } from '@/lib/theme/SpriteIcon';
+import { ForestIcon, SpriteIcon } from '@/lib/theme/SpriteIcon';
 import { useStored } from './useStored';
 
-/** Opens the seed's page in another window. That page scrolls to the seed once it has loaded. */
+/**
+ * Opens the seed's page in another window. That page scrolls to the seed once it has loaded.
+ * Pages only show the current forest's seeds, so this makes the seed's forest the current one.
+ */
 async function openOnPage(seed: Seed) {
+  await updateSettings({ currentForestId: seed.forestId });
   await setPendingJump(seed);
   await browser.windows.create({ url: seed.url });
 }
@@ -31,7 +35,7 @@ export function ForestView({ forestId }: { forestId: string }) {
 
   return (
     <>
-      <h1 className="mb-1 text-2xl font-semibold">{data.forest.icon} {data.forest.name}</h1>
+      <h1 className="mb-1 flex items-center gap-2 text-2xl font-semibold"><ForestIcon icon={data.forest.icon} size={40} />{data.forest.name}</h1>
       <p className="mb-6 text-sm text-ink-muted">{data.seeds.length} {data.seeds.length === 1 ? 'seed' : 'seeds'} on {pages.length} {pages.length === 1 ? 'page' : 'pages'}</p>
 
       {pages.length === 0 && <p className="rounded-xl bg-surface p-6 text-center text-ink-muted">Nothing planted here yet. Open any web page, click the Forest icon in Chrome's toolbar and pick a sprite.</p>}
@@ -44,8 +48,8 @@ export function ForestView({ forestId }: { forestId: string }) {
             <ul className="mt-3 space-y-2">
               {page.seeds.map((seed) => (
                 <li key={seed.id} className="flex items-start gap-3 rounded-lg bg-surface-alt p-3">
-                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-surface shadow-sm shadow-drop" style={{ background: `var(--c-${seed.color})` }} title={SPRITES[seed.spriteType].label}>
-                    <SpriteIcon type={seed.spriteType} size={18} />
+                  <span className="mt-0.5 flex shrink-0 items-center justify-center" title={SPRITES[seed.spriteType].label}>
+                    <SpriteIcon type={seed.spriteType} size={40} color={seed.color} grown={seed.growth === 'tree'} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs uppercase tracking-wide text-ink-muted">{seed.kind === 'highlight' ? 'Highlight' : 'Marker'} · {new Date(seed.createdAt).toLocaleString()}</p>

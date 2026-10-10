@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { APP_NAME } from '@/lib/theme';
+import { ForestIcon } from '@/lib/theme/SpriteIcon';
 import { ForestGrid } from './ForestGrid';
 import { ForestView } from './ForestView';
 
@@ -21,7 +22,7 @@ export function App() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
       <header className="mb-6 flex items-center justify-between">
-        <a href="#" className="text-2xl font-bold text-primary">🌲 {APP_NAME}</a>
+        <a href="#" className="flex items-center gap-2 text-2xl font-bold text-primary"><ForestIcon icon="tree" size={36} />{APP_NAME}</a>
         {forestId && <a href="#" className="text-sm text-ink-muted underline">All forests</a>}
       </header>
       {forestId ? <ForestView forestId={forestId} /> : <ForestGrid />}

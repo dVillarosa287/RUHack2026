@@ -13,6 +13,7 @@ interface MarkerLayerProps {
 }
 
 const DRAG_DISTANCE_PX = 4;
+const MARKER_SIZE = 38;
 const HOLD_AFTER_DROP_MS = 1500;
 
 /**
@@ -101,12 +102,12 @@ export function MarkerLayer({ seeds, digging, flashId, onDig, onMove }: MarkerLa
             else elements.current.delete(seed.id);
           }}
           className={`fo-marker${digging ? ' fo-dig' : ''}${flashId === seed.id ? ' fo-flash' : ''}`}
-          style={{ background: `var(--c-${seed.color})`, visibility: 'hidden' }}
+          style={{ visibility: 'hidden' }}
           title={seed.text}
           onPointerDown={(e) => startDrag(seed, e)}
           onClick={digging ? () => onDig(seed.id) : undefined}
         >
-          <SpriteIcon type={seed.spriteType} size={16} />
+          <SpriteIcon type={seed.spriteType} size={MARKER_SIZE} color={seed.color} grown={seed.growth === 'tree'} />
         </div>
       ))}
     </>

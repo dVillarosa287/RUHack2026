@@ -20,13 +20,14 @@ HackRU project. A Chrome extension (Manifest V3) for annotating web pages for la
 - `docs/SPEC.md`: the full spec. Read only the section for the feature you are about to build, before building it.
 - `PROGRESS.md`: checklist of what is done, grouped by stage. The current stage is stated at the top.
 - `BACKLOG.md`: bugs to fix, things to add, and open decisions.
+- `docs/DIVIDING_WORK.md`: jobs that can be handed to different people or helper agents at the same time, with their folders, dependencies and suggested models.
 - `docs/THEME.md`: the palette and the rules for every color and style. Read it before you write any CSS, Tailwind classes or inline styles.
 
 ## Vocabulary (use these exact names in code and UI)
 
 - **Seed:** one saved annotation or node. Every annotation starts as a seed.
 - **Sprite:** the icon a seed is shown as. Types: `sprout` (general note or key idea), `lilypad` ("quiz me on this"), `mushroom` (confusing, come back to it), `flower` (definition or key term), `fruitsprout` (timed review, see below).
-- **Growth:** two stages, `sprout` then `tree`. A sprout becomes a tree when the user reloads the page. Correct quiz answers never change a seed.
+- **Growth:** two stages, `sprout` then `tree`. A sprout becomes a tree when the user reloads the page. Only the sprout and the fruit sprout grow; the lily pad, mushroom and flower never change. Correct quiz answers never change a seed.
 - **Fruit sprout / fruit tree:** the fifth sprite. The user plants it over text. Five minutes later it grows into an apple tree and asks one question about that text, and the tree stays after the question. It is separate from the lily pad quiz. It is in the toolbar now as a placeholder, but the timer and the review are Stage 3 priority 3 only.
 - **Color:** picked from the palette, separate from sprite type. Groups seeds by topic inside a forest.
 - **Forest:** a collection of seeds for one project. A forest is a folder. Forests can contain folders.
@@ -51,7 +52,8 @@ Reasons for each choice: `docs/SPEC.md` section 2.
 
 - All reads and writes go through the one storage module. Nothing else calls `chrome.storage` directly.
 - Never use IndexedDB or `localStorage` from the page script. There they belong to the website being viewed, so data would not be shared across sites.
-- All on-page UI (toolbar, palette, scroll rail) is mounted inside a Shadow DOM with WXT's `createShadowRootUi`.
+- All on-page UI (toolbar, palette, scroll rail) is mounted inside a Shadow DOM with WXT's `createShadowRootUi`, and is put in the browser's top layer with `keepOnTop` (`lib/onpage-ui/topLayer.ts`) so it draws above everything on the page, whatever z-index the site uses. Do not fix stacking problems with a bigger z-index.
+- On a page, show only the current forest's seeds. Seeds from other forests on the same page stay hidden until that forest is chosen.
 - Draw highlights with the CSS Custom Highlight API. Do not wrap page text in new elements.
 - Never store raw pixel coordinates as the only location. Use the anchor shape in the data model. A marker is attached to the text under it (with the element and scroll position as fallbacks) and is drawn from that anchor on every frame by `MarkerTracker`, so it follows the page when it scrolls, resizes or reflows. Never position a marker from a saved screen or page coordinate.
 - Clean URLs (strip tracking parameters and the `#` part) before using them as keys.
@@ -78,12 +80,12 @@ Changing these shapes affects all four roles. Do not change them without the use
 ## Folder ownership
 
 - Page engine: `lib/engine/`
-- On-page UI and art: `lib/onpage-ui/`, `public/sprites/` (real sprite art goes here), `images/` (art as it was delivered, not yet wired in)
+- On-page UI and art: `lib/onpage-ui/`, `images/` (all sprite and frog art)
 - Viewer: `entrypoints/viewer/`
 - Data, AI and integration: `lib/storage/`, `lib/ai/`, `lib/theme/`, `entrypoints/background.ts`, project config (`wxt.config.ts`, `package.json`, `tsconfig.json`, `.gitignore`), `scripts/`, `docs/THEME.md`
 - Shared glue, keep it tiny: `entrypoints/content/`
 
-`lib/theme/` is used by everyone: it holds the colors, the sprite stand-ins and the shared `SpriteIcon` and `ShovelIcon` components. To use real art, put the file in `public/sprites/` and write its file name in the `image` field of that sprite in `lib/theme/index.ts`.
+`lib/theme/` is used by everyone: it holds the colors, the sprite art lookup and the shared `SpriteIcon`, `ForestIcon` and `ShovelIcon` components. To add art: put the PNG in `images/` as `uncolored-<name>.png` (black outline, white fill, transparent background), then name it in `lib/theme/index.ts`. The build crops the empty margin and copies it into the extension (`wxt.config.ts`, `scripts/trim-art.ts`); the originals in `images/` are never changed. Sprites are drawn through `SpriteIcon` with a palette color, which tints the white fill.
 
 Stay inside your role's folders. If a task needs a change in another role's folder, stop and tell the user.
 
@@ -100,7 +102,7 @@ Build only items from the current stage. Do not start Stage 3 or anything listed
 - Start of every session: read `PROGRESS.md`, including "Notes for other agents" from all four roles. Then pick an unchecked item for your role in the current stage and read the matching section of `docs/SPEC.md`.
 - Check `BACKLOG.md` under "Open decisions" first. If your task touches one, ask the user instead of guessing.
 - Found a bug or an idea outside the current task: add it to `BACKLOG.md` and keep going.
-- Whenever the user answers an open decision or changes a plan, update every file that mentions it in the same session: `docs/SPEC.md`, `PROGRESS.md`, `BACKLOG.md` (move settled decisions to Closed) and this file. Search all four for the old wording so nothing contradicts the new answer.
+- Whenever the user answers an open decision, changes a plan, or asks for a new behavior, design, document or idea (for now or for later), record it in the same session so future agents can see it: `docs/SPEC.md` (what the product does), `PROGRESS.md` (checklist items, plus your note), `BACKLOG.md` (later ideas and decisions; move settled ones to Closed), `docs/DIVIDING_WORK.md` (if it is a job that could be handed out), and this file (rules, commands, folders, links to new docs). Search them for the old wording so nothing contradicts the new answer.
 
 ### Before you finish, every session (required)
 

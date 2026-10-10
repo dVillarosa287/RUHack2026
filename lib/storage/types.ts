@@ -17,7 +17,7 @@ export interface Anchor {
 export interface Forest {
   id: string;
   name: string;
-  /** An emoji for now. Real forest icons arrive in Stage 2. */
+  /** An art id from lib/theme (such as 'tree'). Older forests may have an emoji, which is shown as text. */
   icon: string;
   createdAt: number;
 }
@@ -85,6 +85,8 @@ export interface ToolbarState {
   /** Distance in px from the top and right edges of the window. */
   top: number;
   right: number;
+  /** Size of the toolbar, 1 is normal. The user resizes it by dragging its bottom-left corner. */
+  scale: number;
 }
 
 export interface Settings {

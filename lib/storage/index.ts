@@ -56,7 +56,7 @@ const byCreatedAt = (a: { createdAt: number }, b: { createdAt: number }) => a.cr
 export async function getForests(): Promise<Forest[]> {
   const forests = await listRecords<Forest>(PREFIX.forest);
   if (forests.length > 0) return forests.sort(byCreatedAt);
-  const fallback: Forest = { id: DEFAULT_FOREST_ID, name: 'My First Forest', icon: '🌲', createdAt: Date.now() };
+  const fallback: Forest = { id: DEFAULT_FOREST_ID, name: 'My First Forest', icon: 'tree', createdAt: Date.now() };
   await writeRecord(PREFIX.forest + fallback.id, fallback);
   return [fallback];
 }
@@ -191,7 +191,7 @@ export async function updateSettings(patch: Partial<Settings>): Promise<Settings
 
 // ---------- extras beyond the agreed list ----------
 
-const DEFAULT_TOOLBAR: ToolbarState = { open: false, top: 16, right: 16 };
+const DEFAULT_TOOLBAR: ToolbarState = { open: false, top: 16, right: 16, scale: 1 };
 
 /** Whether the toolbar is open and where it sits. The same in every tab. */
 export async function getToolbarState(): Promise<ToolbarState> {

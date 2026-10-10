@@ -29,7 +29,7 @@ Seeds store a color `id` (for example `green`), never the code, so a theme can c
 ## Exceptions (the only ones)
 
 - **See-through colors.** Shadows, and highlights drawn over page text, are a palette color with transparency (`fade()` in the theme, or the exact color plus `99` in `lib/engine/highlights.ts`). The page's text has to stay readable under a highlight.
-- **Emoji and sprite images** carry their own colors until the real art is tinted (see "Tinting art" below).
+- **Sprite and frog images** are black outlines with a white fill. Their outline stays black, and the fill is tinted with a palette color (see "Tinting art" below). Forest icons and the shovel are drawn untinted.
 - `transparent`, `inherit` and `currentColor` are allowed because they are not colors of their own.
 
 ## How it works
@@ -71,4 +71,8 @@ To restyle one thing, change the token in `themes.ts`. Do not add a one-off colo
 
 ## Tinting art
 
-The line-art sprites in `images/` are uncolored (black lines). When they are wired in, tint them with the palette: draw the image as a CSS `mask-image` on an element whose `background` is the seed's color (`var(--c-<id>)`, optionally shaded). That keeps the art inside this system with no extra files per color.
+The sprites in `images/` are black outlines with a white fill. `SpriteIcon` (in `lib/theme/SpriteIcon.tsx`) colors the fill with a palette color: it draws a layer of that color cut to the sprite's shape (a CSS mask), then multiplies the image on top, so white becomes the color and black stays black. The color is a palette id such as `green`, which becomes `var(--c-green)`. No extra image files are needed for each color, and a new theme recolors every sprite.
+
+Pass `color` to tint: `<SpriteIcon type="mushroom" color={seed.color} />`. Without `color` the sprite is drawn white.
+
+The build crops the empty margin off each image (`scripts/trim-art.ts`) so sprites fill their icon box. The originals in `images/` are not changed.

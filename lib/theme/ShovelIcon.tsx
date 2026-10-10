@@ -1,5 +1,9 @@
-/** The delete tool. A plain line drawing that takes the surrounding text color. */
+import { artUrl } from './index';
+
+/** The delete tool: the shovel art, or a plain line drawing if the image is missing. */
 export function ShovelIcon({ size = 24 }: { size?: number }) {
+  const url = artUrl('uncolored-shovel.png');
+  if (url) return <img src={url} alt="Shovel" width={size} height={size} draggable={false} style={{ display: 'block', pointerEvents: 'none' }} />;
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-label="Shovel" role="img">
       {/* Drawn pointing straight down, then turned 45 degrees: grip, handle, blade. */}

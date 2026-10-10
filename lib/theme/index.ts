@@ -19,34 +19,62 @@ export function colorHex(id: string): string {
   return (COLORS.find((c) => c.id === id) ?? COLORS[0])?.hex ?? '';
 }
 
+/**
+ * All the art. The build copies every "uncolored-*.png" and "frog*.png" from images/ into the extension (see
+ * wxt.config.ts), so adding art is: put the file in images/ and name it in the lists below.
+ */
+const ART_FILES = new Set(__ART_FILES__);
+
+/** Web address of an image from images/, or null if there is no such file (the caller then shows a stand-in). */
+export function artUrl(file: string): string | null {
+  return ART_FILES.has(file) ? browser.runtime.getURL(`/sprites/${file}` as never) : null;
+}
+
 export interface ThemeSprite {
   label: string;
-  /** Stand-in shown until real art exists. */
+  /** Shown only if the image is missing. */
   emoji: string;
-  /**
-   * File name of the real art inside public/sprites/, for example 'sprout.png'.
-   * Drop the file in that folder, write its name here, and every place that shows
-   * the sprite (toolbar, page markers, viewer) switches to it. Leave undefined to keep the emoji.
-   */
-  image?: string;
+  /** File in images/. Black outline with a white fill: the fill is tinted with the seed's palette color. */
+  image: string;
+  /** What it looks like grown (growth `tree`). Only the sprout and the fruit sprout grow. */
+  grownImage?: string;
 }
 
 export const SPRITES: Record<SpriteType, ThemeSprite> = {
-  sprout: { label: 'Sprout', emoji: '🌱' },
-  lilypad: { label: 'Lily pad', emoji: '🪷' },
-  mushroom: { label: 'Mushroom', emoji: '🍄' },
-  flower: { label: 'Flower', emoji: '🌸' },
-  fruitsprout: { label: 'Fruit sprout', emoji: '🍎' },
+  sprout: { label: 'Sprout', emoji: '🌱', image: 'uncolored-sprout.png', grownImage: 'uncolored-tree.png' },
+  lilypad: { label: 'Lily pad', emoji: '🪷', image: 'uncolored-lilypad.png' },
+  mushroom: { label: 'Mushroom', emoji: '🍄', image: 'uncolored-mushroom.png' },
+  flower: { label: 'Flower', emoji: '🌸', image: 'uncolored-flower.png' },
+  // The apple tree art has not been drawn yet. Until then the apple stands in for both stages.
+  fruitsprout: { label: 'Fruit sprout', emoji: '🍎', image: 'uncolored-apple.png' },
 };
 
 /** The order sprites appear in the toolbar. */
 export const SPRITE_ORDER: SpriteType[] = ['sprout', 'lilypad', 'mushroom', 'flower', 'fruitsprout'];
 
-/** Icons for new forests, handed out in turn. Real forest icons arrive in Stage 2. */
-export const FOREST_ICONS = ['🌲', '🌳', '🌴', '🌿', '🍃', '🌾'];
+/** Web address of a sprite's art, or null if the file is missing. */
+export function spriteImageUrl(type: SpriteType, grown = false): string | null {
+  const sprite = SPRITES[type];
+  return artUrl((grown && sprite.grownImage) || sprite.image);
+}
 
-/** Web address of a sprite's real art, or null while it is still the emoji stand-in. */
-export function spriteImageUrl(type: SpriteType): string | null {
-  const file = SPRITES[type].image;
-  return file ? browser.runtime.getURL(`/sprites/${file}` as never) : null;
+/** Forest icons are art ids, handed out to new forests in turn. The user will choose their own in Stage 2. */
+export const FOREST_ICON_ART: Record<string, string> = {
+  tree: 'uncolored-tree.png',
+  sprout: 'uncolored-sprout.png',
+  mushroom: 'uncolored-mushroom.png',
+  flower: 'uncolored-flower.png',
+  lilypad: 'uncolored-lilypad.png',
+  apple: 'uncolored-apple.png',
+};
+
+export const FOREST_ICONS = Object.keys(FOREST_ICON_ART);
+
+/** Forests saved before the art arrived have an emoji as their icon. These show as the matching art. */
+const LEGACY_FOREST_ICONS: Record<string, string> = { '🌲': 'tree', '🌳': 'tree', '🌴': 'tree', '🌿': 'sprout', '🍃': 'sprout', '🌾': 'sprout' };
+
+/** Web address of a forest's icon art, or null if the icon is something else (then it is shown as text). */
+export function forestIconUrl(icon: string): string | null {
+  const file = FOREST_ICON_ART[LEGACY_FOREST_ICONS[icon] ?? icon];
+  return file ? artUrl(file) : null;
 }
