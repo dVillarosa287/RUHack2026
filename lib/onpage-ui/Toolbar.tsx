@@ -1,10 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import type { Tool } from '@/lib/engine';
 import type { Forest, SpriteType } from '@/lib/storage';
 import { COLORS, SPRITES, SPRITE_ORDER } from '@/lib/theme';
 import { ShovelIcon } from '@/lib/theme/ShovelIcon';
 import { ForestIcon, SpriteIcon } from '@/lib/theme/SpriteIcon';
-
-export type Tool = 'none' | 'plant' | 'dig';
 
 interface ToolbarProps {
   forests: Forest[];

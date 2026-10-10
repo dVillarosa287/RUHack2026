@@ -20,6 +20,9 @@ export interface Forest {
   /** An art id from lib/theme (such as 'tree'). Older forests may have an emoji, which is shown as text. */
   icon: string;
   createdAt: number;
+  /** Where the forest sits on the forests grid in the viewer. Not set until the user drags it. */
+  x?: number;
+  y?: number;
 }
 
 export interface Folder {
@@ -45,6 +48,9 @@ export interface Seed {
   anchor: Anchor | null;
   nextReviewAt: number | null;
   createdAt: number;
+  /** Where the seed's node sits in the forest's graph view. Not set until it has been placed or dragged. */
+  graphX?: number;
+  graphY?: number;
 }
 
 /** What a caller passes to saveSeed. The storage module fills in the rest. */

@@ -4,3 +4,6 @@ export { flashHighlight, getHighlightRange, highlightIdAtPoint, paintHighlights 
 export { MarkerTracker } from './markers';
 export { scrollToHighlight, scrollToPageY } from './scroll';
 export { UI_HOST_TAG } from './textIndex';
+export type { Tool } from './types';
+export { usePlanting } from './usePlanting';
+export { useSeedsOnPage } from './useSeedsOnPage';

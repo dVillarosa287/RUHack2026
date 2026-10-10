@@ -3,7 +3,7 @@
 How to use this file:
 
 - Add a new entry at the bottom of the right section. One entry per problem or idea.
-- Give every entry a role tag (`[Engine]`, `[UI]`, `[Viewer]`, `[Data]`, `[All]`) and your name or initials.
+- Give every entry an area tag (`[Engine]`, `[UI]`, `[Viewer]`, `[Data]`, `[All]`) and your name or initials. The tags are areas of the product, not people.
 - When something is fixed or decided, move it to "Closed" at the bottom with one line on what was done. Do not delete it.
 - Planned features live in `PROGRESS.md`. Future ideas live in `docs/SPEC.md` section 12. An idea moves here only when someone wants to build it during the hackathon.
 
@@ -23,21 +23,12 @@ Model chosen: (fill in)
 
 Blocks: Stage 3 priority 1.
 
-### D6. Who has which role
-
-- Page engine: (name). Hardest part, best for the most experienced coder.
-- On-page UI and art: (name). Suits someone newer to coding.
-- Viewer: (name)
-- Data, AI and integration: (name)
-
-Blocks: Setup.
-
 ## Needs fixing
 
 Format:
 
 ```
-### F1. Short title  [Role] (who found it)
+### F1. Short title  [Area] (who found it)
 - What happens:
 - What should happen:
 - Page where it happens:
@@ -50,32 +41,40 @@ Format:
 - Page where it happens: the viewer, only when the address is typed by hand. The toolbar buttons and the forest grid always create it first.
 - Demo-blocking: no
 
+### F2. Jump highlight flashes yellow for one second  [UI] (user)
+- What happens: when you click a sprite in the viewer or the rail to jump to a seed, its highlight flashes yellow for about a second and goes back.
+- What should happen: it turns yellow, stays yellow for a bit, then fades smoothly back to its normal look.
+- Page where it happens: any page, after "Open on page" or a jump. The code is in `lib/engine/` (`useSeedsOnPage`, highlights).
+- Demo-blocking: no
+
+### F3. Sprites land off-center from the mouse  [Engine] (user)
+- What happens: a placed sprite ends up to one side of where the mouse was, because the sprite stands on its anchor point (bottom middle).
+- What should happen: the sprite is placed around the mouse, centered on it, or close to it ("around the mouse-ish").
+- Page where it happens: any page, when clicking to place a sprite. Related code: `lib/onpage-ui/MarkerLayer.tsx`, `lib/engine/markers.ts`. Keep the marker attached to its text.
+- Demo-blocking: no
+
+### F4. A selected sprite does not follow the mouse  [UI] (user)
+- What happens: choosing a sprite in the toolbar only changes the cursor tool; nothing shows on the page.
+- What should happen: a copy of the sprite sits on top of the mouse while it is selected, so it looks like the user is dragging it onto the page. Esc or the shovel removes it.
+- Page where it happens: any page. Probably a new component in `lib/onpage-ui/`, drawn inside the Shadow DOM and in the top layer, ignoring pointer events so clicks pass through. Shares ground with the drag-from-toolbar job in `docs/DIVIDING_WORK.md`.
+- Demo-blocking: no
+
 ## To add
 
 Format:
 
 ```
-### A1. Short title  [Role] (who suggested it)
+### A1. Short title  [Area] (who suggested it)
 - What:
 - Why:
 - Stage it would belong to:
 ```
 
-### A1. Forest grid positions need a field in the data model  [Data] (agent)
-- What: the `Forest` shape (id, name, icon, createdAt) has nowhere to save where a forest sits on the grid. Proposal: add optional `x` and `y` numbers.
-- Why: Stage 2 lets the user drag forests around the grid and remembers where they were put.
-- Stage it would belong to: Stage 2. Changing the data model needs the team's OK first.
-
-### A2. Graph node positions need a field in the data model  [Viewer] (agent)
-- What: the `Seed` shape has no place for where a node sits in the graph. Proposal: optional `graphX` and `graphY` numbers.
-- Why: Stage 2 graph view. Without it nodes would jump to new places each time the forest opens.
-- Stage it would belong to: Stage 2. Needs the team's OK.
-
 ### A3. Art still missing  [UI] (agent)
 - Delivered in `images/` and now in use: sprout, tree (the grown sprout), lily pad, mushroom, flower, apple (stands in for the fruit sprout), shovel, frog sitting and jumping, and the extension icon (also resized to 16, 32 and 96 px for `public/icon/`).
-- Still missing: the apple tree (grown fruit sprout, Stage 3), the animal marker for the scroll rail (Stage 2), the frog talking (Stage 3), and any dedicated forest icons (forests use the sprite art for now).
+- Still missing, and the artist is still drawing them: the animal marker for the scroll rail, the apple tree (grown fruit sprout) and the frog talking. The code uses a placeholder until they arrive (listed in `PROGRESS.md` under Stage 3). Also no dedicated forest icons (forests use the sprite art for now).
 - How to add art: put the PNG in `images/` as `uncolored-<name>.png` (black outline, white fill, transparent background). Then name it in `lib/theme/index.ts`. The build crops the empty margin automatically.
-- Stage it would belong to: animal marker Stage 2, the rest Stage 3.
+- Stage it would belong to: waiting on the artist; tracked in Stage 3.
 
 ### A5. Theme picker ("custom style" dropdown)  [UI] (user)
 - What: a dropdown in the toolbar or a settings screen to choose a theme. The theme system is built (`docs/THEME.md`) and `Settings.theme` holds the choice, but there is only one theme, "Forest", so there is nothing to pick yet.
@@ -87,6 +86,22 @@ Format:
 - What: the decision is made (see `PROGRESS.md` Stage 3 priority 2) but nothing builds it yet. A `growth` field already exists on every seed and starts at `sprout`.
 - Why: it is the demo moment for growth.
 - Stage it would belong to: Stage 3 priority 2.
+
+### A6. Large tree for a page with 3 or more seeds  [Viewer] (user)
+- What: in the graph view, every web page that has 3 or more seeds in the forest gets a "large tree" node, placed fairly close to its seeds and joined to each by a very subtle line. Worked out from the seeds grouped by `url` each time the graph is drawn, not saved, so there is no data model change. Placeholder art: the `tree` sprite drawn larger.
+- Why: shows at a glance which pages a forest is built from, and makes the graph look like a forest.
+- Stage it would belong to: Stage 2, part of the graph view job.
+- Open question: this assumes the large tree lives in the graph view. If the user meant something on the web page itself, ask before building.
+
+### A7. "Create new forest" button on the toolbar  [UI] (user)
+- What: a clearly labelled "Create new forest" button. Today there is a small "+ New" beside the forest picker in `lib/onpage-ui/Toolbar.tsx`.
+- Why: easier to find, and says what it does.
+- Stage it would belong to: Stage 2.
+
+### A8. Rail sprites stick out past the bar  [UI] (user)
+- What: the scroll rail is a slim bar, but its sprites are larger than the bar and stick out past it. The user likes this look and wants it kept.
+- Why: it is the intended look of the rail (`docs/SPEC.md` section 4).
+- Stage it would belong to: Stage 2, part of the scroll rail job.
 
 ## Known risks to test for
 
@@ -103,6 +118,9 @@ These are expected problems from SPEC section 6. Turn one into a "Needs fixing" 
 
 ## Closed
 
+- D6. Who has which role: there are no fixed roles; people just take jobs (2026-10-10). Jobs are claimed in `docs/DIVIDING_WORK.md`.
+- A1. Forest grid positions: approved. `Forest` has optional `x` and `y`, added to `lib/storage/types.ts` (2026-10-10).
+- A2. Graph node positions: approved. `Seed` has optional `graphX` and `graphY`. The graph spreads nodes out automatically once (d3-force), then keeps the positions the user gives them (2026-10-10).
 - D1. Active recall, how the five-minute review works: decided (2026-10-10). `fruitsprout` is the fifth toolbar sprite. It grows into an apple tree after five minutes, not because of a correct answer, and stays an apple tree after its question. Its review is one question, separate from the lily pad quiz (lily pads of one color in one forest). Only the sprout and the fruit sprout grow; the lily pad, mushroom and flower never change. The one-question review is stored as a `Fruit` with a single question, so no new data type is needed.
 - D2. Name of the general toolbar sprite: decided it is called "sprout" (2026-10-10). Growth has two stages, sprout then tree, and a sprout becomes a tree when the page is reloaded.
 - D4. React and WXT, or the plain fallback: decided WXT with React (2026-10-10). The plain fallback is not used.
