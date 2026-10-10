@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Crafty+Girls&display=swap');
 @import 'tailwindcss';
 
 /* Colors come only from the theme (lib/theme/themes.ts, rules in docs/THEME.md).
@@ -27,5 +28,8 @@
 body {
   background: var(--fo-page);
   color: var(--fo-ink);
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+* {
+  font-family: "Crafty Girls", sans-serif;
 }
