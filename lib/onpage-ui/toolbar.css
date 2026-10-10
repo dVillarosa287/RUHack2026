@@ -1,250 +1,283 @@
+@import url("https://fonts.googleapis.com/css2?family=Crafty+Girls&display=swap");
+
 /* On-page styles. Plain CSS in px, because this lives inside a web page whose own font size and CSS must
    not change how the toolbar looks. Colors come only from theme tokens, var(--fo-...), never from color
    codes. See docs/THEME.md. */
 :host {
-  all: initial;
-  display: block;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 0;
-  height: 0;
-  z-index: 2147483647;
-  pointer-events: none;
+    all: initial;
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    z-index: 2147483647;
+    pointer-events: none;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-toolbar {
-  position: fixed;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-  pointer-events: auto;
-  cursor: grab;
-  user-select: none;
-  font: 13px/1.3 system-ui, -apple-system, 'Segoe UI', sans-serif;
-  color: var(--fo-ink);
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    pointer-events: auto;
+    cursor: grab;
+    user-select: none;
+    font-size: 13px/1.3;
+    color: var(--fo-ink);
+    font-family: "Crafty Girls", sans-serif;
 }
 
 /* Everything inside is scaled together when the user resizes the toolbar. */
 .fo-scale {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-resize {
-  position: absolute;
-  left: -2px;
-  bottom: -2px;
-  width: 18px;
-  height: 18px;
-  border-bottom: 3px solid var(--fo-edge);
-  border-left: 3px solid var(--fo-edge);
-  border-bottom-left-radius: 10px;
-  cursor: nesw-resize;
-  touch-action: none;
+    position: absolute;
+    left: -2px;
+    bottom: -2px;
+    width: 18px;
+    height: 18px;
+    border-bottom: 3px solid var(--fo-edge);
+    border-left: 3px solid var(--fo-edge);
+    border-bottom-left-radius: 10px;
+    cursor: nesw-resize;
+    touch-action: none;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-resize:hover {
-  border-color: var(--fo-accent);
+    border-color: var(--fo-accent);
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-toolbar.fo-dragging {
-  cursor: grabbing;
+    cursor: grabbing;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-toolbar *,
 .fo-marker {
-  box-sizing: border-box;
+    box-sizing: border-box;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-forest-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 6px 4px 8px;
-  border-radius: 10px;
-  background: var(--fo-grad-primary);
-  color: var(--fo-primary-ink);
-  box-shadow: 0 4px 12px var(--fo-shadow);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px 4px 8px;
+    border-radius: 10px;
+    background: var(--fo-grad-primary);
+    color: var(--fo-primary-ink);
+    box-shadow: 0 4px 12px var(--fo-shadow);
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-grip {
-  font-size: 16px;
-  line-height: 1;
-  opacity: 0.8;
+    font-size: 16px;
+    line-height: 1;
+    opacity: 0.8;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-forest-row select,
 .fo-forest-row input {
-  flex: 1;
-  min-width: 0;
-  max-width: 190px;
-  padding: 3px 6px;
-  border: 0;
-  border-radius: 6px;
-  background: var(--fo-surface);
-  color: var(--fo-ink);
-  font: inherit;
-  cursor: auto;
+    flex: 1;
+    min-width: 0;
+    max-width: 190px;
+    padding: 3px 6px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--fo-surface);
+    color: var(--fo-ink);
+    font: inherit;
+    cursor: auto;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 2px solid var(--fo-edge);
-  border-radius: 12px;
-  background: var(--fo-grad-surface);
-  box-shadow: 0 4px 16px var(--fo-shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 2px solid var(--fo-edge);
+    border-radius: 12px;
+    background: var(--fo-grad-surface);
+    box-shadow: 0 4px 16px var(--fo-shadow);
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-divider {
-  width: 1px;
-  height: 28px;
-  background: var(--fo-edge);
-  opacity: 0.4;
+    width: 1px;
+    height: 28px;
+    background: var(--fo-edge);
+    opacity: 0.4;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-tool {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 2px solid transparent;
-  border-radius: 8px;
-  background: var(--fo-surface);
-  color: var(--fo-ink);
-  cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background: var(--fo-surface);
+    color: var(--fo-ink);
+    cursor: pointer;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-tool:hover {
-  background: var(--fo-primary-soft);
+    background: var(--fo-primary-soft);
+    font-family: "Crafty Girls", sans-serif;
 }
 
-.fo-tool[aria-pressed='true'] {
-  border-color: var(--fo-primary);
-  background: var(--fo-primary-soft);
+.fo-tool[aria-pressed="true"] {
+    border-color: var(--fo-primary);
+    background: var(--fo-primary-soft);
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-swatch {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 2px solid var(--fo-surface);
-  border-radius: 50%;
-  box-shadow: 0 0 0 1px var(--fo-edge);
-  cursor: pointer;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 2px solid var(--fo-surface);
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px var(--fo-edge);
+    cursor: pointer;
+    font-family: "Crafty Girls", sans-serif;
 }
 
-.fo-swatch[aria-pressed='true'] {
-  box-shadow: 0 0 0 3px var(--fo-ink);
+.fo-swatch[aria-pressed="true"] {
+    box-shadow: 0 0 0 3px var(--fo-ink);
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-button {
-  padding: 5px 10px;
-  border: 1px solid var(--fo-edge);
-  border-radius: 8px;
-  background: var(--fo-surface);
-  color: var(--fo-ink);
-  font: inherit;
-  cursor: pointer;
+    padding: 5px 10px;
+    border: 1px solid var(--fo-edge);
+    border-radius: 8px;
+    background: var(--fo-surface);
+    color: var(--fo-ink);
+    font: inherit;
+    cursor: pointer;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-button:hover {
-  background: var(--fo-primary-soft);
+    background: var(--fo-primary-soft);
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-small-button {
-  padding: 2px 8px;
-  border: 0;
-  border-radius: 6px;
-  background: var(--fo-surface);
-  color: var(--fo-primary);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
+    padding: 2px 8px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--fo-surface);
+    color: var(--fo-primary);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-close {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--fo-primary-ink);
-  font: inherit;
-  font-size: 14px;
-  line-height: 1;
-  cursor: pointer;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--fo-primary-ink);
+    font: inherit;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-close:hover {
-  background: var(--fo-primary-strong);
+    background: var(--fo-primary-strong);
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-hint {
-  max-width: 330px;
-  text-align: center;
-  font-size: 12px;
-  color: var(--fo-ink-muted);
+    max-width: 330px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--fo-ink-muted);
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-status {
-  min-height: 16px;
-  margin-top: -4px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--fo-primary);
+    min-height: 16px;
+    margin-top: -4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--fo-primary);
+    font-family: "Crafty Girls", sans-serif;
 }
 
 /* Markers are positioned on every frame by MarkerLayer, from the text or element they are attached to.
    The sprite stands on the spot: its bottom middle is the anchor point. */
 .fo-marker {
-  position: fixed;
-  top: 0;
-  left: 0;
-  display: block;
-  width: 38px;
-  height: 38px;
-  margin: -38px 0 0 -19px;
-  filter: drop-shadow(0 2px 3px var(--fo-shadow));
-  pointer-events: auto;
-  cursor: grab;
-  user-select: none;
-  touch-action: none;
-  will-change: transform;
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 38px;
+    height: 38px;
+    margin: -38px 0 0 -19px;
+    filter: drop-shadow(0 2px 3px var(--fo-shadow));
+    pointer-events: auto;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    will-change: transform;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-marker.fo-marker-dragging {
-  cursor: grabbing;
-  pointer-events: none;
-  filter: drop-shadow(0 6px 8px var(--fo-shadow));
+    cursor: grabbing;
+    pointer-events: none;
+    filter: drop-shadow(0 6px 8px var(--fo-shadow));
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-marker.fo-dig {
-  cursor: pointer;
+    cursor: pointer;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 .fo-marker.fo-flash {
-  animation: fo-pulse 0.6s ease-in-out 3;
+    animation: fo-pulse 0.6s ease-in-out 3;
+    font-family: "Crafty Girls", sans-serif;
 }
 
 @keyframes fo-pulse {
-  50% {
-    filter: drop-shadow(0 0 3px var(--fo-accent)) drop-shadow(0 0 8px var(--fo-accent));
-  }
+    50% {
+        filter: drop-shadow(0 0 3px var(--fo-accent))
+            drop-shadow(0 0 8px var(--fo-accent));
+        font-family: "Crafty Girls", sans-serif;
+    }
 }

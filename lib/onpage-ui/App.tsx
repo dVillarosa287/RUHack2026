@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
 import { buildMarkerAnchor, nearbyText, usePlanting, useSeedsOnPage, type Tool } from '@/lib/engine';
 import { createForest, updateSeed, updateSettings, updateToolbarState, type SpriteType } from '@/lib/storage';
-import { DEFAULT_COLOR_ID, FOREST_ICONS } from '@/lib/theme';
+import { DEFAULT_COLOR_ID, FOREST_ICONS, spriteImageUrl } from '@/lib/theme';
 import { MarkerLayer } from './MarkerLayer';
 import { Toolbar } from './Toolbar';
 import { usePageData } from './usePageData';
