@@ -21,7 +21,9 @@ async function removeSeedAndRoots(seed: Seed, roots: Root[]): Promise<boolean> {
 export function NodeDetail({ seed, roots, seedsById, folders, onClose }: { seed: Seed; roots: Root[]; seedsById: Map<string, Seed>; folders: Folder[]; onClose: () => void }) {
   // A note's text is edited here and saved when the box loses focus, not on every key press.
   const [draft, setDraft] = useState(seed.text);
+  const [displayDraft, setDisplayDraft] = useState(seed.displayText ?? '');
   useEffect(() => setDraft(seed.text), [seed.id, seed.text]);
+  useEffect(() => setDisplayDraft(seed.displayText ?? ''), [seed.id, seed.displayText]);
 
   const myRoots = roots.filter((r) => r.fromSeedId === seed.id || r.toSeedId === seed.id);
 
@@ -35,6 +37,23 @@ export function NodeDetail({ seed, roots, seedsById, folders, onClose }: { seed:
         </div>
         <button className="rounded-lg px-2 text-ink-muted hover:bg-primary-soft" aria-label="Close" onClick={onClose}>×</button>
       </div>
+
+      <label className="block">
+        <span className="mb-1 block text-xs uppercase tracking-wide text-ink-muted">Display text</span>
+        <input
+          className="w-full rounded-lg border border-edge bg-surface-alt p-2 text-sm"
+          value={displayDraft}
+          placeholder={seedLabel({ ...seed, displayText: undefined })}
+          onChange={(e) => setDisplayDraft(e.target.value)}
+          onBlur={() => {
+            const next = displayDraft.trim();
+            if (next !== (seed.displayText ?? '')) void updateSeed(seed.id, { displayText: next });
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.currentTarget.blur();
+          }}
+        />
+      </label>
 
       {seed.kind === 'note' ? (
         <textarea

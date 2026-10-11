@@ -68,9 +68,12 @@
   color: var(--fo-ink-muted);
 }
 
+.fo-seed-label {
+  width: 100%;
+}
+
 .fo-tree-node {
   width: 170px;
-  pointer-events: none;
 }
 .fo-tree-label {
   max-width: 170px;

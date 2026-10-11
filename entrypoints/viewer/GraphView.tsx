@@ -1,6 +1,6 @@
 import '@xyflow/react/dist/style.css';
 import './graph.css';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import {
   Background,
   ConnectionLineType,
@@ -52,15 +52,16 @@ export function GraphView({ forestId }: { forestId: string }) {
   );
 }
 
-/** Moves each large tree near the middle of its seeds. Called after every change, so trees follow dragged seeds. */
-function placeLargeTrees(nodes: GraphNode[]): GraphNode[] {
-  const where = new Map(nodes.map((n) => [n.id, n.position]));
-  const allSeeds = nodes.filter((n) => n.type === 'seed').map((n) => n.position);
-  return nodes.map((n) => {
-    if (n.type !== 'largeTree') return n;
-    const spots = n.data.seedIds.map((id) => where.get(id)).filter((p): p is Point => !!p);
-    return { ...n, position: largeTreeSpot(spots, allSeeds) };
-  });
+function connectedNodeIds(startId: string, edges: Edge[]): Set<string> {
+  const connected = new Set([startId]);
+  for (const edge of edges) {
+    if (!edge.id.startsWith('root:')) continue;
+    const neighbor = edge.source === startId ? edge.target : edge.target === startId ? edge.source : null;
+    if (neighbor) {
+      connected.add(neighbor);
+    }
+  }
+  return connected;
 }
 
 function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; seeds: Seed[]; roots: Root[]; folders: Folder[] }) {
@@ -72,6 +73,7 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
   const [edges, setEdges] = useState<Edge[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [writingNote, setWritingNote] = useState(false);
+  const rightDrag = useRef<{ pointerId: number; origin: Point; positions: Map<string, Point>; currentPositions: Map<string, Point> } | null>(null);
 
   // Where every seed goes: its saved spot, or for a seed that has none, a spot from the force layout.
   const spots = useMemo(() => {
@@ -111,17 +113,17 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
       const treeNodes: LargeTreeNodeType[] = [...largeTreePages(seeds)].map(([url, seedIds]) => ({
         id: 'tree:' + url,
         type: 'largeTree',
-        position: { x: 0, y: 0 },
+        position: old.get('tree:' + url)?.position ?? largeTreeSpot(seedIds.map((id) => spots.get(id)).filter((p): p is Point => !!p), seedNodes.map((n) => n.position)),
         data: { title: seeds.find((s) => s.url === url)?.pageTitle || url, seedIds },
         measured: old.get('tree:' + url)?.measured,
-        draggable: false,
+        draggable: true,
         selectable: false,
         connectable: false,
         deletable: false,
         focusable: false,
         zIndex: -1,
       }));
-      return placeLargeTrees([...treeNodes, ...seedNodes]);
+      return [...treeNodes, ...seedNodes];
     });
   }, [seeds, spots]);
 
@@ -140,13 +142,55 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
     });
   }, [seeds, roots]);
 
-  const onNodesChange = useCallback((changes: NodeChange<GraphNode>[]) => setNodes((nds) => placeLargeTrees(applyNodeChanges(changes, nds))), []);
+  const onNodesChange = useCallback((changes: NodeChange<GraphNode>[]) => setNodes((nds) => applyNodeChanges(changes, nds)), []);
   const onEdgesChange = useCallback((changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)), []);
 
   // Save a node's spot when the user lets go of it (not on every mouse move).
   const onNodeDragStop = useCallback((_event: unknown, _node: GraphNode, dragged: GraphNode[]) => {
     for (const n of dragged) {
       if (n.type === 'seed') void updateSeed(n.id, { graphX: Math.round(n.position.x), graphY: Math.round(n.position.y) }).catch(() => {});
+    }
+  }, []);
+
+  const onRightDragStart = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 2) return;
+    const nodeElement = (event.target as Element).closest('.react-flow__node');
+    const nodeId = nodeElement?.getAttribute('data-id');
+    if (!nodeId || !nodes.some((node) => node.id === nodeId)) return;
+    const group = connectedNodeIds(nodeId, edges);
+    const origin = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+    rightDrag.current = {
+      pointerId: event.pointerId,
+      origin,
+      positions: new Map(nodes.filter((node) => group.has(node.id)).map((node) => [node.id, { ...node.position }])),
+      currentPositions: new Map(nodes.filter((node) => group.has(node.id)).map((node) => [node.id, { ...node.position }])),
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }, [edges, nodes, screenToFlowPosition]);
+
+  const onRightDragMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    const drag = rightDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const current = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+    const delta = { x: current.x - drag.origin.x, y: current.y - drag.origin.y };
+    setNodes((currentNodes) => currentNodes.map((node) => {
+      const start = drag.positions.get(node.id);
+      if (!start) return node;
+      const position = { x: start.x + delta.x, y: start.y + delta.y };
+      drag.currentPositions.set(node.id, position);
+      return { ...node, position };
+    }));
+    event.preventDefault();
+  }, [screenToFlowPosition]);
+
+  const finishRightDrag = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    const drag = rightDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    rightDrag.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    for (const [nodeId, position] of drag.currentPositions) {
+      if (!nodeId.startsWith('tree:')) void updateSeed(nodeId, { graphX: Math.round(position.x), graphY: Math.round(position.y) }).catch(() => {});
     }
   }, []);
 
@@ -187,7 +231,15 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
 
   return (
     <div className="fo-graph flex gap-4" style={{ height: 'calc(100vh - 190px)', minHeight: 420 }}>
-      <div ref={box} className="relative min-w-0 flex-1 overflow-hidden rounded-xl border-2 border-edge/30 bg-surface-alt">
+        <div
+          ref={box}
+          className="relative min-w-0 flex-1 overflow-hidden rounded-xl border-2 border-edge/30 bg-surface-alt"
+          onContextMenu={(event) => event.preventDefault()}
+          onPointerDown={onRightDragStart}
+          onPointerMove={onRightDragMove}
+          onPointerUp={finishRightDrag}
+          onPointerCancel={finishRightDrag}
+        >
         <ReactFlow
           nodes={nodes}
           edges={edges}
