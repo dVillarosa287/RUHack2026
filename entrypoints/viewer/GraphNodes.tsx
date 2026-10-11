@@ -12,6 +12,8 @@ const LARGE_TREE_SIZE = 120;
 
 /** A short label for a seed: its text, or what kind of seed it is. */
 export function seedLabel(seed: Seed): string {
+  const displayText = seed.displayText?.trim();
+  if (displayText) return displayText;
   const text = seed.text.trim();
   if (!text) return SPRITES[seed.spriteType].label;
   return text.length > 40 ? text.slice(0, 38) + '…' : text;
