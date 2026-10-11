@@ -1,6 +1,6 @@
 # Theme system
 
-Every color in the product comes from one palette. Themes are chosen by the user (today there is one, "Forest"). This file holds the rules. The code is in `lib/theme/`. `CLAUDE.md` links here, and every role follows it.
+Every color in the product comes from one palette. Themes are chosen by the user on the Settings page. There are two: "Vibrant Jungle" (`jungle`, the default) and "Forest" (`forest`). This file holds the rules. The code is in `lib/theme/`. `CLAUDE.md` links here, and every role follows it.
 
 ## The palette
 

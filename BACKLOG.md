@@ -67,6 +67,7 @@ Format:
 - Why: lets users restyle the whole product, and shows the theme system working.
 - Stage it would belong to: Stage 2 or later, after a second theme exists.
 - Also listed, with its dependencies, in `docs/DIVIDING_WORK.md`.
+- Update (2026-10-11): a second theme, "Vibrant Jungle", exists and is the default, and the Settings page has a theme dropdown. A picker on the toolbar is not built.
 
 ### A4. Growth from sprout to tree on page reload  [Data] (agent)
 - What: the decision is made (see `PROGRESS.md` Stage 3 priority 2) but nothing builds it yet. A `growth` field already exists on every seed and starts at `sprout`.

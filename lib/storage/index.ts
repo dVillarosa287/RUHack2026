@@ -3,6 +3,7 @@
 // Every record lives under its own key ("seed:abc123", "forest:xyz", ...). Two tabs saving at the
 // same moment therefore never overwrite each other. Everything is async because chrome.storage is.
 import { browser } from 'wxt/browser';
+import { DEFAULT_THEME_ID } from '@/lib/theme/themes';
 import { cleanUrl } from './url';
 import type { Folder, Forest, Fruit, Root, Seed, SeedInput, Settings, ToolbarState } from './types';
 
@@ -19,7 +20,7 @@ const PENDING_JUMP_MAX_AGE_MS = 60_000;
 const DEFAULT_SETTINGS: Settings = {
   currentForestId: null,
   recentSprites: [],
-  theme: 'forest',
+  theme: DEFAULT_THEME_ID, // Vibrant Jungle; the themes are in lib/theme/themes.ts
   geminiKey: '',
   autoConnections: true,
 };

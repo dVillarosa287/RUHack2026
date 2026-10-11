@@ -277,6 +277,11 @@ Entry format:
 
 ### Data, AI and integration notes
 
+- [Oct 11, 6:20 AM] (Teobobeo99)
+  - Did: "Vibrant Jungle" (`jungle`) is the default theme for new installs: `DEFAULT_SETTINGS.theme` in `lib/storage/index.ts` now uses `DEFAULT_THEME_ID` from `lib/theme/themes.ts` (which already pointed at jungle), so the two cannot disagree again.
+  - Others can use / need to know: browsers that already ran the extension have `theme: 'forest'` saved; pick Vibrant Jungle once on the Settings page there. Tested in Chromium with a fresh profile (saved theme is `jungle`).
+  - Need from someone else: nothing
+
 - [Oct 11, 4:00 AM] (Teobobeo99)
   - Did: Gemini quiz questions. `lib/ai/gemini.ts` (runs in the background only): `quizQuestions(key, sources)` makes one request with a JSON schema for up to 10 multiple-choice questions and drops bad ones; `GEMINI_MODEL = 'gemini-3.8-flash'`. `entrypoints/background.ts` answers the messages `forest:ai-test` and `forest:ai-quiz`. `lib/ai/index.ts` is what the viewer imports: `geminiQuizQuestions(seeds)`, `testGeminiKey()`, plus the fill-in-the-blank functions. Settings page has a "Test key" button.
   - Others can use / need to know: the call throws an `Error` with a message fit to show the user (no key, bad key, rate limit, unknown model); fall back to `fillBlankQuestions`. Only `id`, `text` and `pageTitle` of each seed are sent. Tested: real request to Google with a fake key (clear error back), and parsing with a made-up reply.
