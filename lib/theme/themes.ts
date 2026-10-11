@@ -46,7 +46,7 @@ export const FOREST_THEME: ThemeDefinition = {
     { id: 'magenta', name: 'Magenta', hex: '#FF00CC', light: '#FF66E0', dark: '#E000B4' },
   ],
   base: [
-    { id: 'background', name: 'Background', hex: '#25252F', light: '#2F2F3A', dark: '#18182A' },
+    { id: 'background', name: 'Background', hex: '#22223F', light: '#25254A', dark: '#18182A' },
     { id: 'foreground', name: 'Foreground', hex: '#EAEAFF', light: '#FFFFFF', dark: '#D3D3F3' },
   ],
   tokens: {
