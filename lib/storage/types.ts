@@ -44,6 +44,8 @@ export interface Seed {
   url: string;
   pageTitle: string;
   text: string;
+  /** Optional label shown for this seed in the forest graph. */
+  displayText?: string;
   linkTarget: string | null;
   anchor: Anchor | null;
   nextReviewAt: number | null;

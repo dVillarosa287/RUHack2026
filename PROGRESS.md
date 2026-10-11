@@ -196,6 +196,26 @@ Entry format:
 
 ### Viewer notes
 
+- [Oct 10, 9:55 PM] (GitHub Copilot)
+  - Did: right-button dragging now affects only the dragged node and its directly rooted neighbors; transitive root chains and central-tree trunk links are excluded (`entrypoints/viewer/GraphView.tsx`).
+  - Others can use / need to know: `npm run compile` passes.
+  - Need from someone else: test direct-root dragging versus a second-degree root chain in Chrome.
+
+- [Oct 10, 9:50 PM] (GitHub Copilot)
+  - Did: right-button dragging now moves the full connected graph component, including trunk-connected seeds; large tree nodes are draggable (`entrypoints/viewer/GraphView.tsx`, `graph.css`).
+  - Others can use / need to know: seed positions save when the right drag ends. The central tree position is movable for the open graph but is still derived again when the graph is rebuilt because large trees are not seeds.
+  - Need from someone else: test right-dragging a connected graph and moving the central tree in Chrome.
+
+- [Oct 10, 9:40 PM] (GitHub Copilot)
+  - Did: graph seed labels are editable and persisted as optional `Seed.displayText`; large tree nodes keep their existing position after initial placement (`entrypoints/viewer/GraphNodes.tsx`, `GraphView.tsx`, `graph.css`, `lib/storage/types.ts`).
+  - Others can use / need to know: click a node label, type a shorter display name, and press Enter or click away to save it. `npm run compile`, `npm run build`, and `npm run check:theme` pass.
+  - Need from someone else: test the edit and tree positioning in Chrome on a real graph.
+
+- [Oct 10, 9:40 PM] (GitHub Copilot)
+  - Did: graph nodes now show compact display text when collapsed; the selected node detail shows the full seed text and provides an editable Display text field (`entrypoints/viewer/GraphNodes.tsx`, `NodeDetail.tsx`).
+  - Others can use / need to know: edit the Display text field and press Enter or click away to persist it; clearing it restores the generated label from the seed text. `npm run compile` and `npm run build` pass.
+  - Need from someone else: test the expanded text and display-text editing in Chrome on a real graph.
+
 - [Oct 10, 7:10 PM] (Roshan)
   - Did: all six viewer-lane jobs in `entrypoints/viewer/`: graph view with large trees (`GraphView`, `GraphNodes`, `graphLayout.ts`, `graph.css`), roots, text notes (`NewNoteForm`) and the detail panel (`NodeDetail`), folder sidebar (`FolderSidebar`), draggable forest grid with icon choice, settings page with the Gemini key. A "Settings" link is in the viewer header.
   - Others can use / need to know: text notes are seeds with `kind: 'note'` and `url: ''` (the list shows them under "Your notes"). Roots are drawn from the small dot on a sprite; select a root and press Delete to remove it. Removing a seed from the graph also removes its roots. Tested with a Playwright script in Chromium on Wikipedia; nothing was checked in Chrome by a person yet.
