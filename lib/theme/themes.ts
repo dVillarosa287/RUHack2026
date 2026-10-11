@@ -143,58 +143,58 @@ export const JUNGLE_THEME: ThemeDefinition = {
     {
       id: "red",
       name: "Red",
-      hex: "#FB4934", // Saturated Gruvbox Red
-      light: "#FF5D47",
-      dark: "#CC241D",
+      hex: "#FF4433", // Punchy, saturated scarlet-red
+      light: "#FF6655",
+      dark: "#DD2211",
     },
     {
       id: "orange",
       name: "Orange",
-      hex: "#FE8019", // Warm Amber-Orange
-      light: "#FF9838",
-      dark: "#D65D0E",
+      hex: "#FF7700", // Vibrant warm amber-orange
+      light: "#FF9933",
+      dark: "#DD5500",
     },
     {
       id: "yellow",
       name: "Yellow",
-      hex: "#FABD2F", // Rich Gruvbox Yellow
-      light: "#FFCE52",
-      dark: "#D79921",
+      hex: "#FFBB00", // Rich, sunlit golden yellow
+      light: "#FFDD33",
+      dark: "#DDAA00",
     },
     {
       id: "green",
       name: "Green",
-      hex: "#B8BB26", // Deep Olive/Jungle Green
-      light: "#D5D83D",
-      dark: "#98971A",
+      hex: "#66CC22", // Lush, vibrant jungle green
+      light: "#AAEE44",
+      dark: "#66AA00",
     },
     {
       id: "blue",
       name: "Blue",
-      hex: "#076678", // Muted Warm Petrol Teal (Desaturated & Toned Down)
-      light: "#427B58",
-      dark: "#04434F",
+      hex: "#108899", // Restrained, muted deep teal (toned down blue)
+      light: "#33AAAA",
+      dark: "#086677",
     },
     {
       id: "cyan",
       name: "Cyan",
-      hex: "#8EC07C", // Aqua/Sage Green accent (Shifted away from vibrant cyan)
-      light: "#A9D697",
-      dark: "#689D6A",
+      hex: "#00CCAA", // Vibrant tropical aqua accent
+      light: "#44EECC",
+      dark: "#00AA88",
     },
     {
       id: "purple",
       name: "Purple",
-      hex: "#D3869B", // Earthy Warm Purple/Magenta
-      light: "#E39AA1",
-      dark: "#B16286",
+      hex: "#BB33AA", // Warm, saturated orchid-plum
+      light: "#DD55CC",
+      dark: "#991188",
     },
     {
       id: "magenta",
       name: "Magenta",
-      hex: "#EA698B", // Saturated Warm Crimson-Pink
-      light: "#FF82A2",
-      dark: "#C03E61",
+      hex: "#FF1188", // Vibrant hot tropical pink-magenta
+      light: "#FF44AA",
+      dark: "#DD0066",
     },
   ],
   base: [
@@ -209,7 +209,7 @@ export const JUNGLE_THEME: ThemeDefinition = {
       id: "foreground",
       name: "Foreground",
       hex: "#FBF1C7", // Warm Ivory/Cream
-      light: "#FFFFE3",
+      light: "#FFFFA3",
       dark: "#EBDBB2",
     },
   ],
