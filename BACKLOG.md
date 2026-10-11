@@ -102,7 +102,7 @@ These are expected problems from SPEC section 6. Turn one into a "Needs fixing" 
 
 ## Closed
 
-- F2. Jump highlight flashed for one second: fixed (2026-10-10). It now stays lit 2.5s and fades over 1.5s (`lib/engine/highlights.ts`); marker glow does the same in `toolbar.css`. Tested in Chromium; needs a check in Chrome.
+- F2. Jump highlight flashed for one second: fixed (2026-10-10). It now stays lit 2.5s and fades over 1.5s (`lib/engine/highlights.ts`); marker glow does the same in `toolbar.css`. Tested in Chromium; needs a check in Chrome. Changed later (2026-10-11): the copy sits a little to the top right of the mouse at 60% opacity, instead of on top of it.
 - F3. Sprites landed off-center from the mouse: fixed (2026-10-10). Sprites are centered on the spot and text anchors use the middle of the line. Tested in Chromium; needs a check in Chrome.
 - F4. Selected sprite did not follow the mouse: fixed (2026-10-10) with `CursorSprite`. Tested in Chromium; needs a check in Chrome.
 - A7. "Create new forest" button: done (2026-10-10), replaced "+ New" in the toolbar. Changed later (2026-10-11): the button is gone, and "+ Create new forest" is the last option of the forest drop-down.

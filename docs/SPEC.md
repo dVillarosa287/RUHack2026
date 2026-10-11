@@ -81,7 +81,7 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 - Highlight text in the color of the selected sprite. The sprite appears at the highlight for about a second to confirm the save, then fades. (Stage 1 for the highlight, Stage 2 for the sprite animation)
 - Click anywhere on the page to place the selected sprite at that exact spot. The sprite is attached to the text it was placed on, so it follows that text when the page scrolls, resizes or reflows, and it can be dragged to a new spot. (Stage 1 with a plain marker, Stage 2 with real sprites)
 - A placed sprite is centered on the mouse, so it lands around the cursor and not off to one side. (Stage 2, see `BACKLOG.md` F3)
-- Once a sprite is selected in the toolbar, a copy of it follows the mouse and sits on top of the cursor, so it feels like the user is dragging it onto the page. Esc or the shovel puts it down. (Stage 2, see `BACKLOG.md` F4)
+- Once a sprite is selected in the toolbar, a copy of it follows the mouse, a little to the top right of the cursor and slightly see-through, so it feels like the user is carrying it onto the page and the spot they are about to click stays visible. Esc or the shovel puts it down. (Stage 2, see `BACKLOG.md` F4)
 - When the user jumps to a seed (from the viewer or the scroll rail), the seed's highlight turns yellow, stays yellow for a short while, then fades smoothly back to its normal look. It is not a one-second flash. (Stage 2, see `BACKLOG.md` F2)
 - Drag a sprite from the toolbar and drop it on the page. (Stage 2)
 - Place a sprite on a link: the user stays on the current tab, and the sprite stores the link's destination. Clicking that sprite in the viewer opens the destination. (Stage 2)
@@ -184,7 +184,7 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 
 1. Open the extension on any web page. A rectangular toolbar appears with the sprite icons (sprout, lily pad, mushroom, flower, apple tree) and the shovel. The color dots sit under them, next to a tree icon that opens the current forest.
 2. At the top of the toolbar is a drop-down with the forest you are in, which is the folder your annotations go into. You can switch forests from it, or choose "+ Create new forest" at the bottom of its list.
-3. Click a sprite to select it. A copy of the sprite follows your mouse, as if you were dragging it. Then do one of the following.
+3. Click a sprite to select it. A copy of the sprite follows your mouse, a little to its top right and see-through. Then do one of the following.
    - **Click a spot on the page.** The sprite is placed there, centered on the mouse, and saved at that location.
    - **Highlight text.** The text is highlighted in the sprite's color. The sprite appears at the highlight for a second to show it was saved, then fades away.
    - **Click a link.** You stay on the same tab. The sprite is saved pointing at the link's destination, and clicking it later in the viewer opens that destination.
