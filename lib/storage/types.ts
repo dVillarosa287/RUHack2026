@@ -63,7 +63,7 @@ export interface Seed {
 
 /** What a caller passes to saveSeed. The storage module fills in the rest. */
 export type SeedInput = Pick<Seed, 'forestId' | 'kind' | 'spriteType' | 'color' | 'url' | 'pageTitle' | 'text'> &
-  Partial<Pick<Seed, 'folderId' | 'growth' | 'linkTarget' | 'anchor' | 'nextReviewAt' | 'scale'>>;
+  Partial<Pick<Seed, 'folderId' | 'growth' | 'linkTarget' | 'anchor' | 'nextReviewAt' | 'scale' | 'displayText'>>;
 
 export interface Root {
   id: string;

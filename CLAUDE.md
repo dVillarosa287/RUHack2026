@@ -85,7 +85,7 @@ These are not owned by particular people. They show which folders a job touches,
 
 - Page engine: `lib/engine/`, including its hooks `useSeedsOnPage` (draws highlights, jumps to a seed) and `usePlanting` (turns mouse activity into seeds)
 - On-page UI and art: `lib/onpage-ui/` (`App.tsx` only puts the pieces together; `usePageData`, `Toolbar`, `ForestPicker` (the toolbar's themed forest drop-down) and `MarkerLayer` are separate files), `images/` (all sprite and frog art), `minimal-images/` (the Minimal theme's shapes). The toolbar layout and hotbar are in `hotbar.ts`, the keyboard shortcuts in `useKeybinds.ts`
-- Viewer: `entrypoints/viewer/` (`route.ts` lists the pages; `ForestView`, `ForestHeader`, `ForestList`, `GraphView`, `SettingsPage`, `ForestGrid` and the quiz (`QuizBar`, `QuizView`, `Pond`) are separate files)
+- Viewer: `entrypoints/viewer/` (`route.ts` lists the pages; `ForestView`, `ForestHeader`, `ForestList`, `GraphView`, `SettingsPage`, `ForestGrid`, `GrowFromLink` (reads a pasted link with Gemini, `lib/ai/readPage.ts`) and the quiz (`QuizBar`, `QuizView`, `Pond`) are separate files)
 - Data, AI and integration: `lib/storage/`, `lib/ai/`, `lib/theme/`, `entrypoints/background.ts`, project config (`wxt.config.ts`, `package.json`, `tsconfig.json`, `.gitignore`), `scripts/`, `docs/THEME.md`
 - Shared glue, keep it tiny: `entrypoints/content/`
 - PDF page: `entrypoints/pdf/` (renders a PDF with a text layer and mounts the same on-page UI). Code that needs the page's address uses `pageUrl()` (`lib/engine/pageUrl.ts`), never `window.location.href`, so PDF seeds are saved under the PDF's own address.

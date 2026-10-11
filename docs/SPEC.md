@@ -123,6 +123,7 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 - The user's own notes and media as nodes that are not tied to a web page. (Stage 2 for text notes, Stage 3 for images)
 - Automatic connections between nodes from the same page or the same website, drawn in a lighter style, with a switch to turn them off. (Stage 3)
 - AI-suggested connections. (Stage 3)
+- "Grow from link" (in Minimal, "Add from link"): a button left of "Graph view" on the forest page (and left of "List view" in the graph). The user pastes a link; the extension reads that page, and Gemini (one request, JSON) picks its 3 to 6 key ideas, each as one sentence copied word for word from the page plus a short label, and says which of the forest's seeds each idea relates to (and which ideas relate to each other), with a short reason. Each idea is saved at once as a `highlight` seed from that page (grass sprite, the label as its display text) and each connection as a root with source `ai`; no accept or reject step. A page's ideas get a large tree in the graph like any page. The quotes have a text anchor, so they are highlighted when the user opens the page; a quote not found word for word is saved without one. At most 6 seeds and 20 roots per link. PDF links and pages that need JavaScript or a login to show their text cannot be read yet. (Added 2026-10-11, user's request)
 
 ### Active recall
 

@@ -211,7 +211,7 @@ export function NodeDetail({
             );
             if (!other) return null;
             return (
-              <li key={root.id} className="flex items-center gap-2 text-sm">
+              <li key={root.id} className="flex items-center gap-2 text-sm" title={root.reason || undefined}>
                 <SpriteIcon
                   type={other.spriteType}
                   size={20}

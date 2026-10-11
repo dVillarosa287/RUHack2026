@@ -78,6 +78,11 @@ Format:
 - Stage it would belong to:
 ```
 
+### A10. "Grow from link" for PDFs and pages that need JavaScript  [Data] (agent)
+- What: "Grow from link" reads the page's HTML itself, so a PDF link, or a page that only shows its text after JavaScript runs or after a login, gives "Could not find much text". Options: read PDF links with PDF.js (already in `entrypoints/pdf/`), or fall back to Gemini's own URL reading tool. Also maybe an "undo" for one link's seeds and roots, or an accept/reject step like the suggested roots.
+- Why: many study sources are PDFs.
+- Stage it would belong to: Future.
+
 ### A9. Read the text of scanned PDFs (OCR)  [Engine] (agent)
 - What: scanned PDFs (pictures of pages, like Principia Mathematica) have no text, so they can be read, marked with sprites and screenshotted, but not highlighted. OCR (e.g. Tesseract.js, run in the PDF page) could add an invisible text layer.
 - Why: lets users highlight and quiz on old scanned books.

@@ -271,6 +271,11 @@ Entry format:
 
 ### Viewer notes
 
+- [Oct 11] (Teobobeo99)
+  - Did: "Grow from link" button left of "Graph view" (and of "List view" in the graph): `entrypoints/viewer/GrowFromLink.tsx`. Pipeline in `lib/ai/`: `readPage.ts` (fetches the page from the viewer and turns it into text with DOMParser, `quoteAnchor`), `growFromLink()` in `index.ts` (saves the seeds and `ai` roots), `linkConnections()` in `gemini.ts` (one request, JSON schema, drops bad items), background message `forest:ai-link`. Roots in `NodeDetail` show their reason on hover.
+  - Others can use / need to know: new seeds are `highlight` seeds with the `grass` sprite (`LINK_SPRITE`) and `displayText` as the label; `SeedInput` now accepts `displayText`. Roots are saved straight away (no accept step); the accept/reject item above is still open. To test: Settings, paste a key; open a forest with a few seeds, "Grow from link", paste a Wikipedia link. Agent test: Chromium, stand-in page and Gemini answer, 3 seeds, 4 roots, bad links dropped, 2 quotes highlighted on the page.
+  - Need from someone else: a person to try it in Chrome with a real key.
+
 - [Oct 11] (GitHub Copilot)
   - Did: added a centered, wider "Summarize & export" panel in `entrypoints/viewer/ForestExport.tsx`, placed below the React Flow graph; its trigger now matches the graph's primary "Text note" button styling and smoothly scrolls into view when opened or when export options appear. Gemini creates a study-guide summary, and the user can download it as PDF or DOCX. Raw HTML-looking seed text is excluded from Gemini and both exports. Added `forest:ai-summary` through the background worker and `docx`/`jspdf` dependencies.
   - Others can use / need to know: open a forest's Graph view, scroll below the graph, press "Summarize & export", then "Summarize with Gemini" after saving a key in Settings. The page only shows "Summary ready" plus PDF/DOCX options after generation; the full text stays inside the export handlers. The background listener must include `forest:ai-summary` so the message channel stays open, and the extension must be reloaded after rebuilding. `npm run compile`, `npm run check:theme`, and `npm run build` pass; build reports only a bundle-size warning. Not tested with a real Gemini key in Chrome yet.
@@ -604,6 +609,7 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 
 - [ ] [Data] AI-suggested roots: send one forest's nodes to Gemini, get pairs with a reason each
 - [ ] [Viewer] Suggested roots shown in the graph for the user to accept or reject
+- [ ] [Viewer] [Data] "Grow from link": paste a link, Gemini reads the page, plants its key ideas and grows roots to related seeds (user's request, 2026-10-11) (in progress: built and tested by the agent in Chromium with a stand-in page and a stand-in Gemini answer; needs a check in Chrome on a real page with a real key)
 - [ ] [Viewer] Automatic paths between nodes from the same page or site, drawn dashed
 - [ ] [Viewer] Switch to turn automatic paths off
 

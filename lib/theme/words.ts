@@ -48,6 +48,8 @@ export interface Words {
   emptyGraph: string;
   /** Hover text of the remove button in the list view. */
   removeTitle: string;
+  /** The button that reads a web page from its link and connects its key ideas to the rest (GrowFromLink). */
+  fromLink: string;
 }
 
 /** The nature words. These are exactly the words the app used before themes had their own words. */
@@ -76,6 +78,7 @@ const NATURE_WORDS: Words = {
   emptyList: "Nothing planted here yet. Open any web page, click the Forest icon in Chrome's toolbar and pick a sprite.",
   emptyGraph: 'Nothing planted yet. Plant seeds on a web page, or add a text note.',
   removeTitle: 'Remove with the shovel',
+  fromLink: 'Grow from link',
 };
 
 /** The Minimal theme's plain words: folders, items and links instead of forests, seeds and roots. */
@@ -104,6 +107,7 @@ const MINIMAL_WORDS: Words = {
   emptyList: "Nothing here yet. Open any web page, click this extension's icon in Chrome's toolbar and pick a sprite.",
   emptyGraph: 'Nothing here yet. Add items on a web page, or write a text note.',
   removeTitle: 'Remove',
+  fromLink: 'Add from link',
 };
 
 /** The words for a theme. Every theme except Minimal uses the nature words. */

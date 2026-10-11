@@ -68,6 +68,7 @@ Done already, waiting for a check in Chrome: sprites as real art tinted with pal
 | Quiz screen with lily pads and the frog (art is in `images/`) | `entrypoints/viewer/` | Quiz questions | L | Sonnet | Done: Teobobeo99 (`QuizView.tsx`, `Pond.tsx`; needs a check in Chrome) |
 | Fruit sprout: alarm after five minutes, grows into an apple tree, one question, stored as a `Fruit` with one question | `entrypoints/background.ts`, `lib/engine/` | The apple tree art | M | Larger (the alarm must survive the worker sleeping) | Done: Teobobeo99 (needs a check in Chrome) |
 | AI-suggested roots | `lib/ai/`, `entrypoints/viewer/` | Graph view, Gemini | M | Sonnet | |
+| "Grow from link": paste a link, Gemini reads the page, plants its key ideas and grows roots to related seeds | `lib/ai/`, `entrypoints/viewer/GrowFromLink.tsx`, `entrypoints/background.ts` | Graph view, Gemini | M | Sonnet | Done: Teobobeo99 (needs a check in Chrome with a real key) |
 | Automatic same-site paths, with a switch | `entrypoints/viewer/` | Graph view | S | Sonnet | |
 | Frogs on the page: now and then a frog jumps in from off screen onto a lily pad, sits there, and may hop to another lily pad nearby | `lib/onpage-ui/` | the frog art (in `images/`) | S | Sonnet | Done: Teobobeo99 (`PondFrog.tsx`; needs a check in Chrome) |
 | Frog summary bubble, read aloud | `lib/engine/`, `lib/onpage-ui/`, `lib/ai/` | Gemini, the frog talking art | M | Sonnet | |

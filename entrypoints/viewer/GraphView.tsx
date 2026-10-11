@@ -20,6 +20,7 @@ import { addRoot, deleteRoot, getFolders, getForest, getRoots, getSeedsForForest
 import { countOf, useWords } from '@/lib/theme';
 import { ForestHeader } from './ForestHeader';
 import { ForestExport } from './ForestExport';
+import { GrowFromLink } from './GrowFromLink';
 import { NODE_TYPES, type GraphNode, type LargeTreeNodeType, type SeedNodeType } from './GraphNodes';
 import { clearSpotNear, largeTreePages, largeTreeSpot, layoutAllSeeds, layoutNewSeeds, type Point } from './graphLayout';
 import { NewNoteForm } from './NewNoteForm';
@@ -45,6 +46,7 @@ export function GraphView({ forestId }: { forestId: string }) {
         summary={`${countOf(data.seeds.length, words.seed, words.seeds)}, ${countOf(data.roots.length, words.root, words.roots)}`}
         actions={
           <>
+            <GrowFromLink forestId={forestId} seeds={data.seeds} showGraphLink={false} />
             <a href={forestHref(forestId)} className="rounded-lg border border-edge px-3 py-1.5 text-sm hover:bg-primary-soft">List view</a>
           </>
         }

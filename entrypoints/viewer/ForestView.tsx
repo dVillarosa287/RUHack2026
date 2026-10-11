@@ -4,6 +4,7 @@ import { countOf, useWords } from '@/lib/theme';
 import { FolderSidebar, isUnfiled, type FolderChoice } from './FolderSidebar';
 import { ForestHeader } from './ForestHeader';
 import { ForestList } from './ForestList';
+import { GrowFromLink } from './GrowFromLink';
 import { QuizBar } from './QuizBar';
 import { graphHref } from './route';
 import { useStored } from './useStored';
@@ -32,7 +33,12 @@ export function ForestView({ forestId }: { forestId: string }) {
       <ForestHeader
         forest={data.forest}
         summary={summary}
-        actions={<a href={graphHref(forestId)} className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink hover:bg-primary-strong">Graph view</a>}
+        actions={
+          <>
+            <GrowFromLink forestId={forestId} seeds={data.seeds} showGraphLink />
+            <a href={graphHref(forestId)} className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink hover:bg-primary-strong">Graph view</a>
+          </>
+        }
       />
       <QuizBar forestId={forestId} seeds={data.seeds} />
       <div className="flex gap-6">

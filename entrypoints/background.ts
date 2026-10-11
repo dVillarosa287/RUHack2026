@@ -1,7 +1,7 @@
 // The background service worker. It sleeps after about 30 seconds idle, so keep it stateless.
 import { browser } from 'wxt/browser';
 import type { AiReply, AiRequest } from '@/lib/ai';
-import { forestSummary, quizQuestions, testGemini } from '@/lib/ai/gemini';
+import { forestSummary, linkConnections, quizQuestions, testGemini } from '@/lib/ai/gemini';
 import { getSeed, getSettings, getToolbarState, updateSeed, updateToolbarState } from '@/lib/storage';
 import { watchForPdfs } from './pdf/redirect';
 
@@ -53,7 +53,7 @@ export default defineBackground(() => {
     }
 
     // Gemini is only called from here, and only when the user asked for it.
-    if (type === 'forest:ai-test' || type === 'forest:ai-quiz' || type === 'forest:ai-summary') {
+    if (type === 'forest:ai-test' || type === 'forest:ai-quiz' || type === 'forest:ai-summary' || type === 'forest:ai-link') {
       void answerAi(message as AiRequest).then(sendResponse);
       return true; // keeps the channel open until sendResponse is called
     }
@@ -85,6 +85,9 @@ async function answerAi(request: AiRequest): Promise<AiReply<unknown>> {
     if (request.type === 'forest:ai-test') {
       await testGemini(geminiKey);
       return { ok: true, value: true };
+    }
+    if (request.type === 'forest:ai-link') {
+      return { ok: true, value: await linkConnections(geminiKey, request.page, request.sources) };
     }
     if (request.type === 'forest:ai-summary') {
       return { ok: true, value: await forestSummary(geminiKey, request.forestName, request.sources) };
