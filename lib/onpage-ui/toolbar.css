@@ -439,9 +439,11 @@
     cursor: default;
 }
 
-/* The frog that jumps onto lily pads now and then (PondFrog.tsx). Like a marker it is placed inside the host (`absolute`), and its bottom middle sits on the spot
-   PondFrog sets with `transform` on every frame. It ignores the mouse, so the lily pad under it still works. */
-.fo-pond-frog {
+/* The frog that jumps onto lily pads now and then (PondFrog.tsx), and the owl that flies onto buttons and text (PageOwl.tsx).
+   Like a marker each is placed inside the host (`absolute`), and its bottom middle sits on the spot its component sets with
+   `transform` on every frame. They ignore the mouse, so whatever is under them still works. */
+.fo-pond-frog,
+.fo-page-owl {
   position: absolute;
   top: 0;
   left: 0;
@@ -450,7 +452,8 @@
   pointer-events: none;
   will-change: transform;
 }
-.fo-pond-frog img {
+.fo-pond-frog img,
+.fo-page-owl img {
   display: block;
   width: 100%;
   height: auto;

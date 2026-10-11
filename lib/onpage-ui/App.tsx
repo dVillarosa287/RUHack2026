@@ -6,6 +6,7 @@ import { CursorSprite } from './CursorSprite';
 import { FOREST_ICONS, TEXT_ONLY_SPRITES, spriteLabel, spriteTakesNote, useThemeId } from '@/lib/theme';
 import { ReviewPopup } from './ReviewPopup';
 import { MarkerLayer } from './MarkerLayer';
+import { PageOwl } from './PageOwl';
 import { PondFrog } from './PondFrog';
 import { ScrollRail } from './ScrollRail';
 import { NoteEditor, NoteTooltip } from './SeedNote';
@@ -127,6 +128,8 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
       />
       {/* Now and then a frog jumps onto a lily pad. Drawn after the markers so it sits on top of the pad. */}
       <PondFrog seeds={seeds} />
+      {/* Now and then an owl flies down onto a button or a block of text, while the toolbar is open. */}
+      {visible && <PageOwl />}
       {noteSeed && <NoteEditor key={noteSeed.id} seed={noteSeed} onSave={(note) => void saveNote(noteSeed.id, note)} onClose={() => setNoteSeedId((id) => (id === noteSeed.id ? null : id))} />}
       {hoverSeed?.note && hoverSeed.id !== noteSeed?.id && <NoteTooltip key={hoverSeed.id} seed={hoverSeed} />}
       <CursorSprite type={visible ? spriteOnMouse : null} showOverUi={dragging !== null} scale={plantScale} isInsideUi={isInsideUi} />

@@ -9,14 +9,19 @@ import { trimPng } from './scripts/trim-art';
 // strict content security policy). The originals in images/ are not changed.
 // Every PNG except the extension icons. Most art is colored already; "uncolored-*" art is tinted by SpriteIcon.
 // The Minimal theme's shapes come from minimal-images/ and are published under sprites/minimal/, so the list names them
-// 'minimal/<file>'. Each entry is [folder it is read from, name it is published and looked up under].
+// 'minimal/<file>'. The Night Forest and Vibrant Jungle copies in forest-images/ and jungle-images/ are published under
+// sprites/forest/ and sprites/jungle/ the same way (so far only the owl that flies onto pages uses them, PageOwl.tsx).
+// Each entry is [folder it is read from, name it is published and looked up under].
+const THEMED_ART_FOLDERS = ['minimal', 'forest', 'jungle'];
 const ART_SOURCES: [string, string][] = [
   ...readdirSync('images')
     .filter((file) => file.endsWith('.png') && !/^icon\d+\.png$/.test(file))
     .map((file): [string, string] => ['images', file]),
-  ...readdirSync('minimal-images')
-    .filter((file) => file.endsWith('.png'))
-    .map((file): [string, string] => ['minimal-images', `minimal/${file}`]),
+  ...THEMED_ART_FOLDERS.flatMap((theme) =>
+    readdirSync(`${theme}-images`)
+      .filter((file) => file.endsWith('.png'))
+      .map((file): [string, string] => [`${theme}-images`, `${theme}/${file}`]),
+  ),
 ];
 const ART_FILES = ART_SOURCES.map(([, name]) => name);
 
@@ -37,7 +42,7 @@ export default defineConfig({
   hooks: {
     'build:publicAssets': (_wxt, files) => {
       const trimmedDir = resolve('.wxt', 'art-trimmed');
-      mkdirSync(resolve(trimmedDir, 'minimal'), { recursive: true });
+      for (const theme of THEMED_ART_FOLDERS) mkdirSync(resolve(trimmedDir, theme), { recursive: true });
       for (const [folder, name] of ART_SOURCES) {
         const trimmed = resolve(trimmedDir, name);
         writeFileSync(trimmed, trimPng(readFileSync(resolve(folder, basename(name)))));
@@ -63,6 +68,6 @@ export default defineConfig({
     // An action with no popup lets background.ts react when the icon is clicked.
     action: { default_title: 'Forest: show or hide the toolbar' },
     // The art is drawn inside web pages, so web pages must be allowed to load it.
-    web_accessible_resources: [{ resources: ['sprites/*', 'sprites/minimal/*'], matches: ['<all_urls>'] }],
+    web_accessible_resources: [{ resources: ['sprites/*', ...THEMED_ART_FOLDERS.map((theme) => `sprites/${theme}/*`)], matches: ['<all_urls>'] }],
   },
 });

@@ -100,6 +100,11 @@ Entry format:
 ### On-page UI and art notes
 
 - [Oct 11] (Teobobeo99)
+  - Did: an owl on the page (`lib/onpage-ui/PageOwl.tsx`, `.fo-page-owl` in `toolbar.css`, one line in `App.tsx`). While the toolbar is open, now and then an owl dives down from above the window and sits on top of a button or on the first line of a paragraph, heading or list item; it may fly to another perch or away. Flying uses `owlfly.png` turned to face its way, sitting uses `owl.png`. Art per theme from `owlArt(themeId)` (`lib/theme/index.ts`): Jungle uses `jungle-images/`, every other theme (Minimal too) `forest-images/`; `wxt.config.ts` now publishes those folders as `sprites/forest/` and `sprites/jungle/`.
+  - Others can use / need to know: chances are constants at the top of `PageOwl.tsx` (raise `ARRIVE_CHANCE` for a demo). Off with reduced motion and when the toolbar is closed. Tested in Chromium with chances at 100% in Jungle, Night Forest and Minimal (arrives, sits on text and on a button, hops, leaves, comes back, goes when the toolbar closes). `compile`, `build` and `check:theme` pass.
+  - Need from someone else: a person to watch it in Chrome on a real page.
+
+- [Oct 11] (Teobobeo99)
   - Did: frogs on the page (`lib/onpage-ui/PondFrog.tsx`, `.fo-pond-frog` in `toolbar.css`, one line in `App.tsx`). With a lily pad on screen, a frog sometimes jumps in from off screen and sits on it, and may hop to another lily pad within 450px. It reads each pad's spot from its `.fo-marker[data-seed-id]` every frame, so it works with markers `fixed` or `absolute`. The frog has the same line boil as the markers (`createLineBoil`).
   - Others can use / need to know: the chances and timings are constants at the top of `PondFrog.tsx` (raise `ARRIVE_CHANCE` for a demo). Off in Minimal and with reduced motion. Tested in Chromium with the chances at 100% (arrive, sit, hop both ways, never to a far pad, follows scroll, boil frames change). `npm run compile`, `build` and `check:theme` pass.
   - Need from someone else: a person to check it in Chrome.
@@ -270,6 +275,11 @@ Entry format:
   - Need from someone else: sprite art (see the art list in `BACKLOG.md` A3).
 
 ### Viewer notes
+
+- [Oct 11] (Teobobeo99)
+  - Did: a question-mark Help button in the viewer's top right corner (`entrypoints/viewer/HelpButton.tsx`, mounted in `App.tsx`; art `minimal-images/question.png`). It opens a text-only panel listing every user action (toolbar, planting, shortcuts, notes, scroll rail, forests, list and graph view, quizzes, settings) and the things people get confused by. Esc or a click outside closes it.
+  - Others can use / need to know: the text is in `helpSections()` in `HelpButton.tsx` and follows the theme's words and sprite names (Minimal says items and links). When you change a user-facing feature, change its line there. `npm run compile`, `npm run check:theme` and `npm run build` pass; not yet looked at in Chrome.
+  - Need from someone else: a person to open the viewer in Chrome and check the panel in every theme.
 
 - [Oct 11] (GitHub Copilot)
   - Did: removed the graph viewer's "Spread out" button and its unused layout handler/helper from `entrypoints/viewer/GraphView.tsx` and `graphLayout.ts`.
@@ -665,7 +675,9 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 - [ ] [Viewer] Image nodes
 - [ ] [UI] Visual polish
 - [ ] [UI] Frogs on the page: now and then a frog jumps in from off screen onto a lily pad, sits there, and may hop to a lily pad close by (`PondFrog.tsx`) (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [UI] Owl on the page: now and then an owl flies down from above and sits on a button or the top of a block of text, and may fly to another perch or away (`PageOwl.tsx`) (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [Viewer] Line boil on the graph's sprites, the same as on pages (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [Viewer] Help button (question mark, top right) with text explaining every user action (in progress: built, compile/theme check/build pass, still needs a check in Chrome by a person)
 - [ ] [UI] Themed forest drop-down on the toolbar (`ForestPicker.tsx`), replacing the browser's `<select>` list (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 
 **Done when:** the full demo script runs twice in a row without a failure.

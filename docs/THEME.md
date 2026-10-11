@@ -110,7 +110,7 @@ Minimal draws every sprite as a plain shape from `minimal-images/` (`MINIMAL_ART
 
 `SpriteIcon`, `ForestIcon` and `ShovelIcon` read the theme themselves (`useThemeId()`), so callers do not pass it.
 
-The build crops the empty margin off each image (`scripts/trim-art.ts`) so sprites fill their icon box. Art from `images/` is published as `sprites/<file>` and art from `minimal-images/` as `sprites/minimal/<file>` (`wxt.config.ts`); `artUrl('minimal/<file>')` finds the latter. The originals are not changed.
+The build crops the empty margin off each image (`scripts/trim-art.ts`) so sprites fill their icon box. Art from `images/` is published as `sprites/<file>` art from `minimal-images/` as `sprites/minimal/<file>`, and art from `forest-images/` and `jungle-images/` as `sprites/forest/<file>` and `sprites/jungle/<file>` (`wxt.config.ts`); `artUrl('minimal/<file>')` (or `'forest/…'`, `'jungle/…'`) finds them. The owl that flies onto pages uses Jungle's owl in Vibrant Jungle and the Night Forest owl in every other theme, Minimal included (`owlArt`). The originals are not changed.
 
 ## Fonts and line boil (teammates are working on these)
 

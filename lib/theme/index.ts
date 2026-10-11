@@ -2,7 +2,7 @@
 // Color codes themselves live in ./themes.ts only. See docs/THEME.md.
 import { browser } from 'wxt/browser';
 import type { SpriteType } from '@/lib/storage';
-import { DEFAULT_THEME_ID, FOREST_THEME, MINIMAL_THEME, getTheme, type ThemeColor } from './themes';
+import { DEFAULT_THEME_ID, FOREST_THEME, JUNGLE_THEME, MINIMAL_THEME, getTheme, type ThemeColor } from './themes';
 
 /** The app's name in the nature themes. The viewer shows the theme's own name instead: useWords().appName (./words.ts). */
 export const APP_NAME = 'Forest';
@@ -141,6 +141,16 @@ export function spriteColorHex(type: SpriteType, grown = false, themeId: string 
 export function shovelArt(themeId: string = DEFAULT_THEME_ID): { url: string | null; tint: boolean } {
   const file = isMinimal(themeId) ? SHOVEL_ART.minimal : SHOVEL_ART.normal;
   return { url: artUrl(file), tint: artNeedsTint(file) };
+}
+
+/**
+ * The owl that now and then flies down onto a page (lib/onpage-ui/PageOwl.tsx): sitting and flying art. The Vibrant
+ * Jungle theme has its own owl (jungle-images/); every other theme, Minimal included, uses the Night Forest owl
+ * (forest-images/), so Minimal gets a normal owl rather than its diamond shape.
+ */
+export function owlArt(themeId: string = DEFAULT_THEME_ID): { sit: string | null; fly: string | null } {
+  const folder = themeId === JUNGLE_THEME.id ? 'jungle' : 'forest';
+  return { sit: artUrl(`${folder}/owl.png`), fly: artUrl(`${folder}/owlfly.png`) };
 }
 
 /** Forest icons are art ids, handed out to new forests in turn. The user will choose their own in Stage 2. */
