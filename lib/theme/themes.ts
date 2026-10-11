@@ -337,7 +337,7 @@ export const MINIMAL_THEME: ThemeDefinition = {
 
 export const FOREST_LIGHT_THEME: ThemeDefinition = {
   id: "forest-light",
-  name: "Forest Light",
+  name: "Light Forest",
   palette: [
     {
       id: "red",
