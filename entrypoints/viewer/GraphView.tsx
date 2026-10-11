@@ -64,6 +64,16 @@ function connectedNodeIds(startId: string, edges: Edge[]): Set<string> {
   return connected;
 }
 
+/** The hovered node and everything joined to it by any line (roots and large-tree lines), like Obsidian's hover focus. */
+function hoverNeighborhood(hoveredId: string, edges: Edge[]): Set<string> {
+  const lit = new Set([hoveredId]);
+  for (const edge of edges) {
+    if (edge.source === hoveredId) lit.add(edge.target);
+    if (edge.target === hoveredId) lit.add(edge.source);
+  }
+  return lit;
+}
+
 function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; seeds: Seed[]; roots: Root[]; folders: Folder[] }) {
   const { screenToFlowPosition, setNodes: setFlowNodes } = useReactFlow();
   const box = useRef<HTMLDivElement>(null);
@@ -73,6 +83,7 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
   const [edges, setEdges] = useState<Edge[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [writingNote, setWritingNote] = useState(false);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const rightDrag = useRef<{ pointerId: number; origin: Point; positions: Map<string, Point>; currentPositions: Map<string, Point> } | null>(null);
 
   // Where every seed goes: its saved spot, or for a seed that has none, a spot from the force layout.
@@ -226,6 +237,18 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
     setWritingNote(false);
   }
 
+  // Hover focus: the hovered node and its neighbors stay bright, their lines light up, everything else fades
+  // (graph.css). Only classes are added here; the real nodes and edges in state are left untouched.
+  const lit = useMemo(() => (hoveredId ? hoverNeighborhood(hoveredId, edges) : null), [hoveredId, edges]);
+  const shownNodes = useMemo(
+    () => (lit ? nodes.map((n) => ({ ...n, className: n.id === hoveredId ? 'fo-hovered' : lit.has(n.id) ? 'fo-lit' : 'fo-dim' })) : nodes),
+    [nodes, lit, hoveredId],
+  );
+  const shownEdges = useMemo(
+    () => (lit ? edges.map((e) => ({ ...e, className: `${e.className ?? ''} ${e.source === hoveredId || e.target === hoveredId ? 'fo-lit' : 'fo-dim'}` })) : edges),
+    [edges, lit, hoveredId],
+  );
+
   const seedsById = useMemo(() => new Map(seeds.map((s) => [s.id, s])), [seeds]);
   const selected = selectedId ? seedsById.get(selectedId) : undefined;
 
@@ -241,13 +264,15 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
           onPointerCancel={finishRightDrag}
         >
         <ReactFlow
-          nodes={nodes}
-          edges={edges}
+          nodes={shownNodes}
+          edges={shownEdges}
           nodeTypes={NODE_TYPES}
           nodeOrigin={[0.5, 0.5]}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onNodeDragStop={onNodeDragStop}
+          onNodeMouseEnter={(_event, node) => setHoveredId(node.id)}
+          onNodeMouseLeave={() => setHoveredId(null)}
           onConnect={onConnect}
           onEdgesDelete={onEdgesDelete}
           onSelectionChange={onSelectionChange}

@@ -164,7 +164,7 @@ export function Toolbar(props: ToolbarProps) {
         <div className="fo-panel">
           <div className="fo-tools">
             {SPRITE_ORDER.map((type) => (
-              <button key={type} className="fo-tool" title={SPRITES[type].label} aria-pressed={props.tool === 'plant' && props.spriteType === type} onClick={() => props.onPickSprite(type)} onPointerDown={(e) => props.onSpritePointerDown(type, e)}>
+              <button key={type} className="fo-tool" title={type === 'lilypad' ? undefined : SPRITES[type].label} data-tip={type === 'lilypad' ? 'Quiz generation' : undefined} aria-pressed={props.tool === 'plant' && props.spriteType === type} onClick={() => props.onPickSprite(type)} onPointerDown={(e) => props.onSpritePointerDown(type, e)}>
                 <SpriteIcon type={type} size={28} color={props.colorId} />
               </button>
             ))}

@@ -75,7 +75,7 @@ export function SettingsPage() {
         {saved && !test && <p className="text-sm text-primary">{key ? 'Key saved.' : 'Key removed.'}</p>}
         {test && <p className={`text-sm ${test.ok ? 'text-primary' : 'text-ink'}`}>{test.ok ? '' : 'Not working: '}{test.text}</p>}
         <p className="text-xs text-ink-muted">
-          The key stays in this browser. When you use an AI feature, the text you saved in that forest is sent to Google to write the questions or summary. Nothing is sent unless you ask for it.
+          The key stays in this browser. When you use an AI feature, the text and lily pad screenshots you saved in that forest are sent to Google to write the questions or summary. Nothing is sent unless you ask for it.
         </p>
       </section>
     </>

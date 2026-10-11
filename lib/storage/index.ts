@@ -9,7 +9,7 @@ import type { Folder, Forest, Fruit, Root, Seed, SeedInput, Settings, ToolbarSta
 export * from './types';
 export { cleanUrl } from './url';
 
-const PREFIX = { forest: 'forest:', folder: 'folder:', seed: 'seed:', root: 'root:', fruit: 'fruit:' } as const;
+const PREFIX = { forest: 'forest:', folder: 'folder:', seed: 'seed:', root: 'root:', fruit: 'fruit:', shot: 'shot:' } as const;
 const SETTINGS_KEY = 'settings';
 const PENDING_JUMP_KEY = 'pendingJump';
 const TOOLBAR_KEY = 'toolbar';
@@ -155,6 +155,24 @@ export async function getSeedsForUrl(url: string): Promise<Seed[]> {
 export async function getSeedsForForest(forestId: string): Promise<Seed[]> {
   const seeds = await listRecords<Seed>(PREFIX.seed);
   return seeds.filter((s) => s.forestId === forestId).sort(byCreatedAt);
+}
+
+// ---------- screenshots (lily pads) ----------
+// A lily pad seed's picture is kept in its own record, "shot:<seed id>", and not inside the seed, so lists of
+// seeds stay small. It is not removed with the seed, so undo can bring a lily pad back with its picture; pictures
+// whose seed is gone are cleared out the next time a screenshot is saved.
+
+/** Saves the screenshot (a JPEG data URL) of a lily pad seed. */
+export async function saveScreenshot(seedId: string, dataUrl: string): Promise<void> {
+  const all = await browser.storage.local.get(null);
+  const orphans = Object.keys(all).filter((key) => key.startsWith(PREFIX.shot) && !(PREFIX.seed + key.slice(PREFIX.shot.length) in all));
+  if (orphans.length) await browser.storage.local.remove(orphans);
+  await writeRecord(PREFIX.shot + seedId, dataUrl);
+}
+
+/** The screenshot of a lily pad seed, as a data URL, or null if it has none. */
+export async function getScreenshot(seedId: string): Promise<string | null> {
+  return (await readRecord<string>(PREFIX.shot + seedId)) ?? null;
 }
 
 // ---------- roots ----------

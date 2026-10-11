@@ -6,8 +6,9 @@ import { SpriteIcon } from '@/lib/theme/SpriteIcon';
 import { openOnPage } from './ForestList';
 import { seedLabel } from './GraphNodes';
 import { ColorPicker } from './Pickers';
+import { Screenshot } from './Screenshot';
 
-const KIND_LABEL: Record<Seed['kind'], string> = { highlight: 'Highlight', sprite: 'Marker', link: 'Link', note: 'Your note', media: 'Media' };
+const KIND_LABEL: Record<Seed['kind'], string> = { highlight: 'Highlight', sprite: 'Marker', link: 'Link', note: 'Your note', media: 'Screenshot for the quiz' };
 
 /** Removes a seed and the roots that touch it, so no root is left pointing at nothing. */
 async function removeSeedAndRoots(seed: Seed, roots: Root[]): Promise<boolean> {
@@ -62,6 +63,8 @@ export function NodeDetail({ seed, roots, seedsById, folders, onClose }: { seed:
           onChange={(e) => setDraft(e.target.value)}
           onBlur={() => draft !== seed.text && void updateSeed(seed.id, { text: draft })}
         />
+      ) : seed.kind === 'media' ? (
+        <Screenshot seedId={seed.id} className="w-full" />
       ) : (
         <p className="break-words rounded-lg bg-surface-alt p-3 text-sm">{seed.kind === 'highlight' ? `“${seed.text}”` : seed.text ? `Near: ${seed.text}` : 'Placed on the page'}</p>
       )}

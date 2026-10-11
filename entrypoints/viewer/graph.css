@@ -124,3 +124,43 @@
   outline: 2px dashed var(--fo-primary);
   opacity: 0.6;
 }
+
+/* Hover focus, like Obsidian's graph: hover a node and it plus its direct neighbors stay bright, the lines
+   touching it light up in the accent color, and everything else fades almost away. GraphView.tsx adds
+   fo-hovered / fo-lit / fo-dim while a node is hovered. Fading uses filters (docs/THEME.md rule 4); the
+   transitions make it ease in and out instead of snapping. Only filter is animated, never transform, so
+   dragging stays instant. */
+.fo-graph .react-flow__node {
+  transition: filter 0.25s ease;
+}
+.fo-graph .react-flow__node.fo-dim {
+  filter: opacity(0.15);
+}
+.fo-graph .react-flow__node.fo-hovered {
+  filter: brightness(1.12);
+}
+.fo-graph .react-flow__node.fo-hovered .fo-seed-sprite {
+  box-shadow: 0 0 0 3px var(--fo-accent);
+}
+.fo-graph .react-flow__node.fo-hovered .fo-seed-label,
+.fo-graph .react-flow__node.fo-lit .fo-seed-label {
+  color: var(--fo-ink);
+}
+.fo-graph .react-flow__node.fo-hovered .fo-seed-label {
+  font-weight: 700;
+}
+
+.fo-graph .react-flow__edge path {
+  transition: opacity 0.25s ease, stroke 0.25s ease, stroke-width 0.25s ease;
+}
+.fo-graph .react-flow__edge.fo-dim path {
+  opacity: 0.08;
+}
+.fo-graph .react-flow__edge.fo-lit path {
+  stroke: var(--fo-accent);
+  stroke-width: 4;
+  opacity: 1;
+}
+.fo-graph .fo-trunk-edge.fo-lit path {
+  stroke-width: 2;
+}

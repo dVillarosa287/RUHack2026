@@ -203,6 +203,28 @@
     filter: brightness(1.3);
 }
 
+/* A small message under a tile when hovered (the lily pad: "Quiz generation"). */
+.fo-tool[data-tip] {
+    position: relative;
+}
+
+.fo-tool[data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    z-index: 1;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    border: 1px solid var(--fo-edge);
+    border-radius: 8px;
+    background: var(--fo-surface-alt);
+    color: var(--fo-ink);
+    font-size: 11px;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
 /* The chosen sprite gets a green ring. */
 .fo-tool[aria-pressed='true'] {
     outline: 2px solid var(--fo-primary);
@@ -275,6 +297,19 @@
 .fo-marker.fo-dig {
     cursor: pointer;
     font-family: "Crafty Girls", sans-serif;
+}
+
+/* Lily pads cannot be moved, only shoveled. */
+.fo-marker.fo-fixed:not(.fo-dig) {
+    cursor: default;
+}
+
+/* The box the user drags with the lily pad, to screenshot that part of the page. */
+.fo-area {
+  position: fixed;
+  border: 2px dashed var(--fo-primary);
+  border-radius: 4px;
+  pointer-events: none;
 }
 
 /* A copy of the chosen sprite that follows the mouse, a little to the top right of it and see-through, so the

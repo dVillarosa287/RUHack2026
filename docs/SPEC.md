@@ -94,7 +94,7 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 - A rectangular toolbar with the sprite icons, and a color palette under it. (Stage 2)
 - The toolbar opens in the top right corner and can be dragged anywhere in the window. It can be resized by dragging its bottom-left corner. It is opened and closed with the extension's icon in Chrome (or its close button), and it stays open, in the same place and size, in every tab until the user closes it. It is drawn above everything on the page, including a site's own pop-ups. (Stage 1)
 - At the top of the toolbar, a drop-down with the forest the annotations are going into. It lists every forest, and its last option, "+ Create new forest", asks for a name and makes one. (Stage 1, the create option Stage 2)
-- The toolbar is kept short: one row with the five sprites and the shovel, and under it the color dots and a white tree icon (under the shovel) that opens the current forest in the viewer. There is no instruction text, no "Recent" row and no separate forest buttons. (Stage 2)
+- The toolbar is kept short: one row with the five sprites (sprout, apple, mushroom, flower, lily pad) and the shovel, and under it the color dots and a white tree icon (under the shovel) that opens the current forest in the viewer. There is no instruction text, no "Recent" row and no separate forest buttons. (Stage 2)
 
 ### Scroll rail
 
@@ -118,7 +118,7 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 ### Active recall
 
 - The user plants a fruit sprout over a segment of text they want to review. Five minutes later (the time passing, not a correct answer, is what makes it grow) the fruit sprout grows into an apple tree and the user gets a single question on the text. The tree stays as a fully grown apple tree after the question is answered. This is separate from the lily pad quiz below. (Stage 3)
-- Highlights marked with the lily pad sprite are saved as quiz material. Lily pad seeds of the same color in the same forest form one quiz. (Stage 3)
+- The lily pad is a special sprite: with it the user drags a box over the page and that part of the screen is saved as a screenshot (a figure, a table, a passage), along with the page text inside the box. Lily pad seeds of the same color in the same forest form one quiz, and Gemini writes the questions from the screenshots. A lily pad marker sits at the top-left corner of its box and cannot be dragged; only the shovel removes it. Dragging a lily pad from the toolbar just picks it up. Hovering it in the toolbar shows "Quiz generation". (Stage 3, changed 2026-10-11 from "highlights marked with the lily pad")
 - The quiz is the "fruit" the forest produces. In the quiz screen the lily pads sit in a row and a frog jumps from pad to pad as the user moves to the next question. (Stage 3)
 - Gemini generates the questions. Fill-in-the-blank questions are the fallback: blank out a key term from the saved text, which needs no AI and works offline. (Stage 3)
 - Details decided for Stage 3 (2026-10-11, the user left these to the agent):
@@ -213,7 +213,7 @@ This works like opening a folder in Finder. Each forest is an icon inside a rect
 
 ### Inside a forest
 
-A forest opens as a list of its annotations, with a "Graph view" button at the top right. That button opens the forest as an Obsidian-style graph, with a sprite icon for each node. The folders inside the forest are listed in a sidebar on the left. You connect two nodes by dragging from one to the other, which draws a root between them, or you ask the AI to suggest connections and accept the ones you agree with. You can add your own notes and media as nodes that did not come from a web page, using the same sprites. Nodes from the same page or website are linked automatically in a lighter style, and this can be switched off. A web page with 3 or more seeds in the forest also gets a "large tree" in the graph, placed near its seeds and joined to them by very subtle lines.
+A forest opens as a list of its annotations, with a "Graph view" button at the top right. That button opens the forest as an Obsidian-style graph, with a sprite icon for each node. The folders inside the forest are listed in a sidebar on the left. You connect two nodes by dragging from one to the other, which draws a root between them, or you ask the AI to suggest connections and accept the ones you agree with. You can add your own notes and media as nodes that did not come from a web page, using the same sprites. Nodes from the same page or website are linked automatically in a lighter style, and this can be switched off. A web page with 3 or more seeds in the forest also gets a "large tree" in the graph, placed near its seeds and joined to them by very subtle lines. Hovering a node works like Obsidian: the node and the nodes directly joined to it stay bright, the lines touching it light up in the accent color, and everything else fades almost away, easing in and out.
 
 ### Quizzes
 
@@ -239,7 +239,7 @@ There are two kinds of quiz. A fruit sprout planted over text grows into an appl
 Different sprites stand for different kinds of notes. A proposed starting set:
 
 - **Sprout:** a general note or key idea. It grows into a tree when the page is reloaded.
-- **Lily pad:** "quiz me on this". Lily pad seeds of the same color in the same forest form a quiz.
+- **Lily pad:** "quiz me on this". It takes a screenshot of a box the user drags. Lily pad seeds of the same color in the same forest form a quiz.
 - **Mushroom:** something confusing to come back to.
 - **Flower:** a definition or key term.
 - **Fruit sprout (`fruitsprout`):** text to review soon. Five minutes after planting it grows into an apple tree and asks one question about that text. The apple tree stays after the question. (The sprite is in the toolbar from Stage 1 as a placeholder; the timer and question are Stage 3.)

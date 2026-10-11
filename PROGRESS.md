@@ -32,6 +32,11 @@ Entry format:
 
 ### Page engine notes
 
+- [Oct 11, 5:30 AM] (Teobobeo99)
+  - Did: the lily pad is now a screenshot tool (user's request). `lib/engine/screenshot.ts`: `startAreaSelect` (drag a box), `textInArea` (visible page text inside it), `captureArea` (asks the background worker for `captureVisibleTab`, crops to the box, JPEG at most 1000px wide). `usePlanting` uses it when the sprite is `lilypad`: hides our UI, captures, saves a `media` seed with the marker at the box's top-left corner, then `saveScreenshot`. Lily pad markers cannot be dragged (`MarkerLayer`). Toolbar order is sprout, apple, mushroom, flower, lily pad, shovel, with a "Quiz generation" tip on the lily pad.
+  - Others can use / need to know: `getScreenshot(seedId)` from `@/lib/storage`; the viewer's `Screenshot` component shows one. Gemini now gets each lily pad's image plus its text. New permission `unlimitedStorage`; new record `shot:<id>` (`BACKLOG.md` D7, tell the team). Old lily pad highlights still work in quizzes. Tested in Chromium on Wikipedia with a stand-in for Gemini.
+  - Need from someone else: a person to try it in Chrome with the real key, and the team to OK D7.
+
 - [Oct 10, 10:15 PM] (GitHub Copilot)
   - Did: added guarded page keybinds in `lib/onpage-ui/App.tsx`: `1`-`5` select the visible sprite hotbar slots, Escape puts the tool down, minus/plus resize markers, and Ctrl/Cmd+Z plus Ctrl/Cmd+Shift+Z undo/redo seed create, delete and move actions. Marker rendering accepts the live size in `MarkerLayer.tsx`; seed restoration lives in `lib/storage/index.ts`.
   - Others can use / need to know: keybinds return immediately for input, textarea, select and contenteditable targets, so websites in editing mode keep their shortcuts. `npm run compile`, `npm run build`, and `npm run check:theme` pass.
@@ -200,6 +205,11 @@ Entry format:
   - Need from someone else: sprite art (see the art list in `BACKLOG.md` A3).
 
 ### Viewer notes
+
+- [Oct 11, after 4:45 AM] (Teobobeo99)
+  - Did: Obsidian-style hover focus in the graph. Hovering a node keeps it and its directly joined nodes (roots and large-tree lines) bright, lights those lines in the accent color, and fades the rest (`GraphView.tsx` `hoverNeighborhood`, `shownNodes`/`shownEdges`; styles at the end of `graph.css`).
+  - Others can use / need to know: only display classes `fo-hovered`/`fo-lit`/`fo-dim` are added, so node and edge state is unchanged. `npm run compile` currently fails only in `NodeDetail.tsx` (`Screenshot` not imported), from the screenshot work in progress, not from this.
+  - Need from someone else: nothing.
 
 - [Oct 11, 4:45 AM] (Teobobeo99)
   - Did: the lily pad quiz. Forest page has a "Quizzes" bar (`QuizBar.tsx`) with one button per color that has lily pads. It opens `#/forest/<id>/quiz/<color>` (`QuizView.tsx`, `useQuiz.ts`, `Pond.tsx`, `quiz.css`): a start screen (make with Gemini, or without AI), questions one by one, the frog hops to the next pad, then the score, missed questions, Try again and New questions. Storage: `getFruits(forestId)` and `saveFruit(...)` (keeps only the latest quiz per color).
@@ -428,6 +438,7 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 - [ ] [Data] Lily pad seeds of the same color in the same forest form one quiz (a fruit) (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [Viewer] Quiz screen: lily pads in a row (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [UI] Frog art (sitting, jumping, talking) and the hop animation from pad to pad (in progress: sitting and jumping frog and the hop are in, tested in Chromium; the talking frog art is still missing)
+- [ ] [Engine] The lily pad takes a screenshot of a box the user drags, saved with the text inside it; lily pad markers cannot be moved, only shoveled (in progress: built and tested by the agent in Chromium on Wikipedia, still needs a check in Chrome by a person)
 - [ ] [UI] Notice in the UI that AI features send saved text to Google (in progress: on the quiz start and results screens and the Settings page, tested in Chromium; needs a check in Chrome)
 
 ### Priority 2: Growth
@@ -435,6 +446,7 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 - [ ] [Data] A sprout becomes a tree when the user reloads the page (correct answers do not change anything)
 - [ ] [UI] Sprout and fruit sprout each drawn in two growth stages (sprout and tree)
 - [ ] [Viewer] Graph nodes show their growth stage
+- [ ] [Viewer] Hover focus in the graph, like Obsidian (in progress: built, compiles and passes check:theme; needs a check in Chrome)
 
 ### Priority 3: Fruit sprout five-minute review (see `BACKLOG.md` D1)
 
