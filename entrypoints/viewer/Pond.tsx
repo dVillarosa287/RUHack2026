@@ -1,4 +1,4 @@
-import { artUrl } from '@/lib/theme';
+import { artUrl, useWords } from '@/lib/theme';
 import './quiz.css';
 import { SpriteIcon } from '@/lib/theme/SpriteIcon';
 
@@ -21,6 +21,7 @@ interface PondProps {
  */
 export function Pond({ count, color, at, results }: PondProps) {
   const spot = (i: number) => `${((i + 0.5) / count) * 100}%`;
+  const { frogAlt } = useWords(); // "The frog", or a plain description in Minimal
   return (
     <div className="fo-pond relative mb-6 h-36 rounded-xl border-2 border-edge bg-surface-alt">
       <div className="absolute inset-x-0 bottom-4 flex">
@@ -35,11 +36,11 @@ export function Pond({ count, color, at, results }: PondProps) {
         <div key={at} className={`fo-frog${at === 0 ? ' fo-still' : ''}`}>
           {FROG_SITTING ? (
             <>
-              <img className="fo-frog-sit" src={FROG_SITTING} alt="The frog" width={64} height={64} />
+              <img className="fo-frog-sit" src={FROG_SITTING} alt={frogAlt} width={64} height={64} />
               {FROG_JUMPING && <img className="fo-frog-jump" src={FROG_JUMPING} alt="" width={64} height={64} />}
             </>
           ) : (
-            <span className="block h-12 w-12 rounded-full bg-primary" aria-label="The frog" />
+            <span className="block h-12 w-12 rounded-full bg-primary" aria-label={frogAlt} />
           )}
         </div>
       </div>

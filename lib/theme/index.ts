@@ -4,10 +4,13 @@ import { browser } from 'wxt/browser';
 import type { SpriteType } from '@/lib/storage';
 import { DEFAULT_THEME_ID, FOREST_THEME, MINIMAL_THEME, getTheme, type ThemeColor } from './themes';
 
+/** The app's name in the nature themes. The viewer shows the theme's own name instead: useWords().appName (./words.ts). */
 export const APP_NAME = 'Forest';
 
 export { applyTheme, watchTheme } from './apply';
 export { useThemeId, watchThemeId } from './themeId';
+// The words the user reads per theme (forest or folder, seed or item, ...). See ./words.ts.
+export { cap, countOf, getWords, useWords, type Words } from './words';
 export { DEFAULT_THEME_ID, FOREST_THEME, JUNGLE_THEME, MINIMAL_THEME, THEMES, getTheme, themeToCss, type SpriteColors, type ThemeColor, type ThemeDefinition } from './themes';
 
 /** The palette's eight colors. Seeds no longer pick one (each sprite has its own, see SPRITES); old seeds still have one. */
@@ -21,12 +24,12 @@ export function colorHex(id: string, themeId: string = DEFAULT_THEME_ID): string
 
 /**
  * All the art. The build copies every PNG in images/ (except the extension icons) into the extension as
- * `sprites/<file>`, and every PNG in minimal-icons/ as `sprites/minimal/<file>` (see wxt.config.ts). So adding art
+ * `sprites/<file>`, and every PNG in minimal-images/ as `sprites/minimal/<file>` (see wxt.config.ts). So adding art
  * is: put the file in one of those folders and name it in the lists below (minimal art with the `minimal/` prefix).
  */
 const ART_FILES = new Set(__ART_FILES__);
 
-/** Web address of an image, such as 'owl.png' or 'minimal/uncolored-star.png', or null if there is no such file (the caller then shows a stand-in). */
+/** Web address of an image, such as 'owl.png' or 'minimal/star.png', or null if there is no such file (the caller then shows a stand-in). */
 export function artUrl(file: string): string | null {
   return ART_FILES.has(file) ? browser.runtime.getURL(`/sprites/${file}` as never) : null;
 }
@@ -46,7 +49,7 @@ export interface ThemeSprite {
 // The art the Night Forest and Vibrant Jungle themes use. Colors are per theme, in themes.ts (`sprites`).
 export const SPRITES: Record<SpriteType, ThemeSprite> = {
   // Placeholders until their purpose is decided. The grown sprout's tree is still the old white art, tinted.
-  sprout: { label: 'Sprout', emoji: '🌱', image: 'sprout.png', grownImage: 'uncolored-tree.png' },
+  sprout: { label: 'Sprout', emoji: '🌱', image: 'sprout.png', grownImage: 'tree.png' },
   mushroom: { label: 'Mushroom', emoji: '🍄', image: 'mushroom.png' },
   house: { label: 'House', emoji: '🏠', image: 'house.png' },
   flower: { label: 'Flower', emoji: '🌼', image: 'flower.png' },
@@ -60,29 +63,29 @@ export const SPRITES: Record<SpriteType, ThemeSprite> = {
 };
 
 /**
- * The Minimal Biome theme draws every sprite as a plain shape instead (art in minimal-icons/). All of it is a black
- * outline with a white fill, so it is always tinted with the sprite's color. Labels follow the shape.
+ * The Minimal theme draws every sprite as a plain shape instead (art in minimal-images/, colored already, so it
+ * is drawn as it is). Labels follow the shape.
  */
 const MINIMAL_ART: Record<SpriteType, { label: string; image: string; grownImage?: string }> = {
-  sprout: { label: 'Star', image: 'minimal/uncolored-star.png', grownImage: 'minimal/minimal-cloud.png' },
-  mushroom: { label: 'Red note', image: 'minimal/uncolored-postit.png' },
-  house: { label: 'Check', image: 'minimal/uncolored-check.png' },
-  flower: { label: 'Yellow note', image: 'minimal/uncolored-postit.png' },
-  cat: { label: 'Blue note', image: 'minimal/uncolored-postit.png' },
-  grass: { label: 'Exclamation', image: 'minimal/uncolored-exclamation.png' },
-  owl: { label: 'Diamond', image: 'minimal/uncolored-diamond.png' },
-  rock: { label: 'Hexagon', image: 'minimal/uncolored-hexagon.png' },
-  lilypad: { label: 'Triangle', image: 'minimal/uncolored-triangle.png' },
-  fruitsprout: { label: 'Circle', image: 'minimal/uncolored-circle.png' },
+  sprout: { label: 'Star', image: 'minimal/star.png', grownImage: 'minimal/cloud.png' },
+  mushroom: { label: 'Red note', image: 'minimal/postitred.png' },
+  house: { label: 'Check', image: 'minimal/check.png' },
+  flower: { label: 'Yellow note', image: 'minimal/postityellow.png' },
+  cat: { label: 'Blue note', image: 'minimal/postitblue.png' },
+  grass: { label: 'Exclamation', image: 'minimal/exclamation.png' },
+  owl: { label: 'Diamond', image: 'minimal/diamond.png' },
+  rock: { label: 'Hexagon', image: 'minimal/hexagon.png' },
+  lilypad: { label: 'Triangle', image: 'minimal/triangle.png' },
+  fruitsprout: { label: 'Circle', image: 'minimal/circle.png' },
 };
 
 /** The shovel (delete tool) art per theme. */
-const SHOVEL_ART = { normal: 'shovel.png', minimal: 'minimal/uncolored-x.png' };
+const SHOVEL_ART = { normal: 'shovel.png', minimal: 'minimal/symbolx.png' };
 
 const isMinimal = (themeId: string) => themeId === MINIMAL_THEME.id;
 
-/** Whether an art file is white and needs tinting: "uncolored-*" art, and all the minimal art. */
-export const artNeedsTint = (file: string) => file.startsWith('uncolored-') || file.startsWith('minimal/');
+/** Whether an art file is white and needs tinting: only "uncolored-*" art. All other art, the Minimal shapes included, is colored already. */
+export const artNeedsTint = (file: string) => file.startsWith('uncolored-');
 
 /** Every sprite, in the order lists in the viewer show them. The toolbar has its own layout (Toolbar.tsx). */
 export const SPRITE_ORDER: SpriteType[] = ['sprout', 'mushroom', 'house', 'flower', 'cat', 'grass', 'owl', 'rock', 'lilypad', 'fruitsprout'];
@@ -142,7 +145,7 @@ export function shovelArt(themeId: string = DEFAULT_THEME_ID): { url: string | n
 
 /** Forest icons are art ids, handed out to new forests in turn. The user will choose their own in Stage 2. */
 export const FOREST_ICON_ART: Record<string, string> = {
-  tree: 'uncolored-tree.png',
+  tree: 'tree.png',
   appletree: 'appletree.png',
   house: 'house.png',
   flower: 'flower.png',

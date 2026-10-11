@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { APP_NAME } from '@/lib/theme';
+import { useWords } from '@/lib/theme';
 import { ForestIcon } from '@/lib/theme/SpriteIcon';
 import { ForestGrid } from './ForestGrid';
 import { ForestView } from './ForestView';
@@ -10,6 +10,7 @@ import { parseRoute, settingsHref } from './route';
 
 export function App() {
   const [route, setRoute] = useState(parseRoute());
+  const words = useWords(); // the app's name and "forests" or "folders", by theme
 
   useEffect(() => {
     const onChange = () => setRoute(parseRoute());
@@ -17,13 +18,18 @@ export function App() {
     return () => window.removeEventListener('hashchange', onChange);
   }, []);
 
+  // The browser tab's title follows the theme too (index.html only has the first one).
+  useEffect(() => {
+    document.title = words.appName;
+  }, [words.appName]);
+
   // The graph needs room, so its page is wider than the others.
   return (
     <div className={`mx-auto px-4 py-6 ${route.page === 'graph' ? 'max-w-7xl' : 'max-w-4xl'}`}>
       <header className="mb-6 flex items-center justify-between">
-        <a href="#" className="flex items-center gap-2 text-2xl font-bold text-primary"><ForestIcon icon="tree" size={36} />{APP_NAME}</a>
+        <a href="#" className="flex items-center gap-2 text-2xl font-bold text-primary"><ForestIcon icon="tree" size={36} />{words.appName}</a>
         <nav className="flex gap-4 text-sm text-ink-muted">
-          {route.page !== 'forests' && <a href="#" className="underline">All forests</a>}
+          {route.page !== 'forests' && <a href="#" className="underline">All {words.forests}</a>}
           {route.page !== 'settings' && <a href={settingsHref} className="underline">Settings</a>}
         </nav>
       </header>

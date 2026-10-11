@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { browser } from 'wxt/browser';
 import { deleteSeed, getSeed, getSettings, saveFruit, saveSeed, type Seed, type SpriteType } from '@/lib/storage';
-import { TEXT_ONLY_SPRITES, spriteColorKey, spriteLabel, useThemeId } from '@/lib/theme';
+import { TEXT_ONLY_SPRITES, getWords, spriteColorKey, spriteLabel, useThemeId } from '@/lib/theme';
 import { buildQuoteAnchor } from './anchor';
 import { startDigging, startPlanting } from './capture';
 import { highlightIdAtPoint } from './highlights';
@@ -61,7 +61,8 @@ export function usePlanting({ tool, spriteType, forestId, scale, isInsideUi, say
           void browser.runtime.sendMessage({ type: 'forest:schedule-review', seedId: seed.id, when: nextReviewAt });
         }
         onCreated(seed);
-        say(nextReviewAt ? 'Apple planted: it will quiz you later' : 'Highlight saved');
+        // "Apple planted: ..." in the nature themes, "Circle placed: ..." in Minimal.
+        say(nextReviewAt ? getWords(themeId).quizLater(spriteLabel(spriteType, themeId)) : 'Highlight saved');
       },
       onPlace: async ({ clientX, clientY, target }) => {
         if (TEXT_ONLY_SPRITES.includes(spriteType)) return say(`${spriteLabel(spriteType, themeId)}s go on text: drag over a sentence`);

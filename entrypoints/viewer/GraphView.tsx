@@ -18,6 +18,7 @@ import {
   type OnSelectionChangeParams,
 } from '@xyflow/react';
 import { addRoot, deleteRoot, getFolders, getForest, getRoots, getSeedsForForest, saveSeed, updateSeed, type Folder, type Root, type Seed, type SpriteType } from '@/lib/storage';
+import { countOf, useWords } from '@/lib/theme';
 import { ForestHeader } from './ForestHeader';
 import { NODE_TYPES, type GraphNode, type LargeTreeNodeType, type SeedNodeType } from './GraphNodes';
 import { clearSpotNear, largeTreePages, largeTreeSpot, layoutAllSeeds, layoutNewSeeds, type Point } from './graphLayout';
@@ -32,16 +33,16 @@ export function GraphView({ forestId }: { forestId: string }) {
     async () => ({ forest: await getForest(forestId), seeds: await getSeedsForForest(forestId), roots: await getRoots(forestId), folders: await getFolders(forestId) }),
     [forestId],
   );
+  const words = useWords(); // "seeds, roots" or "items, links", by theme
 
   if (!data) return <p>Loading…</p>;
-  if (!data.forest) return <p>This forest no longer exists.</p>;
+  if (!data.forest) return <p>This {words.forest} no longer exists.</p>;
 
-  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
   return (
     <>
       <ForestHeader
         forest={data.forest}
-        summary={`${plural(data.seeds.length, 'seed')}, ${plural(data.roots.length, 'root')}`}
+        summary={`${countOf(data.seeds.length, words.seed, words.seeds)}, ${countOf(data.roots.length, words.root, words.roots)}`}
         actions={<a href={forestHref(forestId)} className="rounded-lg border border-edge px-3 py-1.5 text-sm hover:bg-primary-soft">List view</a>}
       />
       {/* The provider lets the parts inside use React Flow's helpers, such as finding the middle of the view. */}
@@ -90,6 +91,7 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [writingNote, setWritingNote] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const words = useWords(); // the hints below use the theme's words ("grow a root" or "draw a link")
   const rightDrag = useRef<{ pointerId: number; origin: Point; positions: Map<string, Point>; currentPositions: Map<string, Point> } | null>(null);
 
   // Where every seed goes: its saved spot, or for a seed that has none, a spot from the force layout.
@@ -328,9 +330,9 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
             )}
           </Panel>
           {seeds.length === 0 ? (
-            <Panel position="top-center" className="rounded-lg bg-surface px-3 py-2 text-sm text-ink-muted">Nothing planted yet. Plant seeds on a web page, or add a text note.</Panel>
+            <Panel position="top-center" className="rounded-lg bg-surface px-3 py-2 text-sm text-ink-muted">{words.emptyGraph}</Panel>
           ) : (
-            <Panel position="bottom-center" className="rounded-lg bg-surface px-3 py-1 text-xs text-ink-muted">Drag from a sprite's dot to another sprite to grow a root. Drag it again, or click it and press Delete, to remove it.</Panel>
+            <Panel position="bottom-center" className="rounded-lg bg-surface px-3 py-1 text-xs text-ink-muted">Drag from a sprite's dot to another sprite to {words.growRoot}. Drag it again, or click it and press Delete, to remove it.</Panel>
           )}
         </ReactFlow>
       </div>

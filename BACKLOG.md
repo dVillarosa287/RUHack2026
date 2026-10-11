@@ -72,7 +72,7 @@ Format:
 - Stage it would belong to: Stage 2 or later, after a second theme exists.
 - Also listed, with its dependencies, in `docs/DIVIDING_WORK.md`.
 - Update (2026-10-11): a second theme, "Vibrant Jungle", exists and is the default, and the Settings page has a theme dropdown. A picker on the toolbar is not built.
-- Update (2026-10-11, later): three themes (Night Forest, Vibrant Jungle, Minimal Biome). Sprite art and highlight colors now follow the theme; Minimal has its own shape icons (`docs/THEME.md`). Open: the user listed a "Question" color for Minimal (A8A078) with no icon or sprite; ask what it is for.
+- Update (2026-10-11, later): three themes (Night Forest, Vibrant Jungle, Minimal; Light Forest was added later by a teammate). Sprite art and highlight colors now follow the theme; Minimal has its own shape icons (`docs/THEME.md`). Decided by the user (2026-10-11), leave as is, do not ask again: `minimal-images/question.png` and the Minimal "Question" color stay unused; Light Forest keeps borrowing Night Forest's sprite colors; Minimal keeps the frog picture in the quiz; the default forest keeps the name "My First Forest" in every theme.
 
 ### A4. Growth from sprout to tree on page reload  [Data] (agent)
 - What: the decision is made (see `PROGRESS.md` Stage 3 priority 2) but nothing builds it yet. A `growth` field already exists on every seed and starts at `sprout`.

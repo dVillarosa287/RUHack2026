@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Tool } from '@/lib/engine';
 import type { Forest, SpriteType } from '@/lib/storage';
-import { SPRITES, spriteLabel, useThemeId } from '@/lib/theme';
+import { SPRITES, cap, getWords, spriteLabel, useThemeId } from '@/lib/theme';
 import { ShovelIcon } from '@/lib/theme/ShovelIcon';
 import { ForestIcon, SpriteIcon } from '@/lib/theme/SpriteIcon';
 import { HOTBAR, TOOLBAR_LAYOUT, hotbarKey } from './hotbar';
@@ -51,6 +51,7 @@ function clampToWindow(position: { top: number; right: number }, el: HTMLElement
 export function Toolbar(props: ToolbarProps) {
   // The sprites' names follow the theme (the Minimal theme calls the flower a star, and so on).
   const themeId = useThemeId();
+  const words = getWords(themeId); // "forest" or "folder", by theme
   const [naming, setNaming] = useState(false);
   const [draftName, setDraftName] = useState('');
   const rootRef = useRef<HTMLDivElement>(null);
@@ -135,7 +136,7 @@ export function Toolbar(props: ToolbarProps) {
               <input
                 autoFocus
                 value={draftName}
-                placeholder="Forest name"
+                placeholder={`${cap(words.forest)} name`}
                 onChange={(e) => setDraftName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') submitName();
@@ -155,7 +156,7 @@ export function Toolbar(props: ToolbarProps) {
                 {props.forests.map((f) => (
                   <option key={f.id} value={f.id}>{f.name}</option>
                 ))}
-                <option value={NEW_FOREST}>+ Create new forest</option>
+                <option value={NEW_FOREST}>{`+ Create new ${words.forest}`}</option>
               </select>
             </>
           )}
@@ -178,7 +179,7 @@ export function Toolbar(props: ToolbarProps) {
                 }
                 if (slot === 'forest') {
                   return (
-                    <button key={slot} style={place} className="fo-tool fo-tip-end" aria-label="Open this forest" data-tip="Forests" onClick={props.onOpenCurrentForest}>
+                    <button key={slot} style={place} className="fo-tool fo-tip-end" aria-label="Open this forest" data-tip={cap(words.forests)} onClick={props.onOpenCurrentForest}>
                       <ForestIcon icon="tree" size={28} />
                     </button>
                   );

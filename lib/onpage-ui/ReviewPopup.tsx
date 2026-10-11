@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { fillBlankQuestion, isCorrectAnswer } from '@/lib/ai';
 import { appleFruitKey } from '@/lib/engine';
 import { getDueReviews, getFruits, onDataChanged, updateSeed, type Question, type Seed } from '@/lib/storage';
-import { spriteLabel, useThemeId } from '@/lib/theme';
+import { getWords, spriteLabel, useThemeId } from '@/lib/theme';
 import { SpriteIcon } from '@/lib/theme/SpriteIcon';
 
 /**
@@ -25,7 +25,9 @@ export function ReviewPopup() {
   const [given, setGiven] = useState<string | null>(null);
   const [typed, setTyped] = useState('');
   const showing = useRef<string | null>(null);
-  const apple = spriteLabel('fruitsprout', useThemeId()).toLowerCase(); // "apple", or the theme's own name for it
+  const themeId = useThemeId();
+  const apple = spriteLabel('fruitsprout', themeId).toLowerCase(); // "apple", or the theme's own name for it
+  const words = getWords(themeId); // "has grown" in the nature themes, "is ready to review" in Minimal
 
   // Look for an apple whose time is up: now, when storage changes (the alarm grew one), when the tab comes back
   // into view, and at the moment the next apple is due (in case the alarm was lost, for example after a restart).
@@ -73,7 +75,7 @@ export function ReviewPopup() {
         <SpriteIcon type="fruitsprout" grown size={34} />
         <div>
           <div className="fo-review-title">Active Recall</div>
-          <div className="fo-review-from">Your {apple} from {seed.pageTitle || 'a page'} has grown</div>
+          <div className="fo-review-from">{words.recallReady(apple, seed.pageTitle || 'a page')}</div>
         </div>
       </div>
 

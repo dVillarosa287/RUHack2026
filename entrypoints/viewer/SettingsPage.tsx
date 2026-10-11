@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { GEMINI_MODEL, testGeminiKey } from "@/lib/ai";
 import { getSettings, updateSettings } from "@/lib/storage";
-import { DEFAULT_THEME_ID, THEMES } from "@/lib/theme";
+import { DEFAULT_THEME_ID, THEMES, useWords } from "@/lib/theme";
 
 /**
  * Settings: where the user pastes their Gemini API key and selects their theme.
@@ -15,6 +15,7 @@ export function SettingsPage() {
   const [saved, setSaved] = useState(false);
   // The result of the "Test key" button: null before it is pressed.
   const [test, setTest] = useState<{ ok: boolean; text: string } | null>(null);
+  const words = useWords(); // nature words, or plain ones in the Minimal theme
 
   useEffect(() => {
     void getSettings().then((s) => {
@@ -60,7 +61,7 @@ export function SettingsPage() {
       <section className="space-y-3 rounded-xl border-2 border-edge bg-surface p-5">
         <h2 className="text-lg font-semibold">Gemini API key</h2>
         <p className="text-sm text-ink-muted">
-          Quizzes, suggested roots and the frog's summaries use Google's Gemini.
+          {words.aiUses}
           Get a free key at{" "}
           <a
             href="https://aistudio.google.com/apikey"
@@ -136,7 +137,7 @@ export function SettingsPage() {
         )}
         <p className="text-xs text-ink-muted">
           The key stays in this browser. When you use an AI feature, the text
-          you saved in that forest is sent to Google to write the questions or
+          you saved in that {words.forest} is sent to Google to write the questions or
           summary. Nothing is sent unless you ask for it.
         </p>
       </section>
@@ -168,8 +169,7 @@ export function SettingsPage() {
       <section className="space-y-3 rounded-xl border-2 border-edge bg-surface p-5">
         <h2 className="text-lg font-semibold">Active recall timing</h2>
         <p className="text-sm text-ink-muted">
-          How long after you plant an apple it grows into an apple tree and asks you one question. A new time is used
-          for apples planted after you change it.
+          {words.recallHelp}
         </p>
         <select
           className="rounded-lg border border-edge bg-surface-alt px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary"

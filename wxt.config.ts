@@ -8,15 +8,15 @@ import { trimPng } from './scripts/trim-art';
 // into the extension as a plain file (images embedded inside the content script would be blocked on sites with a
 // strict content security policy). The originals in images/ are not changed.
 // Every PNG except the extension icons. Most art is colored already; "uncolored-*" art is tinted by SpriteIcon.
-// The Minimal theme's shapes come from minimal-icons/ and are published under sprites/minimal/, so the list names them
+// The Minimal theme's shapes come from minimal-images/ and are published under sprites/minimal/, so the list names them
 // 'minimal/<file>'. Each entry is [folder it is read from, name it is published and looked up under].
 const ART_SOURCES: [string, string][] = [
   ...readdirSync('images')
     .filter((file) => file.endsWith('.png') && !/^icon\d+\.png$/.test(file))
     .map((file): [string, string] => ['images', file]),
-  ...readdirSync('minimal-icons')
+  ...readdirSync('minimal-images')
     .filter((file) => file.endsWith('.png'))
-    .map((file): [string, string] => ['minimal-icons', `minimal/${file}`]),
+    .map((file): [string, string] => ['minimal-images', `minimal/${file}`]),
 ];
 const ART_FILES = ART_SOURCES.map(([, name]) => name);
 

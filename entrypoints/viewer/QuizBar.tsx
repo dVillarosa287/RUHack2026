@@ -1,5 +1,5 @@
 import type { Seed } from '@/lib/storage';
-import { spriteLabel, useThemeId } from '@/lib/theme';
+import { getWords, spriteLabel, useThemeId } from '@/lib/theme';
 import { SpriteIcon } from '@/lib/theme/SpriteIcon';
 import { quizHref } from './route';
 
@@ -12,7 +12,9 @@ export const quizPads = (seeds: Seed[]) => seeds.filter((s) => s.spriteType === 
 /** The "Lily pad quiz" button, shown under the forest's header. */
 export function QuizBar({ forestId, seeds }: { forestId: string; seeds: Seed[] }) {
   const count = quizPads(seeds).length;
-  const pad = spriteLabel('lilypad', useThemeId()); // "Lily pad", or the theme's own name for it
+  const themeId = useThemeId();
+  const pad = spriteLabel('lilypad', themeId); // "Lily pad", or the theme's own name for it
+  const words = getWords(themeId); // "Lily pad quiz", or just "Quiz" in Minimal
 
   return (
     <div className="mb-6 flex flex-wrap items-center gap-2 rounded-xl border-2 border-edge bg-surface px-4 py-3">
@@ -22,7 +24,7 @@ export function QuizBar({ forestId, seeds }: { forestId: string; seeds: Seed[] }
       ) : (
         <a href={quizHref(forestId, LILYPAD_QUIZ)} title={`Quiz on your ${pad.toLowerCase()}s`} className="flex items-center gap-2 rounded-lg border border-edge px-3 py-1.5 text-sm hover:bg-primary-soft">
           <SpriteIcon type="lilypad" size={22} />
-          {pad} quiz <span className="text-ink-muted">({count})</span>
+          {words.quizName(pad)} <span className="text-ink-muted">({count})</span>
         </a>
       )}
     </div>

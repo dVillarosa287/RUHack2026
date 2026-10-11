@@ -1,6 +1,6 @@
 import { Handle, Position, useConnection, type Node, type NodeProps } from '@xyflow/react';
 import type { Seed } from '@/lib/storage';
-import { spriteLabel, useThemeId } from '@/lib/theme';
+import { getWords, spriteLabel, useThemeId } from '@/lib/theme';
 import { SpriteIcon } from '@/lib/theme/SpriteIcon';
 
 export type SeedNodeType = Node<{ seed: Seed }, 'seed'>;
@@ -47,7 +47,7 @@ export function SeedNode({ data, selected }: NodeProps<SeedNodeType>) {
       <div className="fo-seed-sprite">
         <SpriteIcon type={seed.spriteType} size={SEED_SPRITE_SIZE} grown={seed.growth === 'tree'} />
         <MiddleHandles />
-        <Handle id="root" type="source" position={Position.Right} className="fo-root-handle" title="Drag to another node to grow a root" />
+        <Handle id="root" type="source" position={Position.Right} className="fo-root-handle" title={`Drag to another node to ${getWords(themeId).growRoot}`} />
       </div>
       <span className="fo-seed-label">{seedLabel(seed, themeId)}</span>
       {dropHere && <Handle id="drop" type="target" position={Position.Top} className="fo-drop-handle" />}

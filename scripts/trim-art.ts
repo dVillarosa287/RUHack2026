@@ -7,6 +7,10 @@ import { deflateSync, inflateSync } from 'node:zlib';
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const VISIBLE_ALPHA = 20;
 const MARGIN = 0.04; // of the final size, on every side
+// A visible blob smaller than this share of all visible pixels (and under SPECK_MAX_PIXELS) is a stray speck, not art.
+// Without this, one faint pixel in a corner (images/sprout.png has one) widens the crop and pushes the art off-center.
+const SPECK_SHARE = 0.001;
+const SPECK_MAX_PIXELS = 40;
 
 const crcTable = Array.from({ length: 256 }, (_, n) => {
   let c = n;
@@ -87,17 +91,51 @@ function encode(width: number, height: number, pixels: Buffer): Buffer {
   return Buffer.concat([PNG_SIGNATURE, chunk('IHDR', header), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
 }
 
+/** Marks visible pixels that belong to tiny isolated blobs (stray specks). Blobs are groups of touching visible pixels. */
+function findSpecks(pixels: Buffer, width: number, height: number): Uint8Array {
+  const speck = new Uint8Array(width * height);
+  const seen = new Uint8Array(width * height);
+  const blobs: number[][] = [];
+  let visible = 0;
+  for (let start = 0; start < width * height; start++) {
+    if (seen[start] || pixels[start * 4 + 3]! <= VISIBLE_ALPHA) continue;
+    const blob = [start];
+    seen[start] = 1;
+    for (let i = 0; i < blob.length; i++) {
+      const x = blob[i]! % width;
+      const y = Math.floor(blob[i]! / width);
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          const at = ny * width + nx;
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height || seen[at] || pixels[at * 4 + 3]! <= VISIBLE_ALPHA) continue;
+          seen[at] = 1;
+          blob.push(at);
+        }
+      }
+    }
+    visible += blob.length;
+    blobs.push(blob);
+  }
+  for (const blob of blobs) {
+    if (blob.length < SPECK_MAX_PIXELS && blob.length < visible * SPECK_SHARE) for (const at of blob) speck[at] = 1;
+  }
+  return speck;
+}
+
 export function trimPng(png: Buffer): Buffer {
   const image = decode(png);
   if (!image) return png;
   const { width, height, pixels } = image;
+  const speck = findSpecks(pixels, width, height);
   let left = width;
   let top = height;
   let right = -1;
   let bottom = -1;
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      if (pixels[(y * width + x) * 4 + 3]! > VISIBLE_ALPHA) {
+      if (pixels[(y * width + x) * 4 + 3]! > VISIBLE_ALPHA && !speck[y * width + x]) {
         left = Math.min(left, x);
         right = Math.max(right, x);
         top = Math.min(top, y);
@@ -115,6 +153,9 @@ export function trimPng(png: Buffer): Buffer {
   const out = Buffer.alloc(side * side * 4); // starts fully transparent
   for (let y = 0; y < contentHeight; y++) {
     pixels.copy(out, ((offsetY + y) * side + offsetX) * 4, ((top + y) * width + left) * 4, ((top + y) * width + left + contentWidth) * 4);
+    for (let x = 0; x < contentWidth; x++) {
+      if (speck[(top + y) * width + left + x]) out.fill(0, ((offsetY + y) * side + offsetX + x) * 4, ((offsetY + y) * side + offsetX + x) * 4 + 4); // drop specks inside the crop
+    }
   }
   return encode(side, side, out);
 }

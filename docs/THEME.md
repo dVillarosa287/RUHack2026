@@ -1,6 +1,6 @@
 # Theme system
 
-Every color in the product comes from one palette. Themes are chosen by the user on the Settings page. There are three: "Vibrant Jungle" (`jungle`, the default), "Night Forest" (`forest`) and "Minimal Biome" (`minimal`). A theme sets the interface colors, each sprite's highlight color and, for Minimal Biome, the sprite art itself. This file holds the rules. The code is in `lib/theme/`. `CLAUDE.md` links here, and every role follows it.
+Every color in the product comes from one palette. Themes are chosen by the user on the Settings page. There are four: "Vibrant Jungle" (`jungle`, the default), "Night Forest" (`forest`), "Light Forest" (`forest-light`) and "Minimal" (`minimal`). A theme sets the interface colors, each sprite's highlight color and, for Minimal, the sprite art and the words (Minimal is the non-nature version of the app: forests are folders, seeds are items, roots are links; the word table is `lib/theme/words.ts`, used through `useWords()`). This file holds the rules. The code is in `lib/theme/`. `CLAUDE.md` links here, and every role follows it.
 
 ## The palette
 
@@ -40,7 +40,7 @@ In CSS the three tones of a color are `var(--c-green)`, `var(--c-green-light)` a
 - **Sprite colors.** Each theme gives every sprite its own highlight color, as exact codes the user chose (`sprites` in each theme in `lib/theme/themes.ts`). They do not have to be palette colors. They are used only for that sprite: its highlight on the page and the tint of its white art.
 - **Highlights drawn over page text.** The CSS Custom Highlight API (`::highlight()`) accepts only a plain color, not a filter, and the page's text has to stay readable under it. So a highlight is the sprite's color plus transparency (the exact color followed by `99` in `lib/engine/highlights.ts`). Nothing else uses transparency.
 - **Shadows need no exception.** The `shadow` token is the darkest background, and a blur already fades a shadow out.
-- **Sprite and frog images** are drawn as they are: the art is colored already. Only white art (the `uncolored-*` files and all of the Minimal theme's shapes) is tinted with the sprite's own color (see "Sprite colors and tinting art" below).
+- **Sprite and frog images** are drawn as they are: the art is colored already. Only white art (the `uncolored-*` files) is tinted with the sprite's own color (see "Sprite colors and tinting art" below).
 - `transparent`, `inherit` and `currentColor` are allowed because they are not colors of their own.
 
 ## How it works
@@ -91,7 +91,7 @@ Each sprite has its own color in each theme, in `sprites` in `lib/theme/themes.t
 - its highlight on the page (`spriteColorHex(type, grown, themeId)`, in `lib/engine/highlights.ts`, the one see-through exception);
 - tinting white art (`spriteColorVar(type, grown)`, which reads `--sprite-<type>` or `--sprite-<type>-grown`).
 
-| Sprite | Night Forest | Vibrant Jungle | Minimal Biome (shape) |
+| Sprite | Night Forest | Vibrant Jungle | Minimal (shape) |
 | --- | --- | --- | --- |
 | `sprout` | `#00B487` (tree too) | `#66CC22` | star `#9582A0`, grown: cloud `#8AA08A` |
 | `mushroom` | `#FF0000` | `#FF4433` | red post-it `#B08080` |
@@ -104,13 +104,13 @@ Each sprite has its own color in each theme, in `sprites` in `lib/theme/themes.t
 | `lilypad` | `#00B487` | `#66CC22` | triangle `#B09078` |
 | `fruitsprout` (apple) | `#FF0000`, tree `#DD8800` | `#FF4433`, tree `#DD5500` | circle `#9582A0` (grown too) |
 
-Night Forest and Vibrant Jungle use the art in `images/`, which is colored already, and `SpriteIcon` (in `lib/theme/SpriteIcon.tsx`) draws it as it is. Art named `uncolored-*` (there, only the tree the sprout grows into) is a black outline with a white fill: `SpriteIcon` draws a layer of the sprite's color cut to its shape (a CSS mask) and multiplies the image on top, so white becomes the color and black stays black.
+Night Forest and Vibrant Jungle use the art in `images/`, which is colored already, and `SpriteIcon` (in `lib/theme/SpriteIcon.tsx`) draws it as it is. Every tree (the grown sprout, the large tree in the graph, the 'tree' forest icon) is `tree.png`; the apple tree keeps `appletree.png`. Art named `uncolored-*` (none is in use now) is a black outline with a white fill: `SpriteIcon` draws a layer of the sprite's color cut to its shape (a CSS mask) and multiplies the image on top, so white becomes the color and black stays black.
 
-Minimal Biome draws every sprite as a plain shape from `minimal-icons/` (`MINIMAL_ART` in `lib/theme/index.ts`), all white-filled and so all tinted. The shovel becomes an X (tinted in the theme's red), the grown sprout and the large tree in the graph become a cloud, and forest icons show the shape of the matching sprite. The labels follow the shape ('Star', 'Red note'), from `spriteLabel(type, themeId)`. The diamond, hexagon and check are simple stand-ins drawn in code until real art arrives; replace the files in `minimal-icons/` with the same names.
+Minimal draws every sprite as a plain shape from `minimal-images/` (`MINIMAL_ART` in `lib/theme/index.ts`). The shapes are colored already and drawn as they are. The shovel becomes an X (`symbolx.png`), the grown sprout and the large tree in the graph become a cloud, and forest icons show the shape of the matching sprite. The labels follow the shape ('Star', 'Red note'), from `spriteLabel(type, themeId)`. `question.png` is there but no sprite uses it yet.
 
 `SpriteIcon`, `ForestIcon` and `ShovelIcon` read the theme themselves (`useThemeId()`), so callers do not pass it.
 
-The build crops the empty margin off each image (`scripts/trim-art.ts`) so sprites fill their icon box. Art from `images/` is published as `sprites/<file>` and art from `minimal-icons/` as `sprites/minimal/<file>` (`wxt.config.ts`); `artUrl('minimal/<file>')` finds the latter. The originals are not changed.
+The build crops the empty margin off each image (`scripts/trim-art.ts`) so sprites fill their icon box. Art from `images/` is published as `sprites/<file>` and art from `minimal-images/` as `sprites/minimal/<file>` (`wxt.config.ts`); `artUrl('minimal/<file>')` finds the latter. The originals are not changed.
 
 ## Fonts and line boil (teammates are working on these)
 

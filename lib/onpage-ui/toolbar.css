@@ -270,15 +270,15 @@
 }
 
 /* Markers are positioned on every frame by MarkerLayer, from the text or element they are attached to.
-   The sprite is centered on the spot, so it lands around the mouse when placed. */
+   The bottom middle of the sprite sits on the spot (the click, or the top of a highlight). The box takes the
+   sprite's own size, and `translate` moves it up by its full height and left by half its width, in % so it is
+   right at every sprite size (- and +). `translate` adds to the `transform` MarkerLayer sets. */
 .fo-marker {
     position: fixed;
     top: 0;
     left: 0;
-    display: block;
-    width: 38px;
-    height: 38px;
-    margin: -38px 0 0 -19px;
+    display: flex;
+    translate: -50% -100%;
     filter: drop-shadow(0 2px 3px var(--fo-shadow));
     pointer-events: auto;
     cursor: grab;
@@ -307,14 +307,15 @@
 
 /* A copy of the chosen sprite that follows the mouse, a little to the top right of it and see-through, so the
    spot you are about to click stays visible. It ignores the mouse, so clicks reach the page. CursorSprite
-   moves it on every mouse move. */
+   moves it on every mouse move. Its bottom left corner stays 8px right of and 8px above the mouse at every size:
+   the box takes the sprite's size and `translate` lifts it by its own height. */
 .fo-cursor-sprite {
   position: fixed;
   top: 0;
   left: 0;
-  width: 38px;
-  height: 38px;
-  margin: -46px 0 0 8px;
+  display: flex;
+  margin: -8px 0 0 8px;
+  translate: 0 -100%;
   opacity: 0.6;
   filter: drop-shadow(0 4px 6px var(--fo-shadow));
   pointer-events: none;

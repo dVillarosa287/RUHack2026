@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { getFolders, getForest, getSeedsForForest } from '@/lib/storage';
+import { countOf, useWords } from '@/lib/theme';
 import { FolderSidebar, isUnfiled, type FolderChoice } from './FolderSidebar';
 import { ForestHeader } from './ForestHeader';
 import { ForestList } from './ForestList';
@@ -15,13 +16,14 @@ import { useStored } from './useStored';
 export function ForestView({ forestId }: { forestId: string }) {
   const data = useStored(async () => ({ forest: await getForest(forestId), seeds: await getSeedsForForest(forestId), folders: await getFolders(forestId) }), [forestId]);
   const [folder, setFolder] = useState<FolderChoice>('all');
+  const words = useWords(); // "seeds" or "items", by theme
 
   if (!data) return <p>Loading…</p>;
-  if (!data.forest) return <p>This forest no longer exists.</p>;
+  if (!data.forest) return <p>This {words.forest} no longer exists.</p>;
 
   // Text notes have no page, so they are not counted as one.
   const pageCount = new Set(data.seeds.map((s) => s.url).filter(Boolean)).size;
-  const summary = `${data.seeds.length} ${data.seeds.length === 1 ? 'seed' : 'seeds'} on ${pageCount} ${pageCount === 1 ? 'page' : 'pages'}`;
+  const summary = `${countOf(data.seeds.length, words.seed, words.seeds)} on ${countOf(pageCount, 'page', 'pages')}`;
 
   const shown = folder === 'all' ? data.seeds : folder === 'none' ? data.seeds.filter((s) => isUnfiled(s, data.folders)) : data.seeds.filter((s) => s.folderId === folder);
 
@@ -36,7 +38,7 @@ export function ForestView({ forestId }: { forestId: string }) {
       <div className="flex gap-6">
         <FolderSidebar forestId={forestId} folders={data.folders} seeds={data.seeds} choice={folder} onChoose={setFolder} />
         <div className="min-w-0 flex-1">
-          <ForestList seeds={shown} emptyText={folder === 'all' ? undefined : 'No seeds here. Drag a seed from "All seeds" onto a folder to move it.'} />
+          <ForestList seeds={shown} emptyText={folder === 'all' ? undefined : `No ${words.seeds} here. Drag ${words.aSeed} from "All ${words.seeds}" onto a ${words.folder} to move it.`} />
         </div>
       </div>
     </>

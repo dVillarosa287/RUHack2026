@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { fillBlankQuestions, geminiQuizQuestions } from '@/lib/ai';
 import { getFruits, getSeedsForForest, getSettings, saveFruit, type Fruit, type Question, type Seed } from '@/lib/storage';
+import { spriteLabel, useThemeId } from '@/lib/theme';
 import { quizPads } from './QuizBar';
 import { useStored } from './useStored';
 
@@ -32,6 +33,7 @@ export function useQuiz(forestId: string, color: string) {
   const [making, setMaking] = useState<QuizMaker | null>(null);
   // Why Gemini could not be used, if it failed and the quiz was made without AI instead.
   const [notice, setNotice] = useState<string | null>(null);
+  const pad = spriteLabel('lilypad', useThemeId()).toLowerCase(); // "lily pad", or the theme's own name for it
 
   async function make(maker: QuizMaker) {
     if (!data) return;
@@ -47,7 +49,7 @@ export function useQuiz(forestId: string, color: string) {
       }
     }
     if (questions.length === 0) questions = fillBlankQuestions(pads);
-    if (questions.length === 0) setNotice('These lily pads have too little text to ask about. Highlight a full sentence with a lily pad.');
+    if (questions.length === 0) setNotice(`These ${pad}s have too little text to ask about. Highlight a full sentence with a ${pad}.`);
     else await saveFruit({ forestId, color, questions }); // storage changes, so `data` reloads with the new fruit
     setMaking(null);
   }

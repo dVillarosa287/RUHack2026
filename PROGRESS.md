@@ -85,6 +85,11 @@ Entry format:
 ### On-page UI and art notes
 
 - [Oct 11] (Teobobeo99)
+  - Did: (1) sprites planted at a non-1 size were off by (19·(s−1), 38·(s−1)) px because `.fo-marker` and `.fo-cursor-sprite` in `toolbar.css` had a fixed 38px box and fixed margins; they now size to the sprite and use `translate: -50% -100%` / `0 -100%`, so planted, dragged and highlight sprites sit exactly right at every size. (2) The sapling was off-center in its toolbar button: `images/sprout.png` has a stray pixel in a corner that stretched the build's crop; `scripts/trim-art.ts` now ignores tiny specks, and `SpriteIcon` uses `object-fit: contain`.
+  - Others can use / need to know: measured in Chromium at 0.5, 1, 1.3 and 2 (all (0, 0) from the click). The note card and line-boil filter now follow the real sprite size too.
+  - Need from someone else: nothing.
+
+- [Oct 11] (Teobobeo99)
   - Did: - and + now size only the sprite on the mouse (the one about to be planted), not every sprite on the page (user's request). `App.tsx` `plantScale` goes to `CursorSprite`, `usePlanting`, `useDropSprite` and `placeMarker`, which save it as the new optional `Seed.scale`; `MarkerLayer` draws each sprite at `seed.scale ?? 1`. The status line says "Sprite size 130%".
   - Others can use / need to know: with no sprite picked, - and + go to the website. The size stays for the next plantings until changed. Tested in Chromium (10 checks, incl. reload).
   - Need from someone else: the team to confirm `Seed.scale` (`BACKLOG.md` D8).
@@ -242,6 +247,11 @@ Entry format:
 ### Viewer notes
 
 - [Oct 11] (Teobobeo99)
+  - Did: the Minimal theme (renamed from "Minimal Biome") now uses plain words everywhere: new `lib/theme/words.ts` (`getWords(themeId)`, `useWords()`, `cap`, `countOf`), used across the viewer, the toolbar, the review pop-up and the planting messages. App name "Notes", forest→folder, folder→section, seed→item, root→link, "Lily pad quiz"→"Quiz". The other themes' text is unchanged.
+  - Others can use / need to know: new user-visible text must come from `useWords()` if it names a nature thing. `removeSeed` (ForestList) and `removeSeedAndRoots` (NodeDetail) now take `words`. Toolbar aria-labels stay English. Tested in Chromium.
+  - Need from someone else: nothing.
+
+- [Oct 11] (Teobobeo99)
   - Did: a web page now gets a large tree in the graph once it has 2 or more seeds in the forest, not 3 (`graphLayout.ts` `LARGE_TREE_MIN_SEEDS = 2`). All docs updated from "3 or more" to "2 or more".
   - Others can use / need to know: compile and check:theme pass; not yet checked in Chrome.
   - Need from someone else: nothing.
@@ -341,6 +351,11 @@ Entry format:
   - Need from someone else: nothing
 
 ### Data, AI and integration notes
+
+- [Oct 11] (Teobobeo99)
+  - Did: the Minimal theme now uses the colored art in `minimal-images/` (drawn as is, no tint; X is `symbolx.png`, tree is `cloud.png`); `minimal-icons/` is gone. Every tree (grown sprout, large tree in the graph, 'tree' forest icon) is now `images/tree.png`; the apple tree keeps `appletree.png`. Files: `lib/theme/index.ts`, `wxt.config.ts`. The teammate-added "Light Forest" theme had no `sprites` and broke compile; it now borrows Night Forest's sprite colors.
+  - Others can use / need to know: `images/uncolored-tree.png` is no longer used. Tested in Chromium (all three test suites pass).
+  - Need from someone else: sprite colors for Light Forest, and what `question.png` is for.
 
 - [Oct 11] (Teobobeo99)
   - Did: per-theme sprites. `themes.ts`: each theme has `sprites` (exact highlight colors from the user) and emits `--sprite-<type>` vars. `lib/theme/themeId.ts`: `useThemeId`, `watchThemeId`. `index.ts`: `spriteLabel`, `spriteImageUrl`/`spriteColorHex` take a themeId, `MINIMAL_ART` table. `SpriteIcon`, `ForestIcon`, `ShovelIcon` follow the theme by themselves. `wxt.config.ts` publishes `minimal-icons/*.png` as `sprites/minimal/`. Added `'house'` to `SpriteType` (`BACKLOG.md` D8).
@@ -488,7 +503,7 @@ Goal: it looks and feels like a forest.
 - [ ] [UI] Forest icons (in progress: forests use the sprite art as their icon; no dedicated forest art, and the user cannot choose one yet)
 - [ ] [UI] Forest color palette (in progress: the palette is now the team's blue background and light text with three tones per color, `docs/THEME.md`; a person needs to check it in Chrome)
 - [ ] [UI] Theme picker (the "custom style" dropdown), see `BACKLOG.md` A5
-- [ ] [All] Sprites follow the theme: Night Forest and Jungle keep the art with their own highlight colors; Minimal Biome swaps in shapes (star, post-its, check, exclamation, diamond, hexagon, triangle, circle, cloud, X) from `minimal-icons/`; live switch with no reload (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person; diamond, hexagon and check are stand-in art)
+- [ ] [All] Sprites follow the theme: Night Forest and Jungle keep the art with their own highlight colors; Minimal swaps in shapes (star, post-its, check, exclamation, diamond, hexagon, triangle, circle, cloud, X) from `minimal-images/`; live switch with no reload (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [UI] House sprite in the toolbar's empty slot, light brown highlight (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [UI] Keyboard shortcuts: 1-9 and 0 pick the hotbar, Ctrl+Z / Ctrl+Shift+Z, Esc, - and + (they size only the sprite about to be planted; planted sprites keep their own size, `Seed.scale`); only while the toolbar is open and never while the user types on the site (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [UI] Sprites drawn with the new colored art, each with its own highlight color and a faint glow on the page (in progress: built and tested by the agent in Chromium on Wikipedia, still needs a check in Chrome by a person)

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { getForests, getSeedsForForest, updateForest, type Forest } from '@/lib/storage';
-import { FOREST_ICONS } from '@/lib/theme';
+import { FOREST_ICONS, countOf, useWords } from '@/lib/theme';
 import { ForestIcon } from '@/lib/theme/SpriteIcon';
 import { forestHref } from './route';
 import { useStored } from './useStored';
@@ -45,6 +45,7 @@ const open = (forest: Forest) => (window.location.hash = forestHref(forest.id));
 
 /** All forests, like icons in a Finder window: drag them around, click to choose, double-click to open. */
 export function ForestGrid() {
+  const words = useWords(); // "forests" or "folders", by theme
   const forests = useStored(async () => {
     const all = await getForests();
     return Promise.all(all.map(async (forest) => ({ forest, seedCount: (await getSeedsForForest(forest.id)).length })));
@@ -107,7 +108,7 @@ export function ForestGrid() {
 
   return (
     <>
-      <h1 className="mb-4 text-xl font-semibold">Your forests</h1>
+      <h1 className="mb-4 text-xl font-semibold">Your {words.forests}</h1>
       <div className="rounded-xl border-2 border-edge bg-surface-alt p-4" onClick={(e) => e.target === e.currentTarget && setSelectedId(null)}>
         <div ref={box} className="relative" style={{ height }} onClick={(e) => e.target === e.currentTarget && setSelectedId(null)}>
           {forests.map(({ forest, seedCount }) => {
@@ -129,7 +130,7 @@ export function ForestGrid() {
               >
                 <ForestIcon icon={forest.icon} size={72} />
                 <span className="mt-2 w-full truncate font-semibold">{forest.name}</span>
-                <span className="text-sm text-ink-muted">{seedCount} {seedCount === 1 ? 'seed' : 'seeds'}</span>
+                <span className="text-sm text-ink-muted">{countOf(seedCount, words.seed, words.seeds)}</span>
               </div>
             );
           })}
@@ -156,7 +157,9 @@ export function ForestGrid() {
           <button className="ml-auto rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink hover:bg-primary-strong" onClick={() => open(selected)}>Open</button>
         </div>
       ) : (
-        <p className="mt-4 text-sm text-ink-muted">Drag forests to arrange them. Click one to choose its icon, double-click to open it. Create a new forest from the toolbar on any web page.</p>
+        <p className="mt-4 text-sm text-ink-muted">
+          Drag {words.forests} to arrange them. Click one to choose its icon, double-click to open it. Create a new {words.forest} from the toolbar on any web page.
+        </p>
       )}
     </>
   );

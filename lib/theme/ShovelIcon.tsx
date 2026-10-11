@@ -3,7 +3,7 @@ import { TintedArt } from './SpriteIcon';
 import { useThemeId } from './themeId';
 
 /**
- * The delete tool: the shovel art (in the Minimal theme an X, tinted in the theme's red), or a plain line drawing if
+ * The delete tool: the shovel art (in the Minimal theme an X), or a plain line drawing if
  * the image is missing.
  */
 export function ShovelIcon({ size = 24 }: { size?: number }) {

@@ -7,7 +7,7 @@ import {
   type Root,
   type Seed,
 } from "@/lib/storage";
-import { spriteLabel, spriteTakesNote, useThemeId } from "@/lib/theme";
+import { cap, getWords, spriteLabel, spriteTakesNote, useThemeId, type Words } from "@/lib/theme";
 import { ShovelIcon } from "@/lib/theme/ShovelIcon";
 import { SpriteIcon } from "@/lib/theme/SpriteIcon";
 import { openOnPage } from "./ForestList";
@@ -21,9 +21,9 @@ const KIND_LABEL: Record<Seed["kind"], string> = {
   media: "Media",
 };
 
-/** Removes a seed and the roots that touch it, so no root is left pointing at nothing. */
-async function removeSeedAndRoots(seed: Seed, roots: Root[]): Promise<boolean> {
-  if (!window.confirm("Remove this seed from the forest?")) return false;
+/** Removes a seed and the roots that touch it, so no root is left pointing at nothing. Asks first, in the theme's `words`. */
+async function removeSeedAndRoots(seed: Seed, roots: Root[], words: Words): Promise<boolean> {
+  if (!window.confirm(`Remove this ${words.seed} from the ${words.forest}?`)) return false;
   await Promise.all(
     roots
       .filter((r) => r.fromSeedId === seed.id || r.toSeedId === seed.id)
@@ -50,6 +50,7 @@ export function NodeDetail({
   // A note's text is edited here and saved when the box loses focus, not on every key press.
   const [draft, setDraft] = useState(seed.text);
   const themeId = useThemeId(); // sprite names follow the theme
+  const words = getWords(themeId); // and so do words like "seed" and "root" ("item" and "link" in Minimal)
   const [displayDraft, setDisplayDraft] = useState(seed.displayText ?? "");
   // The user's own note on a seed planted on a page (not on lily pads or apples). Also saved on blur.
   const [noteDraft, setNoteDraft] = useState(seed.note ?? "");
@@ -173,7 +174,7 @@ export function NodeDetail({
 
       <label className="block">
         <span className="mb-1 block text-xs uppercase tracking-wide text-ink-muted">
-          Folder
+          {cap(words.folder)}
         </span>
         <select
           className="w-full rounded-lg border border-edge bg-surface-alt p-1.5 text-sm"
@@ -182,7 +183,7 @@ export function NodeDetail({
             void updateSeed(seed.id, { folderId: e.target.value || null })
           }
         >
-          <option value="">No folder</option>
+          <option value="">{`No ${words.folder}`}</option>
           {folders.map((f) => (
             <option key={f.id} value={f.id}>
               {f.name}
@@ -193,7 +194,7 @@ export function NodeDetail({
 
       <div>
         <p className="mb-1 text-xs uppercase tracking-wide text-ink-muted">
-          Roots
+          {cap(words.roots)}
         </p>
         {myRoots.length === 0 && (
           <p className="text-sm text-ink-muted">
@@ -217,7 +218,7 @@ export function NodeDetail({
                 </span>
                 <button
                   className="rounded px-1.5 text-ink-muted hover:bg-danger-soft"
-                  title="Remove this root"
+                  title={`Remove this ${words.root}`}
                   onClick={() => void deleteRoot(root.id)}
                 >
                   ×
@@ -231,12 +232,12 @@ export function NodeDetail({
       <button
         className="flex w-full items-center justify-center gap-2 rounded-lg border border-edge px-2 py-1 text-sm hover:bg-danger-soft"
         onClick={() =>
-          void removeSeedAndRoots(seed, roots).then(
+          void removeSeedAndRoots(seed, roots, words).then(
             (removed) => removed && onClose(),
           )
         }
       >
-        <ShovelIcon size={18} /> Remove seed
+        <ShovelIcon size={18} /> Remove {words.seed}
       </button>
     </aside>
   );

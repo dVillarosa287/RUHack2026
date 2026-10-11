@@ -277,7 +277,7 @@ export const JUNGLE_THEME: ThemeDefinition = {
 
 export const MINIMAL_THEME: ThemeDefinition = {
   id: "minimal",
-  name: "Minimal Biome",
+  name: "Minimal",
   palette: [
     {
       id: "red",
@@ -484,6 +484,8 @@ export const FOREST_LIGHT_THEME: ThemeDefinition = {
     shadow: color("foreground", "dark"),
     glow: color("red", "light"),
   },
+  // No sprite colors were chosen for this theme yet, so it uses Night Forest's (same art). Replace with its own when decided.
+  sprites: FOREST_THEME.sprites,
 };
 
 export const THEMES: Record<string, ThemeDefinition> = {

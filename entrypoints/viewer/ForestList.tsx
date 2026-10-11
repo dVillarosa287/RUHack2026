@@ -5,7 +5,7 @@ import {
   updateSettings,
   type Seed,
 } from "@/lib/storage";
-import { spriteLabel, useThemeId } from "@/lib/theme";
+import { getWords, spriteLabel, useThemeId, type Words } from "@/lib/theme";
 import { ShovelIcon } from "@/lib/theme/ShovelIcon";
 import { SpriteIcon } from "@/lib/theme/SpriteIcon";
 import { SEED_DRAG_TYPE } from "./FolderSidebar";
@@ -20,8 +20,9 @@ export async function openOnPage(seed: Seed) {
   await browser.windows.create({ url: seed.url });
 }
 
-export async function removeSeed(seed: Seed) {
-  if (window.confirm("Remove this seed from the forest?"))
+/** Asks first, in the theme's words (`words`), then removes the seed. */
+export async function removeSeed(seed: Seed, words: Words) {
+  if (window.confirm(`Remove this ${words.seed} from the ${words.forest}?`))
     await deleteSeed(seed.id);
 }
 
@@ -55,12 +56,13 @@ export function ForestList({
 }) {
   const pages = groupByPage(seeds);
   const themeId = useThemeId(); // sprite names follow the theme
+  const words = getWords(themeId); // and so do words like "seed" ("item" in Minimal)
 
   if (pages.length === 0) {
     return (
       <p className="rounded-xl bg-surface p-6 text-center text-ink-muted">
         {emptyText ??
-          "Nothing planted here yet. Open any web page, click the Forest icon in Chrome's toolbar and pick a sprite."}
+          words.emptyList}
       </p>
     );
   }
@@ -118,9 +120,9 @@ export function ForestList({
                 )}
                 <button
                   className="shrink-0 rounded-lg border border-edge p-1.5 hover:bg-danger-soft"
-                  title="Remove with the shovel"
+                  title={words.removeTitle}
                   aria-label="Remove"
-                  onClick={() => void removeSeed(seed)}
+                  onClick={() => void removeSeed(seed, words)}
                 >
                   <ShovelIcon size={20} />
                 </button>

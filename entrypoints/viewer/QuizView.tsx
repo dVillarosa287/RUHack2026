@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { isCorrectAnswer } from '@/lib/ai';
-import { spriteLabel, useThemeId } from '@/lib/theme';
+import { getWords, spriteLabel, useThemeId, useWords } from '@/lib/theme';
 import type { Question, Seed } from '@/lib/storage';
 import { Pond } from './Pond';
 import { forestHref, settingsHref } from './route';
@@ -16,20 +16,22 @@ const mainButton = 'rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-p
  */
 export function QuizView({ forestId, color }: { forestId: string; color: string }) {
   const { data, make, making, notice } = useQuiz(forestId, color);
-  const pad = spriteLabel('lilypad', useThemeId()); // "Lily pad", or the theme's own name for it
+  const themeId = useThemeId();
+  const pad = spriteLabel('lilypad', themeId); // "Lily pad", or the theme's own name for it
+  const words = getWords(themeId); // "forest" or "folder", by theme
 
   if (!data) return <p>Loading…</p>;
 
   return (
     <>
       <div className="mb-4 flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">{pad} quiz</h1>
-        <a href={forestHref(forestId)} className={button}>Back to the forest</a>
+        <h1 className="text-2xl font-semibold">{words.quizName(pad)}</h1>
+        <a href={forestHref(forestId)} className={button}>Back to the {words.forest}</a>
       </div>
       {notice && <p className="mb-4 rounded-lg border border-edge bg-surface p-3 text-sm">{notice}</p>}
 
       {data.pads.length === 0 ? (
-        <p className="rounded-xl bg-surface p-6 text-ink-muted">There are no {pad.toLowerCase()}s in this forest yet.</p>
+        <p className="rounded-xl bg-surface p-6 text-ink-muted">There are no {pad.toLowerCase()}s in this {words.forest} yet.</p>
       ) : !data.fruit || making ? (
         <MakeQuiz count={data.pads.length} hasKey={data.hasKey} making={making} onMake={make} />
       ) : (
@@ -41,10 +43,13 @@ export function QuizView({ forestId, color }: { forestId: string; color: string 
 
 /** The start screen: how to make the quiz, with the notice that the Gemini option sends text to Google. */
 function MakeQuiz({ count, hasKey, making, onMake }: { count: number; hasKey: boolean; making: QuizMaker | null; onMake(m: QuizMaker): void }) {
+  const themeId = useThemeId();
+  const pad = spriteLabel('lilypad', themeId).toLowerCase(); // "lily pad", or the theme's own name for it
+  const words = getWords(themeId);
   return (
     <section className="space-y-4 rounded-xl border-2 border-edge bg-surface p-5">
       <p>
-        {count} lily {count === 1 ? 'pad' : 'pads'} in this forest. Each one becomes a question (up to 10).
+        {count} {count === 1 ? pad : `${pad}s`} in this {words.forest}. Each one becomes a question (up to 10).
       </p>
       <div className="flex flex-wrap gap-2">
         <button className={mainButton} disabled={!hasKey || making !== null} onClick={() => onMake('gemini')}>
@@ -56,7 +61,7 @@ function MakeQuiz({ count, hasKey, making, onMake }: { count: number; hasKey: bo
       </div>
       <p className="text-xs text-ink-muted">
         {hasKey ? (
-          <>The Gemini option sends the text of these lily pads to Google to write the questions. Nothing is sent until you press it.</>
+          <>The Gemini option sends the text of these {pad}s to Google to write the questions. Nothing is sent until you press it.</>
         ) : (
           <>
             To use Gemini, add your API key on the <a className="text-primary underline" href={settingsHref}>Settings page</a>. Without it the quiz is fill in the blank, made in your browser.
@@ -77,6 +82,7 @@ interface PlayProps {
 
 /** Answering the questions one by one, then the results. */
 function PlayQuiz({ questions, pads, color, hasKey, onRemake }: PlayProps) {
+  const words = useWords(); // the frog's praise and "Hop to the next pad", or plain words in Minimal
   const [at, setAt] = useState(0);
   const [answers, setAnswers] = useState<{ given: string; right: boolean }[]>([]);
   const [typed, setTyped] = useState('');
@@ -114,7 +120,7 @@ function PlayQuiz({ questions, pads, color, hasKey, onRemake }: PlayProps) {
       {showResults ? (
         <section className="space-y-4 rounded-xl border-2 border-edge bg-surface p-5">
           <h2 className="text-xl font-semibold">
-            {score} of {questions.length} right{score === questions.length ? '. The frog is proud of you!' : '.'}
+            {score} of {questions.length} right.{score === questions.length ? ` ${words.praise}` : ''}
           </h2>
           {score < questions.length && (
             <div className="space-y-2">
@@ -179,7 +185,7 @@ function PlayQuiz({ questions, pads, color, hasKey, onRemake }: PlayProps) {
                   </>
                 )}
               </p>
-              <button autoFocus className={mainButton} onClick={next}>{at < questions.length - 1 ? 'Hop to the next pad' : 'See how you did'}</button>
+              <button autoFocus className={mainButton} onClick={next}>{at < questions.length - 1 ? words.nextQuestion : 'See how you did'}</button>
             </div>
           )}
           <p className="text-xs text-ink-muted">{madeBy}</p>
@@ -193,6 +199,7 @@ function PlayQuiz({ questions, pads, color, hasKey, onRemake }: PlayProps) {
 
 /** Lets the user swap the quiz for a new one, made either way, so an AI quiz can become non-AI and the other way round. */
 function Remake({ isAi, hasKey, onRemake }: { isAi: boolean; hasKey: boolean; onRemake(maker: QuizMaker): void }) {
+  const pad = spriteLabel('lilypad', useThemeId()).toLowerCase(); // "lily pad", or the theme's own name for it
   return (
     <section className="mt-4 space-y-2 rounded-xl border border-edge bg-surface p-4">
       <p className="text-sm">
@@ -204,7 +211,7 @@ function Remake({ isAi, hasKey, onRemake }: { isAi: boolean; hasKey: boolean; on
       </div>
       <p className="text-xs text-ink-muted">
         {hasKey ? (
-          'Gemini sends the text of these lily pads to Google. Nothing is sent until you press it.'
+          `Gemini sends the text of these ${pad}s to Google. Nothing is sent until you press it.`
         ) : (
           <>
             To remake it with Gemini, add your API key on the <a className="text-primary underline" href={settingsHref}>Settings page</a>.

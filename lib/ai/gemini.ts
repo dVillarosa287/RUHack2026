@@ -74,7 +74,7 @@ export async function testGemini(key: string): Promise<void> {
 /** Multiple-choice questions for a quiz: one request for all of them. Bad items from Gemini are dropped, not shown. */
 export async function quizQuestions(key: string, sources: QuizSource[]): Promise<Question[]> {
   const usable = sources.filter((s) => s.text.trim().split(/\s+/).length >= 4).slice(0, MAX_QUESTIONS);
-  if (usable.length === 0) throw new GeminiError('These lily pads have too little saved text to ask about.');
+  if (usable.length === 0) throw new GeminiError('There is too little saved text here to ask about.');
 
   const notes = usable.map((s) => ({ seedId: s.id, page: s.pageTitle, text: s.text.slice(0, 1500) }));
   const parts: Part[] = [

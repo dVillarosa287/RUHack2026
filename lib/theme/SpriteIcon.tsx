@@ -11,7 +11,7 @@ interface SpriteIconProps {
 
 /**
  * Draws a sprite in the chosen theme (its art and color change with the theme). Most art is colored already and is
- * drawn as it is. White placeholder art ("uncolored-*" and all the Minimal theme's shapes) is tinted, see TintedArt.
+ * drawn as it is. White placeholder art ("uncolored-*" files) is tinted, see TintedArt.
  * Falls back to an emoji if the image is missing.
  */
 export function SpriteIcon({ type, size = 24, grown = false }: SpriteIconProps) {
@@ -44,7 +44,7 @@ export function TintedArt({ url, tint, size, label }: { url: string; tint: strin
           style={{ position: 'absolute', inset: 0, background: tint, WebkitMaskImage: shape, maskImage: shape, WebkitMaskSize: 'contain', maskSize: 'contain', WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskPosition: 'center' }}
         />
       )}
-      <img src={url} alt="" width={size} height={size} draggable={false} style={{ position: 'relative', display: 'block', mixBlendMode: tint ? 'multiply' : 'normal', pointerEvents: 'none' }} />
+      <img src={url} alt="" width={size} height={size} draggable={false} style={{ position: 'relative', display: 'block', objectFit: 'contain', objectPosition: 'center', mixBlendMode: tint ? 'multiply' : 'normal', pointerEvents: 'none' }} />
     </span>
   );
 }
