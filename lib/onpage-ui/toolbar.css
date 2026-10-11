@@ -277,16 +277,17 @@
     font-family: "Crafty Girls", sans-serif;
 }
 
-/* A copy of the chosen sprite that rides on the mouse. It is centered on the mouse and ignores it, so
-   clicks reach the page. CursorSprite moves it on every mouse move. */
+/* A copy of the chosen sprite that follows the mouse, a little to the top right of it and see-through, so the
+   spot you are about to click stays visible. It ignores the mouse, so clicks reach the page. CursorSprite
+   moves it on every mouse move. */
 .fo-cursor-sprite {
   position: fixed;
   top: 0;
   left: 0;
   width: 38px;
   height: 38px;
-  margin: -19px 0 0 -19px;
-  opacity: 0.85;
+  margin: -46px 0 0 8px;
+  opacity: 0.6;
   filter: drop-shadow(0 4px 6px var(--fo-shadow));
   pointer-events: none;
   visibility: hidden;

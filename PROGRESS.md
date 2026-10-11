@@ -69,6 +69,11 @@ Entry format:
 
 ### On-page UI and art notes
 
+- [Oct 11, 3:00 AM] (Teobobeo99)
+  - Did: the sprite that follows the mouse after you pick one on the toolbar now sits a little to the top right of the cursor at 60% opacity (`.fo-cursor-sprite` in `lib/onpage-ui/toolbar.css`). It is the same copy that shows while you drag a sprite off the toolbar.
+  - Others can use / need to know: where a sprite lands is unchanged (centered on the mouse); only the preview moved. Change `margin` and `opacity` in that rule to adjust. `docs/SPEC.md` and `BACKLOG.md` F4 updated.
+  - Need from someone else: a person to check it in Chrome.
+
 - [Oct 11, 2:30 AM] (Teobobeo99)
   - Did: the glow around a sprite you jump to (click it on the scroll rail) is orange now, not green: new token `flash` (palette orange) in `lib/theme/themes.ts`, used by `fo-glow` and `fo-pulse` in `lib/onpage-ui/toolbar.css`; listed in `docs/THEME.md`.
   - Others can use / need to know: `accent` is still green and is not used for this glow any more. Tested in Chromium (clicked a rail sprite, the marker on the page glowed orange).
