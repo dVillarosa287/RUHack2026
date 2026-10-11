@@ -119,8 +119,3 @@ export function layoutNewSeeds(seeds: Seed[], known: Map<string, Point>): Map<st
   }
   return fresh;
 }
-
-/** A fresh layout for every seed, ignoring saved spots. Used by the "Spread out" button in the graph view. */
-export function layoutAllSeeds(seeds: Seed[]): Map<string, Point> {
-  return layoutNewSeeds(seeds, new Map());
-}

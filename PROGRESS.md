@@ -271,6 +271,11 @@ Entry format:
 
 ### Viewer notes
 
+- [Oct 11] (GitHub Copilot)
+  - Did: removed the graph viewer's "Spread out" button and its unused layout handler/helper from `entrypoints/viewer/GraphView.tsx` and `graphLayout.ts`.
+  - Others can use / need to know: automatic placement of new nodes and manual dragging are unchanged. `npm run compile` passes; Chrome testing is still needed.
+  - Need from someone else: nothing
+
 - [Oct 11] (Teobobeo99)
   - Did: "Grow from link" button left of "Graph view" (and of "List view" in the graph): `entrypoints/viewer/GrowFromLink.tsx`. Pipeline in `lib/ai/`: `readPage.ts` (fetches the page from the viewer and turns it into text with DOMParser, `quoteAnchor`), `growFromLink()` in `index.ts` (saves the seeds and `ai` roots), `linkConnections()` in `gemini.ts` (one request, JSON schema, drops bad items), background message `forest:ai-link`. Roots in `NodeDetail` show their reason on hover.
   - Others can use / need to know: new seeds are `highlight` seeds with the `grass` sprite (`LINK_SPRITE`) and `displayText` as the label; `SeedInput` now accepts `displayText`. Roots are saved straight away (no accept step); the accept/reject item above is still open. To test: Settings, paste a key; open a forest with a few seeds, "Grow from link", paste a Wikipedia link. Agent test: Chromium, stand-in page and Gemini answer, 3 seeds, 4 roots, bad links dropped, 2 quotes highlighted on the page.

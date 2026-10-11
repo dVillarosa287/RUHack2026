@@ -22,7 +22,7 @@ import { ForestHeader } from './ForestHeader';
 import { ForestExport } from './ForestExport';
 import { GrowFromLink } from './GrowFromLink';
 import { NODE_TYPES, type GraphNode, type LargeTreeNodeType, type SeedNodeType } from './GraphNodes';
-import { clearSpotNear, largeTreePages, largeTreeSpot, layoutAllSeeds, layoutNewSeeds, type Point } from './graphLayout';
+import { clearSpotNear, largeTreePages, largeTreeSpot, layoutNewSeeds, type Point } from './graphLayout';
 import { NewNoteForm } from './NewNoteForm';
 import { NodeDetail } from './NodeDetail';
 import { forestHref } from './route';
@@ -91,7 +91,7 @@ function hoverNeighborhood(hoveredId: string, edges: Edge[]): Set<string> {
 }
 
 function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; seeds: Seed[]; roots: Root[]; folders: Folder[] }) {
-  const { screenToFlowPosition, setNodes: setFlowNodes, fitView } = useReactFlow();
+  const { screenToFlowPosition, setNodes: setFlowNodes } = useReactFlow();
   const box = useRef<HTMLDivElement>(null);
   // Spots the layout gave this visit, kept until storage has them, so a seed is only laid out once.
   const placed = useRef(new Map<string, Point>());
@@ -316,22 +316,6 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
 
   const closeDetail = () => setFlowNodes((nds) => nds.map((n) => (n.selected ? { ...n, selected: false } : n)));
 
-  // "Spread out": lay out every seed again from scratch (not only the ones without a spot), save the new spots,
-  // move the nodes now, and zoom so everything is in view. Large trees are not saved, so they are placed again here.
-  function spreadOut() {
-    const fresh = layoutAllSeeds(seeds);
-    for (const [id, spot] of fresh) void updateSeed(id, { graphX: spot.x, graphY: spot.y }).catch(() => {});
-    const trees = largeTreePages(seeds);
-    setNodes((current) =>
-      current.map((n) => {
-        if (n.type === 'seed') return { ...n, position: fresh.get(n.id) ?? n.position };
-        const mine = (trees.get(n.id.slice('tree:'.length)) ?? []).map((id) => fresh.get(id)).filter((p): p is Point => !!p);
-        return { ...n, position: largeTreeSpot(mine, [...fresh.values()]) };
-      }),
-    );
-    setTimeout(() => void fitView({ padding: 0.2, maxZoom: 1.2, duration: 400 }), 50);
-  }
-
   // A text note is planted in the middle of what the user is looking at, in the nearest free spot.
   async function plantNote(note: { spriteType: SpriteType; color: string; text: string }) {
     const rect = box.current!.getBoundingClientRect();
@@ -404,13 +388,6 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
               <div className="flex gap-2">
                 <button className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink shadow-md shadow-drop hover:bg-primary-strong" onClick={() => setWritingNote(true)}>
                   + Text note
-                </button>
-                <button
-                  className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink shadow-md shadow-drop hover:bg-primary-strong"
-                  title="Arrange every node again with more room between them. This moves nodes you placed yourself."
-                  onClick={spreadOut}
-                >
-                  Spread out
                 </button>
               </div>
             )}
