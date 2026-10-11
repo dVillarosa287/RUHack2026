@@ -240,8 +240,8 @@ export const JUNGLE_THEME: ThemeDefinition = {
 };
 
 export const THEMES: Record<string, ThemeDefinition> = {
-  [FOREST_THEME.id]: FOREST_THEME,
   [JUNGLE_THEME.id]: JUNGLE_THEME,
+  [FOREST_THEME.id]: FOREST_THEME,
 };
 
 export const DEFAULT_THEME_ID = JUNGLE_THEME.id;
