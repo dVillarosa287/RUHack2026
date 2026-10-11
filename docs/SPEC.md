@@ -64,11 +64,11 @@ Agree on this in the first 30 minutes. Everyone's code reads and writes these sh
 
 - **Forest:** id, name, icon, createdAt.
 - **Folder:** id, forestId, name.
-- **Seed (one node):** id, forestId, folderId, kind (highlight, sprite, link, note, media), spriteType (sprout, lilypad, mushroom, flower, fruitsprout), color, growth (sprout, tree), url, pageTitle, text, linkTarget, anchor, nextReviewAt, createdAt.
+- **Seed (one node):** id, forestId, folderId, kind (highlight, sprite, link, note, media), spriteType (sprout, lilypad, mushroom, flower, fruitsprout, cat, grass, owl, rock, house), color, growth (sprout, tree), url, pageTitle, text, linkTarget, anchor, nextReviewAt, createdAt, an optional note (the user's own words, added 2026-10-11), and an optional scale (the size its sprite was planted at, added 2026-10-11).
 - **Anchor (where a seed sits on its page):** the exact quoted text plus a few words before and after it, a selector for the nearest page element with an x and y offset inside it, and the scroll position as a percentage of page height.
 - **Root (one connection):** id, forestId, fromSeedId, toSeedId, source (manual or ai), reason.
 - **Fruit (one quiz):** id, forestId, color, questions (seedId, type, prompt, choices, answer), createdAt.
-- **Settings:** currentForestId, the three most recent sprites, theme, Gemini API key, auto-connections on or off.
+- **Settings:** currentForestId, the three most recent sprites, theme, Gemini API key, auto-connections on or off, reviewMinutes.
 
 ---
 
@@ -78,10 +78,14 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 
 ### Annotating a page
 
-- Highlight text in the color of the selected sprite. The sprite appears at the highlight for about a second to confirm the save, then fades. (Stage 1 for the highlight, Stage 2 for the sprite animation)
+- Highlight text in the color of the selected sprite. The sprite then stays on the page, centered above the highlighted text, resting on its top edge; it cannot be dragged away, and the shovel removes the highlight and its sprite together. (Stage 1 for the highlight; changed 2026-10-11 from "appears for a second, then fades")
 - Click anywhere on the page to place the selected sprite at that exact spot. The sprite is attached to the text it was placed on, so it follows that text when the page scrolls, resizes or reflows, and it can be dragged to a new spot. (Stage 1 with a plain marker, Stage 2 with real sprites)
 - A placed sprite is centered on the mouse, so it lands around the cursor and not off to one side. (Stage 2, see `BACKLOG.md` F3)
 - Once a sprite is selected in the toolbar, a copy of it follows the mouse, a little to the top right of the cursor and slightly see-through, so it feels like the user is carrying it onto the page and the spot they are about to click stays visible. Esc or the shovel puts it down. (Stage 2, see `BACKLOG.md` F4)
+- Keyboard shortcuts while the toolbar is open: 1 to 9 and 0 pick the toolbar's sprites in reading order (1 sprout, 2 mushroom, 3 house, 4 flower, 5 lily pad, 6 cat, 7 grass, 8 owl, 9 rock, 0 apple; each button shows its number), Ctrl+Z undoes and Ctrl+Shift+Z redoes (Cmd on Mac), Esc puts the sprite down, - and + make the sprite on the mouse (the one about to be planted) smaller and larger, and it is planted at that size; sprites already on the page keep their own size. No shortcut runs while the toolbar is closed or while the user is typing on the website (a text field, a rich text editor such as Google Docs, an iframe editor), so the site keeps its keys. (Added 2026-10-11, user's request)
+- The house sprite: an ordinary sprite (any note), light brown highlight in each theme. (Added 2026-10-11, user's request)
+- Sprites follow the theme. Night Forest and Vibrant Jungle use the same art with their own highlight colors. Minimal Biome uses shapes: star, red, yellow and blue post-its, check, exclamation, diamond, hexagon for the ordinary sprites, a triangle for the lily pad, a circle for the apple, a cloud for every tree, an X for the shovel. Switching theme recolors open pages without a reload. The colors are in `docs/THEME.md`. (Added 2026-10-11, user's request)
+- Right after planting a seed, a small box next to its sprite lets the user type their own note about it. Enter saves, Esc skips, clicking away saves what was typed. Hovering the sprite shows the note, and clicking the sprite edits it. The note also shows in the viewer's list and detail panel. Not for the lily pad or the apple, whose text is the quiz material. (Added 2026-10-11, user's request)
 - When the user jumps to a seed (from the viewer or the scroll rail), the seed's highlight turns yellow, stays yellow for a short while, then fades smoothly back to its normal look. It is not a one-second flash. (Stage 2, see `BACKLOG.md` F2)
 - Drag a sprite from the toolbar and drop it on the page. (Stage 2)
 - Place a sprite on a link: the user stays on the current tab, and the sprite stores the link's destination. Clicking that sprite in the viewer opens the destination. (Stage 2)
@@ -94,7 +98,8 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 - A rectangular toolbar with the sprite icons, and a color palette under it. (Stage 2)
 - The toolbar opens in the top right corner and can be dragged anywhere in the window. It can be resized by dragging its bottom-left corner. It is opened and closed with the extension's icon in Chrome (or its close button), and it stays open, in the same place and size, in every tab until the user closes it. It is drawn above everything on the page, including a site's own pop-ups. (Stage 1)
 - At the top of the toolbar, a drop-down with the forest the annotations are going into. It lists every forest, and its last option, "+ Create new forest", asks for a name and makes one. (Stage 1, the create option Stage 2)
-- The toolbar is kept short: one row with the five sprites (sprout, apple, mushroom, flower, lily pad) and the shovel, and under it the color dots and a white tree icon (under the shovel) that opens the current forest in the viewer. There is no instruction text, no "Recent" row and no separate forest buttons. (Stage 2)
+- The toolbar is two rows of six buttons, with a slight gap before the last two columns:
+  `sprout, mushroom, (empty), flower | lily pad, shovel` over `cat, grass, owl, rock | apple, tree button`. The tree button opens the current forest. Sprout and mushroom have their own art now; what they are for is still to be decided. There is no color picker: each sprite has its own color, which is its text highlight color (sprites on the page do not glow; removed 2026-10-11) (apple, mushroom: palette red; apple tree, owl: orange darker; cat: purple lighter; flower: yellow; sprout, grass, lily pad: green darker; rock: foreground darker). Hovering shows a short message under the button: lily pad "Quiz generation", apple "Active Recall", shovel "Remove a sprite", tree "Forests". (2026-10-11)
 
 ### Scroll rail
 
@@ -107,8 +112,8 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 
 - View Forests: a Finder-style window with one icon per forest. New forests land in a tidy grid by default, the user can drag them around, choose each forest's icon, and double-click to open one. (Grid and open in Stage 1, dragging and icon choice in Stage 2)
 - A list of every annotation in a forest, grouped by web page, each one linking back to its page which opens in another window. (Stage 1)
-- Graph view: every annotation is a sprite node, as in Obsidian. The forest page keeps its list of annotations, and a "Graph view" button at the top right of it opens the graph. Nodes spread out automatically once, the first time a node has no saved position; after that the positions are the user's and are saved. (Stage 2)
-- Large trees: in each forest, every web page that has 3 or more seeds gets a "large tree" node in the graph. It sits fairly close to its seeds and is joined to each of them by a very subtle line. It is worked out from the seeds (grouped by `url`) each time the graph is drawn, not saved, so it needs no data model change. A large tree is not a seed and cannot be quizzed. Placeholder art: the existing `tree` sprite drawn larger. (Stage 2)
+- Graph view: every annotation is a sprite node, as in Obsidian. The forest page keeps its list of annotations, and a "Graph view" button at the top right of it opens the graph. Nodes spread out automatically once, the first time a node has no saved position; after that the positions are the user's and are saved. The automatic layout leaves room between nodes so sprites and labels never overlap, and a "Spread out" button lays out every node again (it moves nodes the user placed). (Stage 2; roomier layout and the button added 2026-10-11)
+- Large trees: in each forest, every web page that has 2 or more seeds gets a "large tree" node in the graph. It sits fairly close to its seeds and is joined to each of them by a very subtle line. It is worked out from the seeds (grouped by `url`) each time the graph is drawn, not saved, so it needs no data model change. A large tree is not a seed and cannot be quizzed. Placeholder art: the existing `tree` sprite drawn larger. (Stage 2)
 - Manual connections ("roots"): drag from one node to another to draw a root between them. (Stage 2)
 - A left sidebar with the folders inside the forest. (Stage 2)
 - The user's own notes and media as nodes that are not tied to a web page. (Stage 2 for text notes, Stage 3 for images)
@@ -119,16 +124,16 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 
 - The user plants a fruit sprout over a segment of text they want to review. Five minutes later (the time passing, not a correct answer, is what makes it grow) the fruit sprout grows into an apple tree and the user gets a single question on the text. The tree stays as a fully grown apple tree after the question is answered. This is separate from the lily pad quiz below. (Stage 3)
 - The lily pad only goes on text: the user drags over a sentence to highlight it as quiz material. A click with the lily pad places nothing, and dragging it off the toolbar just picks it up. Lily pad seeds of the same color in the same forest form one quiz. Hovering the lily pad in the toolbar shows "Quiz generation". (Stage 3; a screenshot version was tried on 2026-10-11 and removed at the user's request)
-- The quiz is the "fruit" the forest produces. In the quiz screen the lily pads sit in a row and a frog jumps from pad to pad as the user moves to the next question. (Stage 3)
+- The quiz is the "fruit" the forest produces. In the quiz screen the lily pads sit in a row and a frog jumps from pad to pad as the user moves to the next question. The quiz says whether Gemini wrote it or it was made without AI, and it can always be remade either way ("Remake with Gemini", "Remake without AI"). (Stage 3)
 - Gemini generates the questions. Fill-in-the-blank questions are the fallback: blank out a key term from the saved text, which needs no AI and works offline. (Stage 3)
 - Details decided for Stage 3 (2026-10-11, the user left these to the agent):
   - **Quiz size:** one question per lily pad of that color, at most 10. A color with a single lily pad still makes a quiz.
   - **Question types:** Gemini writes multiple choice (4 choices). The fallback is fill-in-the-blank: the sentence around the blanked key term, with 4 choices taken from the other lily pads' words; if there are too few other words, the user types the answer. Text under 4 words gets no question. Answers ignore case and surrounding punctuation.
-  - **Starting a quiz:** the forest page lists one "Quiz" button per color that has lily pads. The quiz has its own page (`#/forest/<id>/quiz/<color>`).
+  - **Starting a quiz:** the forest page has a "Lily pad quiz" button; all the forest's lily pads form one quiz (every lily pad has the same color now). The quiz has its own page (`#/forest/<id>/quiz/lilypad`).
   - **Saving:** a quiz is saved as a `Fruit`, so taking it again does not call Gemini again. A "New questions" button makes a fresh one.
   - **End screen:** the score (for example 4 of 5), which questions were missed, and buttons to try again or go back to the forest.
   - **Growth:** a sprout or fruit sprout becomes a tree the next time its page loads after the visit it was planted in.
-  - **Fruit sprout review:** the question appears in a small pop-up on the page, as multiple choice. If the page is not open when the five minutes are up, the question waits and appears the next time that page is opened (no Chrome notifications, so no new permission). The 30-second demo timing is a switch on the Settings page.
+  - **Fruit sprout (apple) review:** the apple only goes on text. After the active recall time (a setting, 5 minutes by default, 30 seconds for a demo) it grows into an apple tree and a pop-up in the top left of whatever page the user is looking at asks one fill-in-the-blank question: the paragraph the apple was planted in, with the highlighted part blanked out, and the user types what they highlighted ("Show answer" reveals it). The question is made and saved when the apple is planted; no Gemini. If no page is open then, it appears on the next page opened. Answering or skipping ends it; the apple tree stays.
 
 ### The frog
 
@@ -194,7 +199,7 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 2. At the top of the toolbar is a drop-down with the forest you are in, which is the folder your annotations go into. You can switch forests from it, or choose "+ Create new forest" at the bottom of its list.
 3. Click a sprite to select it. A copy of the sprite follows your mouse, a little to its top right and see-through. Then do one of the following.
    - **Click a spot on the page.** The sprite is placed there, centered on the mouse, and saved at that location.
-   - **Highlight text.** The text is highlighted in the sprite's color. The sprite appears at the highlight for a second to show it was saved, then fades away.
+   - **Highlight text.** The text is highlighted in the sprite's color, and the sprite stays centered above it.
    - **Click a link.** You stay on the same tab. The sprite is saved pointing at the link's destination, and clicking it later in the viewer opens that destination.
 
 Sprites can also be dragged from the toolbar and dropped on the page.
@@ -213,7 +218,7 @@ This works like opening a folder in Finder. Each forest is an icon inside a rect
 
 ### Inside a forest
 
-A forest opens as a list of its annotations, with a "Graph view" button at the top right. That button opens the forest as an Obsidian-style graph, with a sprite icon for each node. The folders inside the forest are listed in a sidebar on the left. You connect two nodes by dragging from one to the other, which draws a root between them, or you ask the AI to suggest connections and accept the ones you agree with. You can add your own notes and media as nodes that did not come from a web page, using the same sprites. Nodes from the same page or website are linked automatically in a lighter style, and this can be switched off. A web page with 3 or more seeds in the forest also gets a "large tree" in the graph, placed near its seeds and joined to them by very subtle lines. Hovering a node works like Obsidian: the node and the nodes directly joined to it stay bright, the lines touching it light up in the accent color, and everything else fades almost away, easing in and out.
+A forest opens as a list of its annotations, with a "Graph view" button at the top right. That button opens the forest as an Obsidian-style graph, with a sprite icon for each node. The folders inside the forest are listed in a sidebar on the left. You connect two nodes by dragging from one to the other, which draws a root between them (dragging between two nodes that already have a root removes it), or you ask the AI to suggest connections and accept the ones you agree with. You can add your own notes and media as nodes that did not come from a web page, using the same sprites. Nodes from the same page or website are linked automatically in a lighter style, and this can be switched off. A web page with 2 or more seeds in the forest also gets a "large tree" in the graph, placed near its seeds and joined to them by very subtle lines. Hovering a node works like Obsidian: the node and the nodes directly joined to it stay bright, the lines touching it light up in the accent color, and everything else fades almost away, easing in and out.
 
 ### Quizzes
 
@@ -317,7 +322,7 @@ Hour ranges assume a 24-hour event and should be scaled to the real schedule. Th
 - Sprites on links.
 - The scroll rail with markers and the animal.
 - Forests can be dragged around the grid and given an icon.
-- The graph view with sprite nodes, large trees for pages with 3 or more seeds, drag-to-connect roots and the folder sidebar.
+- The graph view with sprite nodes, large trees for pages with 2 or more seeds, drag-to-connect roots and the folder sidebar.
 - Text notes as nodes.
 - Polish on placing: sprites centered on the mouse, the selected sprite follows the cursor, the jump highlight stays yellow then fades, the "Create new forest" button, and rail sprites that stick out past the bar.
 - Sprites and colors loaded from one theme file.
@@ -365,7 +370,6 @@ Hour ranges assume a 24-hour event and should be scaled to the real schedule. Th
 - **Shared forests.** A read-only link to a forest, and later study-group forests that several people plant in.
 - **Citations.** Every seed already knows its URL and date, so a forest can produce a formatted bibliography.
 - **Search and tags.** Search across every forest.
-- **Keyboard shortcuts.** One key each for the three recent sprites.
 - **Cram mode.** One quiz built from everything planted in the last few days, across forests.
 - **Accessible palettes.** Color-blind-safe colors, with sprite shape carrying the meaning so color is never the only signal.
 - **On-device AI.** Chrome's built-in model for summaries and questions without an API key or sending text anywhere, where the user's Chrome supports it.

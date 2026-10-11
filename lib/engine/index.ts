@@ -3,6 +3,7 @@ export { startDigging, startPlanting } from './capture';
 export { flashHighlight, getHighlightRange, highlightIdAtPoint, paintHighlights } from './highlights';
 export { MarkerTracker } from './markers';
 export { placeMarker } from './placeMarker';
+export { appleFruitKey, recallQuestion } from './recall';
 export { createLineBoil } from './lineBoil';
 export { scrollToHighlight, scrollToPageY } from './scroll';
 export { UI_HOST_TAG } from './textIndex';

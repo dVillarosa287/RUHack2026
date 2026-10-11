@@ -5,7 +5,7 @@ import {
   updateSettings,
   type Seed,
 } from "@/lib/storage";
-import { SPRITES } from "@/lib/theme";
+import { spriteLabel, useThemeId } from "@/lib/theme";
 import { ShovelIcon } from "@/lib/theme/ShovelIcon";
 import { SpriteIcon } from "@/lib/theme/SpriteIcon";
 import { SEED_DRAG_TYPE } from "./FolderSidebar";
@@ -54,6 +54,7 @@ export function ForestList({
   emptyText?: string;
 }) {
   const pages = groupByPage(seeds);
+  const themeId = useThemeId(); // sprite names follow the theme
 
   if (pages.length === 0) {
     return (
@@ -94,18 +95,18 @@ export function ForestList({
               >
                 <span
                   className="mt-0.5 flex shrink-0 items-center justify-center"
-                  title={SPRITES[seed.spriteType].label}
+                  title={spriteLabel(seed.spriteType, themeId)}
                 >
                   <SpriteIcon
                     type={seed.spriteType}
                     size={40}
-                    color={seed.color}
                     grown={seed.growth === "tree"}
                   />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs uppercase tracking-wide text-ink-muted">{describe(seed).kind} · {new Date(seed.createdAt).toLocaleString()}</p>
                   {describe(seed).text && <p className="break-words">{describe(seed).text}</p>}
+                  {seed.note && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-ink-muted">Note: {seed.note}</p>}
                 </div>
                 {seed.url && (
                   <button

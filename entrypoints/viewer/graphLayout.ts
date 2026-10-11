@@ -9,7 +9,7 @@ export interface Point {
 }
 
 /** A web page with this many seeds or more gets a large tree in the graph (docs/SPEC.md, Forest viewer). */
-export const LARGE_TREE_MIN_SEEDS = 3;
+export const LARGE_TREE_MIN_SEEDS = 2;
 
 /**
  * The pages that get a large tree, as page address -> ids of that page's seeds.
@@ -48,10 +48,24 @@ export function clearSpotNear(start: Point, others: Point[], clearance: number):
   return start;
 }
 
-/** Where a large tree stands: near the middle of its seeds, without covering any seed in the graph. */
+/**
+ * Where a large tree stands: near the middle of its seeds, without covering any seed in the graph.
+ * 150 (was 95): a large tree is about 170 wide and 160 tall with its label, a seed about 130 by 95, so their
+ * centers must be roughly 130+ apart or the two boxes overlap.
+ */
 export function largeTreeSpot(mySeeds: Point[], allSeeds: Point[]): Point {
-  return clearSpotNear(middleOf(mySeeds), allSeeds, 95);
+  return clearSpotNear(middleOf(mySeeds), allSeeds, 150);
 }
+
+// Spacing numbers for the layout below. A seed node is 130 wide and about 95 tall (sprite plus a 2-line label),
+// a large tree about 170 by 160 (graph.css), so these are sized from the real node boxes.
+// Each "radius" is half the space a node keeps to itself; two nodes never get closer than their radii added up.
+const SEED_RADIUS = 85; // was 55: 55 was narrower than the 130 wide node, so neighbors overlapped
+const TREE_RADIUS = 110; // the invisible page point is where a large tree stands, and trees are bigger
+const PAGE_DISTANCE = 200; // was 110: SEED_RADIUS + TREE_RADIUS = 195, so seeds sit just outside the tree
+const PUSH = -700; // was -260: every node pushes every other node away; stronger means roomier overall
+const CENTER_PULL = 0.02; // was 0.04: a gentler pull to the middle, so the push can spread things out
+const START_RING = 130; // was 60: new seeds start this far from their page point
 
 interface SimNode extends SimulationNodeDatum {
   id: string;
@@ -61,7 +75,7 @@ interface SimNode extends SimulationNodeDatum {
  * Gives a spot to every seed that does not have one yet, and returns only those new spots.
  * Seeds that already have a spot (in `known`) stay exactly where they are: the user placed them.
  *
- * How: a d3-force simulation, run instantly (300 steps) instead of animated. Nodes push each other apart, and
+ * How: a d3-force simulation, run instantly (400 steps) instead of animated. Nodes push each other apart, and
  * each seed is tied by a spring to an invisible point for its web page, so seeds from one page end up in a ring
  * around that point. That point is where the page's large tree stands.
  */
@@ -84,7 +98,7 @@ export function layoutNewSeeds(seeds: Seed[], known: Map<string, Point>): Map<st
     const page = seed.url ? pages.get(seed.url) : undefined;
     if (page?.x !== undefined && page.y !== undefined) {
       const angle = i * 2.4;
-      return { id: seed.id, x: page.x + Math.cos(angle) * 60, y: page.y + Math.sin(angle) * 60 };
+      return { id: seed.id, x: page.x + Math.cos(angle) * START_RING, y: page.y + Math.sin(angle) * START_RING };
     }
     return { id: seed.id }; // d3 picks a starting spot
   });
@@ -92,16 +106,21 @@ export function layoutNewSeeds(seeds: Seed[], known: Map<string, Point>): Map<st
   const links = seeds.filter((s) => s.url).map((s) => ({ source: s.id, target: 'page:' + s.url }));
 
   const simulation = forceSimulation<SimNode>([...nodes, ...pages.values()])
-    .force('push', forceManyBody().strength(-260))
-    .force('space', forceCollide(55))
-    .force('page', forceLink<SimNode, { source: string; target: string }>(links).id((n) => n.id).distance(110).strength(0.6))
-    .force('x', forceX(0).strength(0.04))
-    .force('y', forceY(0).strength(0.04))
+    .force('push', forceManyBody().strength(PUSH))
+    .force('space', forceCollide<SimNode>((n) => (n.id.startsWith('page:') ? TREE_RADIUS : SEED_RADIUS)))
+    .force('page', forceLink<SimNode, { source: string; target: string }>(links).id((n) => n.id).distance(PAGE_DISTANCE).strength(0.5))
+    .force('x', forceX(0).strength(CENTER_PULL))
+    .force('y', forceY(0).strength(CENTER_PULL))
     .stop();
-  simulation.tick(300);
+  simulation.tick(400); // a few more steps than before (300) because the nodes now travel farther to settle
 
   for (const node of nodes) {
     if (!known.has(node.id)) fresh.set(node.id, { x: Math.round(node.x ?? 0), y: Math.round(node.y ?? 0) });
   }
   return fresh;
+}
+
+/** A fresh layout for every seed, ignoring saved spots. Used by the "Spread out" button in the graph view. */
+export function layoutAllSeeds(seeds: Seed[]): Map<string, Point> {
+  return layoutNewSeeds(seeds, new Map());
 }

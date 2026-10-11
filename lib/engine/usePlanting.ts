@@ -1,18 +1,21 @@
 import { useCallback, useEffect } from 'react';
-import { deleteSeed, getSeed, saveSeed, type Seed, type SpriteType } from '@/lib/storage';
+import { browser } from 'wxt/browser';
+import { deleteSeed, getSeed, getSettings, saveFruit, saveSeed, type Seed, type SpriteType } from '@/lib/storage';
+import { TEXT_ONLY_SPRITES, spriteColorKey, spriteLabel, useThemeId } from '@/lib/theme';
 import { buildQuoteAnchor } from './anchor';
 import { startDigging, startPlanting } from './capture';
 import { highlightIdAtPoint } from './highlights';
 import { placeMarker } from './placeMarker';
+import { appleFruitKey, recallQuestion } from './recall';
 import type { Tool } from './types';
 
 interface PlantingOptions {
   tool: Tool;
   spriteType: SpriteType;
-  /** A palette color id, for example 'green'. */
-  colorId: string;
   /** The forest new seeds go into. Nothing is saved until there is one. */
   forestId: string | null;
+  /** The size new sprites are planted at (1 is normal), chosen with - and + before planting. */
+  scale: number;
   /** True for events that started inside our own toolbar, which the page tools must ignore. */
   isInsideUi(target: EventTarget | null): boolean;
   /** Called with a short message for the user, such as "Highlight saved". */
@@ -23,10 +26,11 @@ interface PlantingOptions {
 
 /**
  * Turns mouse activity on the page into saved seeds: drag over text to highlight, click to place a marker,
- * and with the shovel, click to remove. The lily pad only goes on text
- * (it is quiz material), so with it a click does not place a marker. Returns `removeSeed` for the markers, which handle their own clicks.
+ * and with the shovel, click to remove. The lily pad and the apple only go on text (they are quiz material), so
+ * with them a click places nothing. Planting an apple also starts its active recall timer. Returns `removeSeed` for the markers, which handle their own clicks.
  */
-export function usePlanting({ tool, spriteType, colorId, forestId, isInsideUi, say, onCreated, onDeleted}: PlantingOptions): { removeSeed(seedId: string): Promise<void> } {
+export function usePlanting({ tool, spriteType, forestId, scale, isInsideUi, say, onCreated, onDeleted}: PlantingOptions): { removeSeed(seedId: string): Promise<void> } {
+  const themeId = useThemeId();
   const removeSeed = useCallback(
     async (seedId: string) => {
       const seed = await getSeed(seedId);
@@ -47,18 +51,26 @@ export function usePlanting({ tool, spriteType, colorId, forestId, isInsideUi, s
       onHighlight: async (range, text) => {
         const anchor = buildQuoteAnchor(range);
         if (!anchor) return say('Could not save that selection');
-        const seed = await saveSeed({ forestId, kind: 'highlight', spriteType, color: colorId, url: window.location.href, pageTitle: document.title, text, anchor });
+        // An apple asks its question after the active recall time (Settings). The background worker sets an alarm,
+        // because a timer in the page would be lost if the tab closed.
+        const nextReviewAt = spriteType === 'fruitsprout' ? Date.now() + (await getSettings()).reviewMinutes * 60_000 : null;
+        const seed = await saveSeed({ forestId, kind: 'highlight', spriteType, color: spriteColorKey(spriteType), url: window.location.href, pageTitle: document.title, text, anchor, nextReviewAt, scale });
+        if (nextReviewAt) {
+          // Its question is made now, while the paragraph is on screen: that paragraph with the highlight blanked out.
+          await saveFruit({ forestId, color: appleFruitKey(seed.id), questions: [recallQuestion(range, text, seed.id)] });
+          void browser.runtime.sendMessage({ type: 'forest:schedule-review', seedId: seed.id, when: nextReviewAt });
+        }
         onCreated(seed);
-        say('Highlight saved');
+        say(nextReviewAt ? 'Apple planted: it will quiz you later' : 'Highlight saved');
       },
       onPlace: async ({ clientX, clientY, target }) => {
-        if (spriteType === 'lilypad') return say('Lily pads go on text: drag over a sentence');
-        const seed = await placeMarker({ forestId, spriteType, colorId, clientX, clientY, target });
+        if (TEXT_ONLY_SPRITES.includes(spriteType)) return say(`${spriteLabel(spriteType, themeId)}s go on text: drag over a sentence`);
+        const seed = await placeMarker({ forestId, spriteType, clientX, clientY, target, scale });
         onCreated(seed);
         say('Marker placed');
       },
     });
-  }, [tool, spriteType, colorId, forestId, isInsideUi, onCreated, removeSeed, say]);
+  }, [tool, spriteType, forestId, scale, isInsideUi, onCreated, removeSeed, say, themeId]);
 
   return { removeSeed };
 }

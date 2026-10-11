@@ -26,7 +26,7 @@ export function Pond({ count, color, at, results }: PondProps) {
       <div className="absolute inset-x-0 bottom-4 flex">
         {Array.from({ length: count }, (_, i) => (
           <div key={i} className="flex flex-1 flex-col items-center gap-1">
-            <SpriteIcon type="lilypad" size={i === at ? 60 : 48} color={color} />
+            <SpriteIcon type="lilypad" size={i === at ? 60 : 48} />
             <span className="h-4 text-xs font-bold">{results[i] === true ? '✓' : results[i] === false ? '✗' : ''}</span>
           </div>
         ))}

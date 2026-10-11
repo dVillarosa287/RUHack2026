@@ -1,6 +1,6 @@
 // Draws highlights with the CSS Custom Highlight API, so no page text is wrapped in new elements.
-import type { Seed } from '@/lib/storage';
-import { COLORS, colorHex } from '@/lib/theme';
+import type { Seed, SpriteType } from '@/lib/storage';
+import { SPRITE_ORDER, colorHex, spriteColorHex, watchThemeId } from '@/lib/theme';
 import { resolveQuote } from './anchor';
 import { buildTextIndex } from './textIndex';
 
@@ -14,30 +14,58 @@ const painted = new Map<string, Range>();
 let stylesReady = false;
 let flashRule: CSSStyleRule | null = null;
 let flashFrame = 0;
+/** Replaces the CSS of the sheet that holds the highlight colors (set once the sheet exists). */
+let setColorCss: ((css: string) => void) | null = null;
+let themeId: string | undefined;
 
-const nameFor = (colorId: string) => `forest-${colorId}`;
+/**
+ * One highlight name per sprite and growth stage, such as `forest-owl` or `forest-fruitsprout-tree`. The names
+ * never change with the theme, so a theme change only rewrites the colors in the style sheet, not the highlights.
+ */
+const nameFor = (type: SpriteType, grown: boolean) => `forest-${type}${grown ? '-tree' : ''}`;
 
-/** Adds CSS to the page and returns its style sheet, so a rule can be changed later. */
-function addStyles(css: string): CSSStyleSheet | null {
+/** Every sprite (taken from the theme, so new sprites such as the house are included), sprout and grown. */
+function allKinds(): { type: SpriteType; grown: boolean }[] {
+  return SPRITE_ORDER.flatMap((type) => [false, true].map((grown) => ({ type, grown })));
+}
+
+/**
+ * The CSS for every highlight color in the current theme. The highlights live in the web page's own document, not
+ * in our Shadow DOM, so our CSS variables do not reach them: the exact codes are written in instead.
+ */
+function colorCss(): string {
+  return allKinds()
+    .map(({ type, grown }) => `::highlight(${nameFor(type, grown)}) { background-color: ${spriteColorHex(type, grown, themeId)}99; }`)
+    .join('\n');
+}
+
+/** Adds CSS to the page. Returns its style sheet (so a rule can be changed later) and a way to replace all of it. */
+function addStyles(css: string): { sheet: CSSStyleSheet | null; replace(css: string): void } {
   try {
     const sheet = new CSSStyleSheet();
     sheet.replaceSync(css);
     document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
-    return sheet;
+    return { sheet, replace: (next) => sheet.replaceSync(next) };
   } catch {
     const style = document.createElement('style');
     style.textContent = css;
     document.head.appendChild(style);
-    return style.sheet;
+    return { sheet: style.sheet, replace: (next) => void (style.textContent = next) };
   }
 }
 
 function ensureStyles() {
   if (stylesReady) return;
-  addStyles(COLORS.map((c) => `::highlight(${nameFor(c.id)}) { background-color: ${c.hex}99; }`).join('\n'));
+  setColorCss = addStyles(colorCss()).replace;
   // Its own sheet: the fade changes this one rule on every frame, because ::highlight cannot be animated by CSS.
-  flashRule = (addStyles(`::highlight(${FLASH_NAME}) { background-color: ${flashColor(FLASH_ALPHA)}; }`)?.cssRules[0] as CSSStyleRule) ?? null;
+  flashRule = (addStyles(`::highlight(${FLASH_NAME}) { background-color: ${flashColor(FLASH_ALPHA)}; }`).sheet?.cssRules[0] as CSSStyleRule) ?? null;
   stylesReady = true;
+  // Recolor every highlight when the user picks another theme (in any tab). Only the colors change.
+  watchThemeId((id) => {
+    if (id === themeId) return;
+    themeId = id;
+    setColorCss?.(colorCss());
+  });
 }
 
 /** The jump color (palette orange) at an alpha from 0 to 255. */
@@ -50,19 +78,22 @@ export function paintHighlights(seeds: Seed[]): Set<string> {
   if (!('highlights' in CSS)) return new Set();
   ensureStyles();
   const index = buildTextIndex();
-  const byColor = new Map<string, Range[]>();
+  const byName = new Map<string, Range[]>();
   painted.clear();
   for (const seed of seeds) {
     if (seed.kind !== 'highlight' || !seed.anchor?.quote) continue;
     const range = resolveQuote(index, seed.anchor);
     if (!range) continue;
     painted.set(seed.id, range);
-    byColor.set(seed.color, [...(byColor.get(seed.color) ?? []), range]);
+    // The color comes from the sprite (and whether it has grown) in the current theme, not from the seed's old picked color.
+    const name = nameFor(seed.spriteType, seed.growth === 'tree');
+    byName.set(name, [...(byName.get(name) ?? []), range]);
   }
-  for (const color of COLORS) {
-    const ranges = byColor.get(color.id);
-    if (ranges) CSS.highlights.set(nameFor(color.id), new Highlight(...ranges));
-    else CSS.highlights.delete(nameFor(color.id));
+  for (const { type, grown } of allKinds()) {
+    const name = nameFor(type, grown);
+    const ranges = byName.get(name);
+    if (ranges) CSS.highlights.set(name, new Highlight(...ranges));
+    else CSS.highlights.delete(name);
   }
   return new Set(painted.keys());
 }

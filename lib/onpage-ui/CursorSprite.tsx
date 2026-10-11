@@ -5,10 +5,10 @@ import { SpriteIcon } from '@/lib/theme/SpriteIcon';
 interface CursorSpriteProps {
   /** The sprite to show on the mouse, or null for none. */
   type: SpriteType | null;
-  /** A palette color id, for example 'green'. */
-  color: string;
   /** True while a sprite is being dragged off the toolbar: it then shows over the toolbar too. */
   showOverUi: boolean;
+  /** The size the sprite will be planted at (1 is normal), so - and + show here before planting. */
+  scale: number;
   isInsideUi(target: EventTarget | null): boolean;
 }
 
@@ -19,7 +19,7 @@ const SIZE = 38;
  * `.fo-cursor-sprite` in toolbar.css), so it looks like the user is carrying it onto the page without hiding the spot. It ignores the mouse, so clicks go straight through to the page. It follows with a direct style change
  * instead of React state, so it does not redraw on every mouse move.
  */
-export function CursorSprite({ type, color, showOverUi, isInsideUi }: CursorSpriteProps) {
+export function CursorSprite({ type, showOverUi, scale, isInsideUi }: CursorSpriteProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export function CursorSprite({ type, color, showOverUi, isInsideUi }: CursorSpri
   if (!type) return null;
   return (
     <div ref={ref} className="fo-cursor-sprite" aria-hidden="true">
-      <SpriteIcon type={type} size={SIZE} color={color} />
+      <SpriteIcon type={type} size={SIZE * scale} />
     </div>
   );
 }

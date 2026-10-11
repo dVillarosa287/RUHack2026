@@ -20,7 +20,7 @@ import {
 import { addRoot, deleteRoot, getFolders, getForest, getRoots, getSeedsForForest, saveSeed, updateSeed, type Folder, type Root, type Seed, type SpriteType } from '@/lib/storage';
 import { ForestHeader } from './ForestHeader';
 import { NODE_TYPES, type GraphNode, type LargeTreeNodeType, type SeedNodeType } from './GraphNodes';
-import { clearSpotNear, largeTreePages, largeTreeSpot, layoutNewSeeds, type Point } from './graphLayout';
+import { clearSpotNear, largeTreePages, largeTreeSpot, layoutAllSeeds, layoutNewSeeds, type Point } from './graphLayout';
 import { NewNoteForm } from './NewNoteForm';
 import { NodeDetail } from './NodeDetail';
 import { forestHref } from './route';
@@ -52,10 +52,16 @@ export function GraphView({ forestId }: { forestId: string }) {
   );
 }
 
+/**
+ * The nodes a right-button drag moves together. From a seed: the seed and the seeds rooted to it.
+ * From a large tree: the tree and all of its seeds (its trunk lines), so the whole page's cluster moves at once.
+ */
 function connectedNodeIds(startId: string, edges: Edge[]): Set<string> {
   const connected = new Set([startId]);
+  const fromTree = startId.startsWith('tree:');
   for (const edge of edges) {
-    if (!edge.id.startsWith('root:')) continue;
+    const follow = edge.id.startsWith('root:') || (fromTree && edge.id.startsWith('trunk:'));
+    if (!follow) continue;
     const neighbor = edge.source === startId ? edge.target : edge.target === startId ? edge.source : null;
     if (neighbor) {
       connected.add(neighbor);
@@ -75,7 +81,7 @@ function hoverNeighborhood(hoveredId: string, edges: Edge[]): Set<string> {
 }
 
 function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; seeds: Seed[]; roots: Root[]; folders: Folder[] }) {
-  const { screenToFlowPosition, setNodes: setFlowNodes } = useReactFlow();
+  const { screenToFlowPosition, setNodes: setFlowNodes, fitView } = useReactFlow();
   const box = useRef<HTMLDivElement>(null);
   // Spots the layout gave this visit, kept until storage has them, so a seed is only laid out once.
   const placed = useRef(new Map<string, Point>());
@@ -206,11 +212,13 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
   }, []);
 
   // A root is drawn by dragging from one seed's dot to another seed. One root per pair, whichever way it was drawn.
+  // Drawing a root that already exists removes it instead, so the same gesture toggles a connection on and off.
   const onConnect = useCallback(
     (c: Connection) => {
       if (c.source === c.target) return;
-      const exists = roots.some((r) => (r.fromSeedId === c.source && r.toSeedId === c.target) || (r.fromSeedId === c.target && r.toSeedId === c.source));
-      if (!exists) void addRoot({ forestId, fromSeedId: c.source, toSeedId: c.target, source: 'manual', reason: '' });
+      const existing = roots.find((r) => (r.fromSeedId === c.source && r.toSeedId === c.target) || (r.fromSeedId === c.target && r.toSeedId === c.source));
+      if (existing) void deleteRoot(existing.id);
+      else void addRoot({ forestId, fromSeedId: c.source, toSeedId: c.target, source: 'manual', reason: '' });
     },
     [roots, forestId],
   );
@@ -225,6 +233,22 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
   }, []);
 
   const closeDetail = () => setFlowNodes((nds) => nds.map((n) => (n.selected ? { ...n, selected: false } : n)));
+
+  // "Spread out": lay out every seed again from scratch (not only the ones without a spot), save the new spots,
+  // move the nodes now, and zoom so everything is in view. Large trees are not saved, so they are placed again here.
+  function spreadOut() {
+    const fresh = layoutAllSeeds(seeds);
+    for (const [id, spot] of fresh) void updateSeed(id, { graphX: spot.x, graphY: spot.y }).catch(() => {});
+    const trees = largeTreePages(seeds);
+    setNodes((current) =>
+      current.map((n) => {
+        if (n.type === 'seed') return { ...n, position: fresh.get(n.id) ?? n.position };
+        const mine = (trees.get(n.id.slice('tree:'.length)) ?? []).map((id) => fresh.get(id)).filter((p): p is Point => !!p);
+        return { ...n, position: largeTreeSpot(mine, [...fresh.values()]) };
+      }),
+    );
+    setTimeout(() => void fitView({ padding: 0.2, maxZoom: 1.2, duration: 400 }), 50);
+  }
 
   // A text note is planted in the middle of what the user is looking at, in the nearest free spot.
   async function plantNote(note: { spriteType: SpriteType; color: string; text: string }) {
@@ -289,15 +313,24 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
             {writingNote ? (
               <NewNoteForm onPlant={(note) => void plantNote(note)} onCancel={() => setWritingNote(false)} />
             ) : (
-              <button className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink shadow-md shadow-drop hover:bg-primary-strong" onClick={() => setWritingNote(true)}>
-                + Text note
-              </button>
+              <div className="flex gap-2">
+                <button className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink shadow-md shadow-drop hover:bg-primary-strong" onClick={() => setWritingNote(true)}>
+                  + Text note
+                </button>
+                <button
+                  className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink shadow-md shadow-drop hover:bg-primary-strong"
+                  title="Arrange every node again with more room between them. This moves nodes you placed yourself."
+                  onClick={spreadOut}
+                >
+                  Spread out
+                </button>
+              </div>
             )}
           </Panel>
           {seeds.length === 0 ? (
             <Panel position="top-center" className="rounded-lg bg-surface px-3 py-2 text-sm text-ink-muted">Nothing planted yet. Plant seeds on a web page, or add a text note.</Panel>
           ) : (
-            <Panel position="bottom-center" className="rounded-lg bg-surface px-3 py-1 text-xs text-ink-muted">Drag from a sprite's dot to another sprite to grow a root. Click a root and press Delete to remove it.</Panel>
+            <Panel position="bottom-center" className="rounded-lg bg-surface px-3 py-1 text-xs text-ink-muted">Drag from a sprite's dot to another sprite to grow a root. Drag it again, or click it and press Delete, to remove it.</Panel>
           )}
         </ReactFlow>
       </div>

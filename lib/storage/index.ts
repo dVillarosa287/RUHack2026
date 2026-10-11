@@ -23,6 +23,7 @@ const DEFAULT_SETTINGS: Settings = {
   theme: DEFAULT_THEME_ID, // Vibrant Jungle; the themes are in lib/theme/themes.ts
   geminiKey: '',
   autoConnections: true,
+  reviewMinutes: 5,
 };
 
 // ---------- small helpers ----------
@@ -173,6 +174,15 @@ export async function addRoot(input: Omit<Root, 'id'>): Promise<Root> {
 
 export async function deleteRoot(id: string): Promise<void> {
   await browser.storage.local.remove(PREFIX.root + id);
+}
+
+/**
+ * Apples (fruit sprouts) whose time is up and whose question has not been answered yet, in every forest,
+ * oldest first. An apple's `nextReviewAt` is cleared once its question is answered.
+ */
+export async function getDueReviews(now = Date.now()): Promise<Seed[]> {
+  const seeds = await listRecords<Seed>(PREFIX.seed);
+  return seeds.filter((s) => s.spriteType === 'fruitsprout' && s.nextReviewAt !== null && s.nextReviewAt <= now).sort((a, b) => (a.nextReviewAt ?? 0) - (b.nextReviewAt ?? 0));
 }
 
 // ---------- fruits (quizzes) ----------

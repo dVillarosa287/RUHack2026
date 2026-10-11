@@ -84,6 +84,36 @@ Entry format:
 
 ### On-page UI and art notes
 
+- [Oct 11] (Teobobeo99)
+  - Did: - and + now size only the sprite on the mouse (the one about to be planted), not every sprite on the page (user's request). `App.tsx` `plantScale` goes to `CursorSprite`, `usePlanting`, `useDropSprite` and `placeMarker`, which save it as the new optional `Seed.scale`; `MarkerLayer` draws each sprite at `seed.scale ?? 1`. The status line says "Sprite size 130%".
+  - Others can use / need to know: with no sprite picked, - and + go to the website. The size stays for the next plantings until changed. Tested in Chromium (10 checks, incl. reload).
+  - Need from someone else: the team to confirm `Seed.scale` (`BACKLOG.md` D8).
+
+- [Oct 11] (Teobobeo99)
+  - Did: house sprite (toolbar's empty cell); the toolbar layout and hotbar now live in `lib/onpage-ui/hotbar.ts` (shared with `useKeybinds.ts`); each button shows its key number. Shortcuts moved to `lib/onpage-ui/useKeybinds.ts`: they only run while the toolbar is open, Ctrl+Z only takes the key when there is something to undo, and `isTypingInPage` skips everything in inputs, contenteditable, role=textbox, iframes (Google Docs) and designMode. `lib/engine/highlights.ts` recolors highlights live when the theme changes.
+  - Others can use / need to know: keys are 1 sprout, 2 mushroom, 3 house, 4 flower, 5 lily pad, 6 cat, 7 grass, 8 owl, 9 rock, 0 apple. Toolbar `aria-label`s stay English; the themed name is in `title`. Tested in Chromium (25 checks).
+  - Need from someone else: a person to try the shortcuts on Google Docs in Chrome.
+
+- [Oct 11] (Teobobeo99)
+  - Did: your own note on a seed. New `lib/onpage-ui/SeedNote.tsx` (`NoteEditor`, `NoteTooltip`); `App.tsx` opens the box after planting and saves through undo history; `MarkerLayer.tsx` adds `data-seed-id`, hover and click-to-edit; styles `.fo-note*` in `toolbar.css`. Not for the lily pad or the apple (`NO_NOTE_SPRITES`, `spriteTakesNote` in `lib/theme`).
+  - Others can use / need to know: the App's keydown check now uses `e.composedPath()[0]`, so typing in any input inside our Shadow DOM no longer triggers shortcuts. Tested in Chromium on a local page (box, focus, digits, Enter, Esc, click-away, hover, reload).
+  - Need from someone else: a person to check it in Chrome.
+
+- [Oct 11, 8:10 AM] (Teobobeo99)
+  - Did: removed the colored glow around sprites on the page (`--fo-sprite-glow` is gone from `toolbar.css` and `MarkerLayer`). Fixed the flicker when placing a sprite: `createLineBoil` (`lib/engine/lineBoil.ts`) now puts its first frame on right away, so restarting it never leaves the markers without a filter for a moment.
+  - Others can use / need to know: the scroll rail's white glow and the orange glow after jumping to a seed are unchanged. Tested in Chromium: 208 samples while placing sprites, none without the line boil filter.
+  - Need from someone else: David (line boil) to know about the one-line change in `lineBoil.ts`.
+
+- [Oct 11, 7:45 AM] (Teobobeo99)
+  - Did: colored sprout and mushroom art (`images/sprout.png`, `mushroom.png`; colors green darker and red). Apple question is no longer Gemini: when an apple is planted, `recallQuestion` (`lib/engine/recall.ts`) saves the paragraph with the highlight blanked out as a one-question Fruit (`appleFruitKey`); the pop-up has a typed answer and "Show answer". Every highlight now shows its sprite centered above it (`MarkerLayer`, `aboveHighlight`), not draggable. Hover tips fixed (they were hidden under the tile below) and added for the shovel and the tree (the tree's says "Forests").
+  - Others can use / need to know: `isCorrectAnswer` now ignores case, spacing and punctuation everywhere. Dragging over link text in Chrome drags the link instead of selecting it, so start a highlight on plain text. Tested in Chromium on Wikipedia with a 30-second timing.
+  - Need from someone else: a person to check it in Chrome.
+
+- [Oct 11, 7:00 AM] (Teobobeo99)
+  - Did: new colored art from `forest-images/` copied into `images/` (old white versions removed, except the sprout, mushroom and tree placeholders); new sprites `cat`, `grass`, `owl`, `rock`; no color picker: each sprite's color is in `SPRITES` (`lib/theme/index.ts`) and gives its highlight color and a faint marker glow. Toolbar: `TOOLBAR_LAYOUT` in `Toolbar.tsx` (two rows, gap before lily pad/apple). Apple = active recall: text only, alarm (`entrypoints/background.ts`), apple tree, `ReviewPopup.tsx` top left; "Active recall timing" in Settings.
+  - Others can use / need to know: `spriteColorKey`, `spriteColorVar`, `spriteColorHex`, `TEXT_ONLY_SPRITES` from `@/lib/theme`; `getDueReviews()` in storage; `SpriteIcon` has no `color` prop any more. The lily pad quiz is now one per forest (`QuizBar`). Data model additions in `BACKLOG.md` D8. `forest-images/` is still there as the artist's copy.
+  - Need from someone else: the team to OK D8; a person to check it in Chrome.
+
 - [Oct 11, 3:00 AM] (Teobobeo99)
   - Did: the sprite that follows the mouse after you pick one on the toolbar now sits a little to the top right of the cursor at 60% opacity (`.fo-cursor-sprite` in `lib/onpage-ui/toolbar.css`). It is the same copy that shows while you drag a sprite off the toolbar.
   - Others can use / need to know: where a sprite lands is unchanged (centered on the mouse); only the preview moved. Change `margin` and `opacity` in that rule to adjust. `docs/SPEC.md` and `BACKLOG.md` F4 updated.
@@ -211,6 +241,41 @@ Entry format:
 
 ### Viewer notes
 
+- [Oct 11] (Teobobeo99)
+  - Did: a web page now gets a large tree in the graph once it has 2 or more seeds in the forest, not 3 (`graphLayout.ts` `LARGE_TREE_MIN_SEEDS = 2`). All docs updated from "3 or more" to "2 or more".
+  - Others can use / need to know: compile and check:theme pass; not yet checked in Chrome.
+  - Need from someone else: nothing.
+
+- [Oct 11] (Teobobeo99)
+  - Did: right-button dragging a large tree now moves the tree and all of its seeds together (`GraphView.tsx` `connectedNodeIds` follows trunk lines when the drag starts on a tree). Right-dragging a seed is unchanged (the seed and its directly rooted seeds). No physics; seeds' new spots are saved on release.
+  - Others can use / need to know: compile and check:theme pass; not yet checked in Chrome.
+  - Need from someone else: nothing.
+
+- [Oct 11] (Teobobeo99)
+  - Did: (1) the lily pad quiz can be remade with or without AI at any time (`QuizView.tsx`, a `Remake` panel; the kind is read from the question types). (2) Roomier graph layout (`graphLayout.ts`: bigger collision radius, push and link distance) and a "Spread out" button (`GraphView.tsx`, `layoutAllSeeds`) that re-places every node and overwrites dragged spots. (3) Notes show in `ForestList.tsx` ("Note: …") and are editable in `NodeDetail.tsx` ("Your note").
+  - Others can use / need to know: existing forests keep their saved node spots until "Spread out" is pressed. Tested in Chromium with a mocked Gemini reply (switch both ways, failure notice, no overlapping nodes after Spread out).
+  - Need from someone else: a person to check it in Chrome, and a real Gemini key test.
+
+- [Oct 11] (Teobobeo99)
+  - Did: a clicked (selected) sprite in the graph now gets a soft white glow and is slightly brighter, in place of the old green ring (`graph.css`, `.fo-seed-node.is-selected .fo-seed-sprite`, using `--fo-glow`).
+  - Others can use / need to know: still no ring on hover or selection. check:theme passes; not yet checked in Chrome.
+  - Need from someone else: nothing.
+
+- [Oct 11] (Teobobeo99)
+  - Did: removed the green ring around a selected (clicked) sprite in the graph too, so sprites never get a ring (`graph.css`). A selected sprite still opens the detail panel and shows its root dot at full strength.
+  - Others can use / need to know: do not add a ring back for hover or selection; the user asked for none. check:theme passes.
+  - Need from someone else: nothing.
+
+- [Oct 11] (Teobobeo99)
+  - Did: drawing a root between two seeds that already have one now removes that root, so the drag toggles a connection on and off (`GraphView.tsx` `onConnect`). The hint at the bottom of the graph says so.
+  - Others can use / need to know: either direction counts as the same root. Click and Delete still works too. Compiles; not yet checked in Chrome.
+  - Need from someone else: nothing.
+
+- [Oct 11] (Teobobeo99)
+  - Did: removed the green ring around a hovered sprite in the graph; hover now only brightens it and fades the unconnected nodes (`graph.css`). The ring on a clicked (selected) sprite is unchanged.
+  - Others can use / need to know: nothing new. check:theme passes.
+  - Need from someone else: nothing.
+
 - [Oct 11, after 4:45 AM] (Teobobeo99)
   - Did: Obsidian-style hover focus in the graph. Hovering a node keeps it and its directly joined nodes (roots and large-tree lines) bright, lights those lines in the accent color, and fades the rest (`GraphView.tsx` `hoverNeighborhood`, `shownNodes`/`shownEdges`; styles at the end of `graph.css`).
   - Others can use / need to know: only display classes `fo-hovered`/`fo-lit`/`fo-dim` are added, so node and edge state is unchanged. `npm run compile` currently fails only in `NodeDetail.tsx` (`Screenshot` not imported), from the screenshot work in progress, not from this.
@@ -248,7 +313,7 @@ Entry format:
 
 - [Oct 10, 9:00 PM] (Teobobeo99)
   - Did: docs only. Added the "large tree" idea (A6) to `docs/SPEC.md`, `BACKLOG.md`, the Stage 2 checklist and the graph view row in `docs/DIVIDING_WORK.md`; nothing is built.
-  - Others can use / need to know: group the forest's seeds by `url`; for each url with 3 or more seeds draw a larger `tree` node near them with subtle lines. It is worked out each time, not stored, so no data model change. Assumed to live in the graph view only; ask the user if unsure.
+  - Others can use / need to know: group the forest's seeds by `url`; for each url with 2 or more seeds draw a larger `tree` node near them with subtle lines. It is worked out each time, not stored, so no data model change. Assumed to live in the graph view only; ask the user if unsure.
   - Need from someone else: nothing
 - [Oct 10, 8:00 PM] (Teobobeo99)
   - Did: split the viewer. `route.ts` lists the pages (`#/forest/<id>/graph` and `#/settings` are placeholders). `ForestView` is only the layout, with `ForestHeader` (room for buttons on the right) and `ForestList`.
@@ -276,6 +341,16 @@ Entry format:
   - Need from someone else: nothing
 
 ### Data, AI and integration notes
+
+- [Oct 11] (Teobobeo99)
+  - Did: per-theme sprites. `themes.ts`: each theme has `sprites` (exact highlight colors from the user) and emits `--sprite-<type>` vars. `lib/theme/themeId.ts`: `useThemeId`, `watchThemeId`. `index.ts`: `spriteLabel`, `spriteImageUrl`/`spriteColorHex` take a themeId, `MINIMAL_ART` table. `SpriteIcon`, `ForestIcon`, `ShovelIcon` follow the theme by themselves. `wxt.config.ts` publishes `minimal-icons/*.png` as `sprites/minimal/`. Added `'house'` to `SpriteType` (`BACKLOG.md` D8).
+  - Others can use / need to know: show sprite names with `spriteLabel(type, useThemeId())`, not `SPRITES[type].label`. `spriteColorKey` now returns the sprite name (`'owl'`), not a palette key. `minimal-icons/uncolored-{diamond,hexagon,check}.png` are stand-ins drawn by the agent; replace them with real art under the same names.
+  - Need from someone else: real diamond, hexagon and check art from the artist.
+
+- [Oct 11] (Teobobeo99)
+  - Did: added optional `Seed.note` (the user's own words about a seed) in `lib/storage/types.ts`. Additive only; old seeds have none. Saved with `updateSeed(id, { note })`; an empty note saves `undefined`.
+  - Others can use / need to know: recorded in `BACKLOG.md` D8 for the team to confirm.
+  - Need from someone else: the team to confirm the field.
 
 - [Oct 11, 6:20 AM] (Teobobeo99)
   - Did: "Vibrant Jungle" (`jungle`) is the default theme for new installs: `DEFAULT_SETTINGS.theme` in `lib/storage/index.ts` now uses `DEFAULT_THEME_ID` from `lib/theme/themes.ts` (which already pointed at jungle), so the two cannot disagree again.
@@ -402,8 +477,9 @@ Goal: it looks and feels like a forest.
 
 - [ ] [UI] Rectangular toolbar with the sprite icons (sprout, lily pad, mushroom, flower, apple tree) (in progress: toolbar shows all five sprites as real art, tinted in the chosen color; the final look is still to do, and a person needs to check it in Chrome)
 - [x] [UI] ~~Recent sprites row~~ removed by the user to shorten the toolbar (`Settings.recentSprites` is no longer written)
-- [ ] [UI] Color palette under the toolbar (in progress: the eight colors are on the toolbar and work; styling is basic)
-- [ ] [UI] On highlight, the sprite appears at the highlight for about a second, then fades
+- [x] [UI] ~~Color palette under the toolbar~~ removed by the user (2026-10-11): each sprite has its own color
+- [ ] [UI] Your own note on a seed: a text box opens right after planting any sprite except the lily pad and the apple; Enter saves, Esc skips, clicking away saves; hovering the sprite shows the note and clicking it edits it (`SeedNote.tsx`) (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [UI] Every highlight shows its sprite centered above it (changed from "appears for a second, then fades") (in progress: built and tested by the agent in Chromium on Wikipedia, still needs a check in Chrome by a person)
 - [ ] [UI] Create a new forest from the forest drop-down's last option, "+ Create new forest" (replaces the button, `BACKLOG.md` A7) (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [UI] Scroll rail on the right edge with a marker for every annotation on the page; a slim bar whose sprites are larger than the bar and stick out past it (`BACKLOG.md` A8) (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [UI] Clicking a rail marker scrolls to that annotation (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
@@ -412,7 +488,10 @@ Goal: it looks and feels like a forest.
 - [ ] [UI] Forest icons (in progress: forests use the sprite art as their icon; no dedicated forest art, and the user cannot choose one yet)
 - [ ] [UI] Forest color palette (in progress: the palette is now the team's blue background and light text with three tones per color, `docs/THEME.md`; a person needs to check it in Chrome)
 - [ ] [UI] Theme picker (the "custom style" dropdown), see `BACKLOG.md` A5
-- [ ] [UI] Sprites tinted with the palette colors (line art from `images/`, see `docs/THEME.md`) (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [All] Sprites follow the theme: Night Forest and Jungle keep the art with their own highlight colors; Minimal Biome swaps in shapes (star, post-its, check, exclamation, diamond, hexagon, triangle, circle, cloud, X) from `minimal-icons/`; live switch with no reload (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person; diamond, hexagon and check are stand-in art)
+- [ ] [UI] House sprite in the toolbar's empty slot, light brown highlight (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [UI] Keyboard shortcuts: 1-9 and 0 pick the hotbar, Ctrl+Z / Ctrl+Shift+Z, Esc, - and + (they size only the sprite about to be planted; planted sprites keep their own size, `Seed.scale`); only while the toolbar is open and never while the user types on the site (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [UI] Sprites drawn with the new colored art, each with its own highlight color and a faint glow on the page (in progress: built and tested by the agent in Chromium on Wikipedia, still needs a check in Chrome by a person)
 
 ### Viewer
 
@@ -420,7 +499,8 @@ Goal: it looks and feels like a forest.
 - [ ] [Viewer] User can choose each forest's icon (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [Viewer] Double-click a forest to open it (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [Viewer] Graph view: every annotation is a sprite node (React Flow), opened by a "Graph view" button at the top right of the forest page; nodes spread out automatically once (d3-force), then keep the positions the user gives them (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
-- [ ] [Viewer] Large trees in the graph: a web page with 3 or more seeds in the forest gets a bigger tree node near its seeds, joined to them by very subtle lines; worked out from the seeds, not saved (`BACKLOG.md` A6) (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [Viewer] Roomier graph layout and a "Spread out" button that lays out every node again and saves the spots (`graphLayout.ts`, `GraphView.tsx`) (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [Viewer] Large trees in the graph: a web page with 2 or more seeds in the forest gets a bigger tree node near its seeds, joined to them by very subtle lines; worked out from the seeds, not saved (`BACKLOG.md` A6) (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [Viewer] Roots: drag from one node to another to connect them (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [Viewer] Left sidebar with the folders inside the forest (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [Viewer] Text notes as nodes not tied to a web page, using the same sprites (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
@@ -446,6 +526,7 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 - [ ] [Data] Gemini writes the questions: one request per quiz, JSON output, sent from the background worker (in progress: built in `lib/ai/gemini.ts`; tested with a fake key and a made-up reply; needs the "Test key" button pressed with a real key in Chrome)
 - [ ] [Data] Fill-in-the-blank fallback that needs no AI (in progress: built in `lib/ai/fillBlank.ts`, used by the quiz screen, tested in Chromium; needs a check in Chrome)
 - [ ] [Data] Lily pad seeds of the same color in the same forest form one quiz (a fruit) (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [Viewer] A lily pad quiz can always be remade either way: "Remake with Gemini" and "Remake without AI" under every quiz, which says which kind it is (`QuizView.tsx`) (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [Viewer] Quiz screen: lily pads in a row (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [UI] Frog art (sitting, jumping, talking) and the hop animation from pad to pad (in progress: sitting and jumping frog and the hop are in, tested in Chromium; the talking frog art is still missing)
 - [ ] [Engine] The lily pad only goes on text (drag over a sentence); a click with it places nothing (in progress: built and tested by the agent in Chromium on Wikipedia, still needs a check in Chrome by a person)
@@ -460,9 +541,9 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 
 ### Priority 3: Fruit sprout five-minute review (see `BACKLOG.md` D1)
 
-- [ ] [Data] Alarm set with `chrome.alarms` five minutes after planting
-- [ ] [Engine] Review prompt appears on the page
-- [ ] [Data] 30-second demo setting so judges can see it
+- [ ] [Data] Alarm set with `chrome.alarms` after the active recall time (5 minutes by default); the apple grows into an apple tree (in progress: built and tested by the agent in Chromium on Wikipedia with a 30-second timing, still needs a check in Chrome by a person)
+- [ ] [Engine] Review prompt appears on the page (top-left pop-up, one fill-in-the-blank question from the paragraph, no Gemini) (in progress: built and tested by the agent in Chromium on Wikipedia with a 30-second timing, still needs a check in Chrome by a person)
+- [ ] [Data] 30-second demo setting so judges can see it ("Active recall timing" on the Settings page) (in progress: built and tested by the agent in Chromium on Wikipedia with a 30-second timing, still needs a check in Chrome by a person)
 
 ### Priority 4: Connections
 

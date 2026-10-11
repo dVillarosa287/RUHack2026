@@ -108,8 +108,11 @@ export function fillBlankQuestions(seeds: Seed[]): Question[] {
   return seeds.map((seed) => fillBlankQuestion(seed, seeds)).filter((q): q is Question => q !== null);
 }
 
-/** Whether a typed or picked answer is right. Case, accents of quotes and surrounding punctuation do not matter. */
+/**
+ * Whether a typed or picked answer is right. Case, punctuation and spacing do not matter anywhere, because an answer
+ * can be a whole highlighted phrase ("light-dependent reactions" and "Light dependent reactions" are both right).
+ */
 export function isCorrectAnswer(question: Question, given: string): boolean {
-  const tidy = (s: string) => plain(s).trim().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+  const tidy = (s: string) => plain(s).replace(/[^\p{L}\p{N}]+/gu, '');
   return tidy(given) !== '' && tidy(given) === tidy(question.answer);
 }

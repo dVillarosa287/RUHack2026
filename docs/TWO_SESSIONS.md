@@ -30,7 +30,7 @@ Not in either lane (ask the user first, or leave to the person who already has i
 
 ### Viewer lane
 
-1. **Graph view with large trees** (React Flow plus `d3-force`). The hardest job. The "Graph view" button goes in `ForestHeader`'s `actions`. Large trees: a page with 3 or more seeds in the forest gets a bigger tree node near its seeds with very subtle lines to them, worked out from the seeds each time (A6).
+1. **Graph view with large trees** (React Flow plus `d3-force`). The hardest job. The "Graph view" button goes in `ForestHeader`'s `actions`. Large trees: a page with 2 or more seeds in the forest gets a bigger tree node near its seeds with very subtle lines to them, worked out from the seeds each time (A6).
 2. **Roots**: drag from one node to another.
 3. **Folder sidebar** and folders, in the marked spot in `ForestView.tsx`.
 4. **Forest grid**: drag forests and remember positions (`Forest.x`, `Forest.y`), choose icons, double-click to open.

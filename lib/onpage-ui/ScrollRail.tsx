@@ -112,7 +112,7 @@ export function ScrollRail({ seeds, onJump }: ScrollRailProps) {
       <div ref={thumbRef} className="fo-rail-thumb" />
       {stops.map(({ seed, fraction }) => (
         <button key={seed.id} className="fo-rail-stop" style={{ top: `${fraction * 100}%` }} title={seed.text || seed.pageTitle} onClick={() => jump(seed.id)}>
-          <SpriteIcon type={seed.spriteType} size={SPRITE_SIZE} color={seed.color} grown={seed.growth === 'tree'} />
+          <SpriteIcon type={seed.spriteType} size={SPRITE_SIZE} grown={seed.growth === 'tree'} />
         </button>
       ))}
       {animalAt !== null && (

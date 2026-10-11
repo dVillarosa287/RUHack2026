@@ -1,6 +1,8 @@
 // The data model from CLAUDE.md. Changing these shapes affects every role, so confirm with the team first.
 
-export type SpriteType = 'sprout' | 'lilypad' | 'mushroom' | 'flower' | 'fruitsprout';
+// sprout and mushroom are placeholders for now; cat, grass, owl and rock were added 2026-10-11 (user's request), and
+// house later that day. Each theme draws and colors them its own way (lib/theme).
+export type SpriteType = 'sprout' | 'lilypad' | 'mushroom' | 'flower' | 'fruitsprout' | 'cat' | 'grass' | 'owl' | 'rock' | 'house';
 export type Growth = 'sprout' | 'tree';
 export type SeedKind = 'highlight' | 'sprite' | 'link' | 'note' | 'media';
 
@@ -46,6 +48,8 @@ export interface Seed {
   text: string;
   /** Optional label shown for this seed in the forest graph. */
   displayText?: string;
+  /** The user's own words about this seed, typed after planting it. Not for the lily pad or the apple (NO_NOTE_SPRITES). */
+  note?: string;
   linkTarget: string | null;
   anchor: Anchor | null;
   nextReviewAt: number | null;
@@ -53,11 +57,13 @@ export interface Seed {
   /** Where the seed's node sits in the forest's graph view. Not set until it has been placed or dragged. */
   graphX?: number;
   graphY?: number;
+  /** How big its sprite is drawn on the page: 1 is normal, 0.5 to 2. Chosen with - and + before planting. Old seeds have none (normal). */
+  scale?: number;
 }
 
 /** What a caller passes to saveSeed. The storage module fills in the rest. */
 export type SeedInput = Pick<Seed, 'forestId' | 'kind' | 'spriteType' | 'color' | 'url' | 'pageTitle' | 'text'> &
-  Partial<Pick<Seed, 'folderId' | 'growth' | 'linkTarget' | 'anchor' | 'nextReviewAt'>>;
+  Partial<Pick<Seed, 'folderId' | 'growth' | 'linkTarget' | 'anchor' | 'nextReviewAt' | 'scale'>>;
 
 export interface Root {
   id: string;
@@ -104,4 +110,6 @@ export interface Settings {
   theme: string;
   geminiKey: string;
   autoConnections: boolean;
+  /** Minutes after planting an apple (fruit sprout) before it grows into an apple tree and asks its question. */
+  reviewMinutes: number;
 }

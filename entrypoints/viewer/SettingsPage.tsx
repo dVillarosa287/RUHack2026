@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { GEMINI_MODEL, testGeminiKey } from "@/lib/ai";
 import { getSettings, updateSettings } from "@/lib/storage";
-import { THEMES } from "@/lib/theme";
+import { DEFAULT_THEME_ID, THEMES } from "@/lib/theme";
 
 /**
  * Settings: where the user pastes their Gemini API key and selects their theme.
  */
 export function SettingsPage() {
   const [key, setKey] = useState<string | null>(null); // null while loading
-  const [theme, setTheme] = useState<string>("jungle");
+  const [theme, setTheme] = useState<string>(DEFAULT_THEME_ID);
+  // Minutes before a planted apple grows into an apple tree and asks its question.
+  const [reviewMinutes, setReviewMinutes] = useState(5);
   const [show, setShow] = useState(false);
   const [saved, setSaved] = useState(false);
   // The result of the "Test key" button: null before it is pressed.
@@ -18,6 +20,7 @@ export function SettingsPage() {
     void getSettings().then((s) => {
       setKey(s.geminiKey);
       if (s.theme) setTheme(s.theme);
+      setReviewMinutes(s.reviewMinutes);
     });
   }, []);
 
@@ -30,9 +33,9 @@ export function SettingsPage() {
 
   async function handleThemeChange(newTheme: string) {
     setTheme(newTheme);
+    // Saving is all it takes: watchTheme (viewer main.tsx, and the on-page UI in every tab) and useThemeId (sprite
+    // art and names) listen for this change and re-theme everything live.
     await updateSettings({ theme: newTheme });
-    // Optional: Update document attribute if your app applies themes dynamically this way
-    document.documentElement.setAttribute("data-theme", newTheme);
   }
 
   /** Sends one tiny request to Gemini with the saved key, so the user knows the key and the model name work. */
@@ -159,6 +162,43 @@ export function SettingsPage() {
           </select>
         </div>
       </section>
+
+      <br />
+
+      <section className="space-y-3 rounded-xl border-2 border-edge bg-surface p-5">
+        <h2 className="text-lg font-semibold">Active recall timing</h2>
+        <p className="text-sm text-ink-muted">
+          How long after you plant an apple it grows into an apple tree and asks you one question. A new time is used
+          for apples planted after you change it.
+        </p>
+        <select
+          className="rounded-lg border border-edge bg-surface-alt px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary"
+          value={reviewMinutes}
+          onChange={(e) => {
+            const minutes = Number(e.target.value);
+            setReviewMinutes(minutes);
+            void updateSettings({ reviewMinutes: minutes });
+          }}
+        >
+          {REVIEW_CHOICES.map(([minutes, label]) => (
+            <option key={minutes} value={minutes}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </section>
     </>
   );
 }
+
+/** The choices for the active recall time, in minutes. 30 seconds is for showing it in a demo. */
+const REVIEW_CHOICES: [number, string][] = [
+  [0.5, "30 seconds (demo)"],
+  [1, "1 minute"],
+  [2, "2 minutes"],
+  [5, "5 minutes"],
+  [10, "10 minutes"],
+  [30, "30 minutes"],
+  [60, "1 hour"],
+  [1440, "1 day"],
+];

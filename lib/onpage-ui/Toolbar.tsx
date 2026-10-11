@@ -1,16 +1,16 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Tool } from '@/lib/engine';
 import type { Forest, SpriteType } from '@/lib/storage';
-import { COLORS, SPRITES, SPRITE_ORDER } from '@/lib/theme';
+import { SPRITES, spriteLabel, useThemeId } from '@/lib/theme';
 import { ShovelIcon } from '@/lib/theme/ShovelIcon';
 import { ForestIcon, SpriteIcon } from '@/lib/theme/SpriteIcon';
+import { HOTBAR, TOOLBAR_LAYOUT, hotbarKey } from './hotbar';
 
 interface ToolbarProps {
   forests: Forest[];
   currentForestId: string | null;
   tool: Tool;
   spriteType: SpriteType;
-  colorId: string;
   status: string;
   /** Distance in px from the top and right edges of the window. */
   position: { top: number; right: number };
@@ -23,7 +23,6 @@ interface ToolbarProps {
   /** The user pressed a sprite button. If they then move the mouse, they are carrying the sprite onto the page. */
   onSpritePointerDown(type: SpriteType, e: ReactPointerEvent<HTMLElement>): void;
   onPickShovel(): void;
-  onPickColor(id: string): void;
   onSwitchForest(id: string): void;
   onCreateForest(name: string): void;
   /** The tree button: open the current forest in the viewer. */
@@ -50,6 +49,8 @@ function clampToWindow(position: { top: number; right: number }, el: HTMLElement
 }
 
 export function Toolbar(props: ToolbarProps) {
+  // The sprites' names follow the theme (the Minimal theme calls the flower a star, and so on).
+  const themeId = useThemeId();
   const [naming, setNaming] = useState(false);
   const [draftName, setDraftName] = useState('');
   const rootRef = useRef<HTMLDivElement>(null);
@@ -163,23 +164,37 @@ export function Toolbar(props: ToolbarProps) {
 
         <div className="fo-panel">
           <div className="fo-tools">
-            {SPRITE_ORDER.map((type) => (
-              <button key={type} className="fo-tool" title={type === 'lilypad' ? undefined : SPRITES[type].label} data-tip={type === 'lilypad' ? 'Quiz generation' : undefined} aria-pressed={props.tool === 'plant' && props.spriteType === type} onClick={() => props.onPickSprite(type)} onPointerDown={(e) => props.onSpritePointerDown(type, e)}>
-                <SpriteIcon type={type} size={28} color={props.colorId} />
-              </button>
-            ))}
-            <button className="fo-tool" title="Shovel: click a highlight or marker to remove it" aria-pressed={props.tool === 'dig'} onClick={props.onPickShovel}>
-              <ShovelIcon size={28} />
-            </button>
-
-            <div className="fo-colors">
-              {COLORS.map((c) => (
-                <button key={c.id} className="fo-swatch" title={c.name} aria-label={c.name} aria-pressed={props.colorId === c.id} style={{ background: `var(--c-${c.id})` }} onClick={() => props.onPickColor(c.id)} />
-              ))}
-            </div>
-            <button className="fo-tool" title="Open this forest" aria-label="Open this forest" onClick={props.onOpenCurrentForest}>
-              <ForestIcon icon="tree" size={28} />
-            </button>
+            {TOOLBAR_LAYOUT.flatMap((row, r) =>
+              row.map((slot, c) => {
+                // Where each button sits is in hotbar.ts. Grid column 5 is the slight gap before the lily pad and apple column.
+                const place = { gridRow: r + 1, gridColumn: c < 4 ? c + 1 : c + 2 };
+                if (slot === null) return null;
+                if (slot === 'shovel') {
+                  return (
+                    <button key={slot} style={place} className="fo-tool fo-tip-end" aria-label="Shovel" data-tip="Remove a sprite" aria-pressed={props.tool === 'dig'} onClick={props.onPickShovel}>
+                      <ShovelIcon size={28} />
+                    </button>
+                  );
+                }
+                if (slot === 'forest') {
+                  return (
+                    <button key={slot} style={place} className="fo-tool fo-tip-end" aria-label="Open this forest" data-tip="Forests" onClick={props.onOpenCurrentForest}>
+                      <ForestIcon icon="tree" size={28} />
+                    </button>
+                  );
+                }
+                const tip = SPRITES[slot].tip;
+                const name = spriteLabel(slot, themeId);
+                const key = hotbarKey(HOTBAR.indexOf(slot));
+                // aria-label stays the plain English sprite name whatever the theme; the themed name is the hover text.
+                return (
+                  <button key={slot} style={place} className="fo-tool" title={tip ? undefined : key ? `${name} (${key})` : name} aria-label={SPRITES[slot].label} data-tip={tip ? `${name}: ${tip}` : undefined} aria-pressed={props.tool === 'plant' && props.spriteType === slot} onClick={() => props.onPickSprite(slot)} onPointerDown={(e) => props.onSpritePointerDown(slot, e)}>
+                    <SpriteIcon type={slot} size={28} />
+                    {key && <span className="fo-key" aria-hidden="true">{key}</span>}
+                  </button>
+                );
+              }),
+            )}
           </div>
 
           <div className="fo-status" role="status">{props.status}</div>

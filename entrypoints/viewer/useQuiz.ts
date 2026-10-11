@@ -9,7 +9,7 @@ const MAX_QUESTIONS = 10;
 export type QuizMaker = 'gemini' | 'fill-blank';
 
 export interface QuizData {
-  /** The lily pads of this color, in planting order. */
+  /** The forest's lily pads, in planting order. */
   pads: Seed[];
   /** The saved quiz, with questions about pads that were removed since taken out. Null if there is none yet. */
   fruit: Fruit | null;
@@ -22,7 +22,7 @@ export interface QuizData {
  */
 export function useQuiz(forestId: string, color: string) {
   const data = useStored<QuizData>(async () => {
-    const pads = quizPads(await getSeedsForForest(forestId), color);
+    const pads = quizPads(await getSeedsForForest(forestId));
     const ids = new Set(pads.map((p) => p.id));
     const saved = (await getFruits(forestId)).filter((f) => f.color === color).pop();
     const questions = saved?.questions.filter((q) => ids.has(q.seedId)) ?? [];

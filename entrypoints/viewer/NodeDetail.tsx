@@ -7,12 +7,11 @@ import {
   type Root,
   type Seed,
 } from "@/lib/storage";
-import { SPRITES } from "@/lib/theme";
+import { spriteLabel, spriteTakesNote, useThemeId } from "@/lib/theme";
 import { ShovelIcon } from "@/lib/theme/ShovelIcon";
 import { SpriteIcon } from "@/lib/theme/SpriteIcon";
 import { openOnPage } from "./ForestList";
 import { seedLabel } from "./GraphNodes";
-import { ColorPicker } from "./Pickers";
 
 const KIND_LABEL: Record<Seed["kind"], string> = {
   highlight: "Highlight",
@@ -50,7 +49,12 @@ export function NodeDetail({
 }) {
   // A note's text is edited here and saved when the box loses focus, not on every key press.
   const [draft, setDraft] = useState(seed.text);
+  const themeId = useThemeId(); // sprite names follow the theme
   const [displayDraft, setDisplayDraft] = useState(seed.displayText ?? "");
+  // The user's own note on a seed planted on a page (not on lily pads or apples). Also saved on blur.
+  const [noteDraft, setNoteDraft] = useState(seed.note ?? "");
+  useEffect(() => setNoteDraft(seed.note ?? ""), [seed.id, seed.note]);
+  const takesNote = seed.kind !== "note" && spriteTakesNote(seed.spriteType);
   useEffect(() => setDraft(seed.text), [seed.id, seed.text]);
   useEffect(
     () => setDisplayDraft(seed.displayText ?? ""),
@@ -67,11 +71,10 @@ export function NodeDetail({
         <SpriteIcon
           type={seed.spriteType}
           size={56}
-          color={seed.color}
           grown={seed.growth === "tree"}
         />
         <div className="min-w-0 flex-1">
-          <p className="font-semibold">{SPRITES[seed.spriteType].label}</p>
+          <p className="font-semibold">{spriteLabel(seed.spriteType, themeId)}</p>
           <p className="text-xs uppercase tracking-wide text-ink-muted">
             {KIND_LABEL[seed.kind]} ·{" "}
             {new Date(seed.createdAt).toLocaleDateString()}
@@ -93,7 +96,7 @@ export function NodeDetail({
         <input
           className="w-full rounded-lg border border-edge bg-surface-alt p-2 text-sm"
           value={displayDraft}
-          placeholder={seedLabel({ ...seed, displayText: undefined })}
+          placeholder={seedLabel({ ...seed, displayText: undefined }, themeId)}
           onChange={(e) => setDisplayDraft(e.target.value)}
           onBlur={() => {
             const next = displayDraft.trim();
@@ -125,6 +128,25 @@ export function NodeDetail({
         </p>
       )}
 
+      {takesNote && (
+        <label className="block">
+          <span className="mb-1 block text-xs uppercase tracking-wide text-ink-muted">
+            Your note
+          </span>
+          <textarea
+            className="h-20 w-full rounded-lg border border-edge bg-surface-alt p-2 text-sm"
+            value={noteDraft}
+            placeholder="Add your own note…"
+            onChange={(e) => setNoteDraft(e.target.value)}
+            onBlur={() => {
+              const next = noteDraft.trim();
+              if (next !== (seed.note ?? ""))
+                void updateSeed(seed.id, { note: next || undefined });
+            }}
+          />
+        </label>
+      )}
+
       {seed.url && (
         <div className="space-y-2">
           <p className="truncate text-sm font-semibold" title={seed.pageTitle}>
@@ -148,16 +170,6 @@ export function NodeDetail({
           Open link: {seed.linkTarget}
         </a>
       )}
-
-      <div>
-        <p className="mb-1 text-xs uppercase tracking-wide text-ink-muted">
-          Color
-        </p>
-        <ColorPicker
-          value={seed.color}
-          onChange={(color) => void updateSeed(seed.id, { color })}
-        />
-      </div>
 
       <label className="block">
         <span className="mb-1 block text-xs uppercase tracking-wide text-ink-muted">
@@ -199,10 +211,9 @@ export function NodeDetail({
                 <SpriteIcon
                   type={other.spriteType}
                   size={20}
-                  color={other.color}
                 />
                 <span className="min-w-0 flex-1 truncate">
-                  {seedLabel(other)}
+                  {seedLabel(other, themeId)}
                 </span>
                 <button
                   className="rounded px-1.5 text-ink-muted hover:bg-danger-soft"

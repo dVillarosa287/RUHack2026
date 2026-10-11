@@ -69,6 +69,9 @@ export function createLineBoil(elements: Iterable<HTMLElement>, root: Document |
   }
 
   let frame = 0;
+  // The first frame goes on right away. Without it, each restart (every time a sprite is placed) left the markers
+  // with no filter for up to one tick, and they flickered.
+  for (const element of targetElements) element.style.filter = `url(#${key}-0)`;
   let lastTick = performance.now();
   let animationFrame = 0;
   const tick = (now: number) => {

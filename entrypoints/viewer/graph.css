@@ -49,8 +49,13 @@
   padding: 4px;
 }
 
+/* A clicked (selected) sprite gets a soft white glow and is a little brighter. No ring: the user asked for none.
+   Made with filters only (docs/THEME.md rule 4); --fo-glow is the palette's white. */
+.fo-seed-sprite {
+  transition: filter 0.2s ease;
+}
 .fo-seed-node.is-selected .fo-seed-sprite {
-  box-shadow: 0 0 0 3px var(--fo-primary);
+  filter: brightness(1.15) drop-shadow(0 0 4px var(--fo-glow)) drop-shadow(0 0 10px var(--fo-glow));
 }
 
 .fo-seed-label,
@@ -126,7 +131,8 @@
 }
 
 /* Hover focus, like Obsidian's graph: hover a node and it plus its direct neighbors stay bright, the lines
-   touching it light up in the accent color, and everything else fades almost away. GraphView.tsx adds
+   touching it light up in the accent color, and everything else fades almost away. No ring is drawn around the hovered
+   sprite; it is only brightened. GraphView.tsx adds
    fo-hovered / fo-lit / fo-dim while a node is hovered. Fading uses filters (docs/THEME.md rule 4); the
    transitions make it ease in and out instead of snapping. Only filter is animated, never transform, so
    dragging stays instant. */
@@ -138,9 +144,6 @@
 }
 .fo-graph .react-flow__node.fo-hovered {
   filter: brightness(1.12);
-}
-.fo-graph .react-flow__node.fo-hovered .fo-seed-sprite {
-  box-shadow: 0 0 0 3px var(--fo-accent);
 }
 .fo-graph .react-flow__node.fo-hovered .fo-seed-label,
 .fo-graph .react-flow__node.fo-lit .fo-seed-label {

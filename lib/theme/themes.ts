@@ -1,5 +1,6 @@
 // Theme definitions. This is the ONLY file in the project allowed to contain color codes.
 // Rules and how to add a theme: docs/THEME.md.
+import type { SpriteType } from "@/lib/storage/types";
 
 export interface ThemeColor {
   id: string;
@@ -25,6 +26,17 @@ export interface ThemeDefinition {
    * Components use them as var(--fo-<name>).
    */
   tokens: Record<string, string>;
+  /**
+   * Each sprite's own highlight color in this theme (exact codes chosen by the user), and its color once grown
+   * if that is different. CSS reads them as var(--sprite-<type>) and var(--sprite-<type>-grown).
+   */
+  sprites: Record<SpriteType, SpriteColors>;
+}
+
+export interface SpriteColors {
+  color: string;
+  /** Only if the grown form (growth `tree`) has another color. */
+  grownColor?: string;
 }
 
 type Tone = "normal" | "light" | "dark";
@@ -134,6 +146,18 @@ export const FOREST_THEME: ThemeDefinition = {
     // The faint glow around sprites
     glow: color("foreground", "light"),
   },
+  sprites: {
+    fruitsprout: { color: "#FF0000", grownColor: "#DD8800" }, // apple, then apple tree
+    cat: { color: "#CC66FF" },
+    flower: { color: "#FFEE88" },
+    grass: { color: "#00B487" },
+    lilypad: { color: "#00B487" },
+    owl: { color: "#DD8800" },
+    rock: { color: "#D3D3F3" },
+    sprout: { color: "#00B487" }, // the grown tree stays green
+    mushroom: { color: "#FF0000" },
+    house: { color: "#C49A6C" }, // light brown
+  },
 };
 
 export const JUNGLE_THEME: ThemeDefinition = {
@@ -237,6 +261,18 @@ export const JUNGLE_THEME: ThemeDefinition = {
     // The faint glow around sprites
     glow: color("foreground", "light"),
   },
+  sprites: {
+    fruitsprout: { color: "#FF4433", grownColor: "#DD5500" }, // apple, then apple tree
+    cat: { color: "#BB33AA" },
+    flower: { color: "#FF9933" },
+    grass: { color: "#66CC22" },
+    lilypad: { color: "#66CC22" },
+    owl: { color: "#FF7700" },
+    rock: { color: "#FFFFA3" },
+    sprout: { color: "#66CC22" },
+    mushroom: { color: "#FF4433" },
+    house: { color: "#D2A679" }, // light brown
+  },
 };
 
 export const MINIMAL_THEME: ThemeDefinition = {
@@ -333,6 +369,19 @@ export const MINIMAL_THEME: ThemeDefinition = {
     shadow: color("background", "dark"),
     glow: color("foreground", "light"),
   },
+  // In this theme every sprite is drawn as a simple shape (lib/theme/index.ts, MINIMAL_ART); the comment names it.
+  sprites: {
+    sprout: { color: "#9582A0", grownColor: "#8AA08A" }, // star, grown: cloud
+    mushroom: { color: "#B08080" }, // red post-it
+    house: { color: "#8AA08A" }, // shown as the check in Minimal, so it takes the check color from the user's list
+    flower: { color: "#A8A078" }, // yellow post-it
+    cat: { color: "#8290A0" }, // blue post-it
+    grass: { color: "#B08080" }, // exclamation
+    owl: { color: "#82A0A0" }, // diamond
+    rock: { color: "#A08298" }, // hexagon
+    lilypad: { color: "#B09078" }, // triangle
+    fruitsprout: { color: "#9582A0" }, // circle (grown: circle too)
+  },
 };
 
 export const THEMES: Record<string, ThemeDefinition> = {
@@ -348,9 +397,8 @@ export function getTheme(id: string): ThemeDefinition {
   return THEMES[id] ?? THEMES[DEFAULT_THEME_ID]!;
 }
 
-/** The CSS that defines a theme's palette and tokens as custom properties on `selector`. */
+/** The CSS that defines a theme's palette, tokens and sprite colors as custom properties on `selector`. */
 export function themeToCss(theme: ThemeDefinition, selector: string): string {
-  console.log(theme.id);
   const lines = [
     ...[...theme.palette, ...theme.base].flatMap((c) => [
       `  --c-${c.id}: ${c.hex};`,
@@ -360,7 +408,11 @@ export function themeToCss(theme: ThemeDefinition, selector: string): string {
     ...Object.entries(theme.tokens).map(
       ([name, value]) => `  --fo-${name}: ${value};`,
     ),
+    // Every sprite gets both names; a sprite that does not change color when grown repeats its color.
+    ...Object.entries(theme.sprites).flatMap(([type, c]) => [
+      `  --sprite-${type}: ${c.color};`,
+      `  --sprite-${type}-grown: ${c.grownColor ?? c.color};`,
+    ]),
   ];
-  console.table(lines);
   return `${selector} {\n${lines.join("\n")}\n}`;
 }

@@ -2,9 +2,22 @@
 import { browser } from 'wxt/browser';
 import type { AiReply, AiRequest } from '@/lib/ai';
 import { quizQuestions, testGemini } from '@/lib/ai/gemini';
-import { getSettings, getToolbarState, updateToolbarState } from '@/lib/storage';
+import { getSeed, getSettings, getToolbarState, updateSeed, updateToolbarState } from '@/lib/storage';
+
+/** Alarms named "review:<seed id>" are an apple's active recall timer. */
+const REVIEW_ALARM = 'review:';
 
 export default defineBackground(() => {
+  // The apple's time is up: it grows into an apple tree. Open pages see the change and show its question
+  // (lib/onpage-ui/ReviewPopup.tsx).
+  browser.alarms.onAlarm.addListener((alarm) => {
+    if (!alarm.name.startsWith(REVIEW_ALARM)) return;
+    void (async () => {
+      const seed = await getSeed(alarm.name.slice(REVIEW_ALARM.length));
+      if (seed && seed.nextReviewAt !== null && seed.growth !== 'tree') await updateSeed(seed.id, { growth: 'tree' });
+    })();
+  });
+
   // Clicking the extension's icon in Chrome's toolbar opens or closes the on-page toolbar.
   // The state is saved, so the toolbar then follows you into every tab and stays until you close it.
   browser.action.onClicked.addListener(async () => {
@@ -19,6 +32,13 @@ export default defineBackground(() => {
     if (type === 'forest:open-viewer') {
       const hash = forestId ? `#/forest/${forestId}` : '';
       void browser.tabs.create({ url: browser.runtime.getURL('/viewer.html' as never) + hash });
+      return false;
+    }
+
+    // An apple was planted: wake up when its active recall time is up. chrome.alarms survives this worker sleeping.
+    if (type === 'forest:schedule-review') {
+      const { seedId, when } = message as { seedId: string; when: number };
+      void browser.alarms.create(`${REVIEW_ALARM}${seedId}`, { when });
       return false;
     }
 

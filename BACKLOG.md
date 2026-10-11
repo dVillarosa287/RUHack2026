@@ -15,6 +15,10 @@ A well-known focus-timer app is already called Forest. Pick a distinct name befo
 
 Blocks: write-up and extension name in Wrap-up.
 
+### D8. Data model additions for the new sprites and active recall (team to confirm)
+
+Asked for by the user (2026-10-11): `SpriteType` has four new values (`cat`, `grass`, `owl`, `rock`), and `Settings` has `reviewMinutes` (the active recall time, default 5). `Seed.color` is no longer chosen by the user; it is set to the sprite's color key and nothing reads it. Also (2026-10-11, user's request): `SpriteType` has `house`, and `Seed` has an optional `scale` (the size its sprite was planted at, 0.5 to 2). And `Seed` has an optional `note` (the user's own words typed after planting; not for the lily pad or the apple). Tell the team; nothing existing was removed.
+
 ## Needs fixing
 
 Format:
@@ -68,14 +72,15 @@ Format:
 - Stage it would belong to: Stage 2 or later, after a second theme exists.
 - Also listed, with its dependencies, in `docs/DIVIDING_WORK.md`.
 - Update (2026-10-11): a second theme, "Vibrant Jungle", exists and is the default, and the Settings page has a theme dropdown. A picker on the toolbar is not built.
+- Update (2026-10-11, later): three themes (Night Forest, Vibrant Jungle, Minimal Biome). Sprite art and highlight colors now follow the theme; Minimal has its own shape icons (`docs/THEME.md`). Open: the user listed a "Question" color for Minimal (A8A078) with no icon or sprite; ask what it is for.
 
 ### A4. Growth from sprout to tree on page reload  [Data] (agent)
 - What: the decision is made (see `PROGRESS.md` Stage 3 priority 2) but nothing builds it yet. A `growth` field already exists on every seed and starts at `sprout`.
 - Why: it is the demo moment for growth.
 - Stage it would belong to: Stage 3 priority 2.
 
-### A6. Large tree for a page with 3 or more seeds  [Viewer] (user)
-- What: in the graph view, every web page that has 3 or more seeds in the forest gets a "large tree" node, placed fairly close to its seeds and joined to each by a very subtle line. Worked out from the seeds grouped by `url` each time the graph is drawn, not saved, so there is no data model change. Placeholder art: the `tree` sprite drawn larger.
+### A6. Large tree for a page with 2 or more seeds  [Viewer] (user)
+- What: in the graph view, every web page that has 2 or more seeds in the forest gets a "large tree" node, placed fairly close to its seeds and joined to each by a very subtle line. Worked out from the seeds grouped by `url` each time the graph is drawn, not saved, so there is no data model change. Placeholder art: the `tree` sprite drawn larger.
 - Why: shows at a glance which pages a forest is built from, and makes the graph look like a forest.
 - Stage it would belong to: Stage 2, part of the graph view job.
 - Open question: this assumes the large tree lives in the graph view. If the user meant something on the web page itself, ask before building.
