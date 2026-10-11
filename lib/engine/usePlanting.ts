@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { deleteSeed, saveSeed, type SpriteType } from '@/lib/storage';
+import { deleteSeed, getSeed, saveSeed, type Seed, type SpriteType } from '@/lib/storage';
 import { buildQuoteAnchor } from './anchor';
 import { startDigging, startPlanting } from './capture';
 import { highlightIdAtPoint } from './highlights';
@@ -17,19 +17,23 @@ interface PlantingOptions {
   isInsideUi(target: EventTarget | null): boolean;
   /** Called with a short message for the user, such as "Highlight saved". */
   say(message: string): void;
+  onCreated(seed: Seed): void;
+  onDeleted(seed: Seed): void;
 }
 
 /**
  * Turns mouse activity on the page into saved seeds: drag over text to highlight, click to place a marker,
  * and with the shovel, click to remove. Returns `removeSeed` for the markers, which handle their own clicks.
  */
-export function usePlanting({ tool, spriteType, colorId, forestId, isInsideUi, say }: PlantingOptions): { removeSeed(seedId: string): Promise<void> } {
+export function usePlanting({ tool, spriteType, colorId, forestId, isInsideUi, say, onCreated, onDeleted }: PlantingOptions): { removeSeed(seedId: string): Promise<void> } {
   const removeSeed = useCallback(
     async (seedId: string) => {
+      const seed = await getSeed(seedId);
       await deleteSeed(seedId);
+      if (seed) onDeleted(seed);
       say('Removed');
     },
-    [say],
+    [onDeleted, say],
   );
 
   useEffect(() => {
@@ -42,15 +46,17 @@ export function usePlanting({ tool, spriteType, colorId, forestId, isInsideUi, s
       onHighlight: async (range, text) => {
         const anchor = buildQuoteAnchor(range);
         if (!anchor) return say('Could not save that selection');
-        await saveSeed({ forestId, kind: 'highlight', spriteType, color: colorId, url: window.location.href, pageTitle: document.title, text, anchor });
+        const seed = await saveSeed({ forestId, kind: 'highlight', spriteType, color: colorId, url: window.location.href, pageTitle: document.title, text, anchor });
+        onCreated(seed);
         say('Highlight saved');
       },
       onPlace: async ({ clientX, clientY, target }) => {
-        await placeMarker({ forestId, spriteType, colorId, clientX, clientY, target });
+        const seed = await placeMarker({ forestId, spriteType, colorId, clientX, clientY, target });
+        onCreated(seed);
         say('Marker placed');
       },
     });
-  }, [tool, spriteType, colorId, forestId, isInsideUi, removeSeed, say]);
+  }, [tool, spriteType, colorId, forestId, isInsideUi, onCreated, removeSeed, say]);
 
   return { removeSeed };
 }

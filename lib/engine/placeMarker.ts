@@ -1,4 +1,4 @@
-import { saveSeed, type SpriteType } from '@/lib/storage';
+import { saveSeed, type Seed, type SpriteType } from '@/lib/storage';
 import { buildMarkerAnchor, nearbyText } from './anchor';
 
 interface Placement {
@@ -22,9 +22,9 @@ function linkAt(target: Element): HTMLAnchorElement | null {
  * Saves a sprite at a spot on the page. A click and a drop from the toolbar both end up here. On a link the
  * seed is a `link` seed: the user stays on the page, and the seed keeps the link's destination in `linkTarget`.
  */
-export async function placeMarker({ forestId, spriteType, colorId, clientX, clientY, target }: Placement): Promise<void> {
+export async function placeMarker({ forestId, spriteType, colorId, clientX, clientY, target }: Placement): Promise<Seed> {
   const link = linkAt(target);
-  await saveSeed({
+  return saveSeed({
     forestId,
     kind: link ? 'link' : 'sprite',
     spriteType,
