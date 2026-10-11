@@ -2,7 +2,7 @@
 import { browser } from 'wxt/browser';
 import type { AiReply, AiRequest } from '@/lib/ai';
 import { quizQuestions, testGemini } from '@/lib/ai/gemini';
-import { getScreenshot, getSettings, getToolbarState, updateToolbarState } from '@/lib/storage';
+import { getSettings, getToolbarState, updateToolbarState } from '@/lib/storage';
 
 export default defineBackground(() => {
   // Clicking the extension's icon in Chrome's toolbar opens or closes the on-page toolbar.
@@ -22,16 +22,6 @@ export default defineBackground(() => {
       return false;
     }
 
-    // The lily pad's screenshot: only the background worker may take a picture of the tab. The page crops it.
-    if (type === 'forest:capture-tab') {
-      const windowId = (_sender as { tab?: { windowId?: number } }).tab?.windowId;
-      browser.tabs
-        .captureVisibleTab(windowId ?? browser.windows.WINDOW_ID_CURRENT, { format: 'png' })
-        .then((value) => sendResponse({ ok: true, value }))
-        .catch((error: unknown) => sendResponse({ ok: false, error: `Could not take the screenshot: ${error instanceof Error ? error.message : String(error)}` }));
-      return true;
-    }
-
     // Gemini is only called from here, and only when the user asked for it.
     if (type === 'forest:ai-test' || type === 'forest:ai-quiz') {
       void answerAi(message as AiRequest).then(sendResponse);
@@ -48,9 +38,7 @@ async function answerAi(request: AiRequest): Promise<AiReply<unknown>> {
       await testGemini(geminiKey);
       return { ok: true, value: true };
     }
-    // The lily pads' screenshots are read here, so the viewer only has to send ids and text.
-    const sources = await Promise.all(request.sources.map(async (s) => ({ ...s, image: await getScreenshot(s.id) })));
-    return { ok: true, value: await quizQuestions(geminiKey, sources) };
+    return { ok: true, value: await quizQuestions(geminiKey, request.sources) };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) };
   }

@@ -27,7 +27,7 @@ HackRU project. A Chrome extension (Manifest V3) for annotating web pages for la
 ## Vocabulary (use these exact names in code and UI)
 
 - **Seed:** one saved annotation or node. Every annotation starts as a seed.
-- **Sprite:** the icon a seed is shown as. Types: `sprout` (general note or key idea), `lilypad` ("quiz me on this": a special sprite that takes a screenshot of a box the user drags; it cannot be moved, only shoveled), `mushroom` (confusing, come back to it), `flower` (definition or key term), `fruitsprout` (timed review, see below).
+- **Sprite:** the icon a seed is shown as. Types: `sprout` (general note or key idea), `lilypad` ("quiz me on this": it only goes on text, by dragging over it; a click does not place one), `mushroom` (confusing, come back to it), `flower` (definition or key term), `fruitsprout` (timed review, see below).
 - **Growth:** two stages, `sprout` then `tree`. A sprout becomes a tree when the user reloads the page. Only the sprout and the fruit sprout grow; the lily pad, mushroom and flower never change. Correct quiz answers never change a seed.
 - **Fruit sprout / fruit tree:** the fifth sprite. The user plants it over text. Five minutes later it grows into an apple tree and asks one question about that text, and the tree stays after the question. It is separate from the lily pad quiz. It is in the toolbar now as a placeholder, but the timer and the review are Stage 3 priority 3 only.
 - **Color:** picked from the palette, separate from sprite type. Groups seeds by topic inside a forest.
@@ -71,7 +71,6 @@ Reasons for each choice: `docs/SPEC.md` section 2.
 - **Folder:** id, forestId, name.
 - **Seed:** id, forestId, folderId, kind (`highlight`, `sprite`, `link`, `note`, `media`), spriteType, color, growth, url, pageTitle, text, linkTarget, anchor, nextReviewAt, createdAt. Allowed values: spriteType is `sprout`, `lilypad`, `mushroom`, `flower` or `fruitsprout`; growth is `sprout` or `tree`. Seeds also have optional graphX and graphY (the node's spot in the graph view). The source of truth is `lib/storage/types.ts`.
 - **Anchor:** the exact quoted text plus a few words before and after it; a selector for the nearest page element with an x and y offset inside it; scroll position as a percentage of page height.
-- **Screenshot:** a lily pad seed's picture, a JPEG data URL in its own record `shot:<seedId>` (`saveScreenshot`, `getScreenshot`). The seed itself is `kind: 'media'` with the text found inside the box. Added 2026-10-11 at the user's request; the existing shapes did not change.
 - **Root:** id, forestId, fromSeedId, toSeedId, source (`manual` or `ai`), reason.
 - **Fruit:** id, forestId, color, questions (seedId, type, prompt, choices, answer), createdAt.
 - **Settings:** currentForestId, the three most recent sprites, theme, Gemini API key, auto-connections on or off.

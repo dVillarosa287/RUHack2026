@@ -299,19 +299,6 @@
     font-family: "Crafty Girls", sans-serif;
 }
 
-/* Lily pads cannot be moved, only shoveled. */
-.fo-marker.fo-fixed:not(.fo-dig) {
-    cursor: default;
-}
-
-/* The box the user drags with the lily pad, to screenshot that part of the page. */
-.fo-area {
-  position: fixed;
-  border: 2px dashed var(--fo-primary);
-  border-radius: 4px;
-  pointer-events: none;
-}
-
 /* A copy of the chosen sprite that follows the mouse, a little to the top right of it and see-through, so the
    spot you are about to click stays visible. It ignores the mouse, so clicks reach the page. CursorSprite
    moves it on every mouse move. */

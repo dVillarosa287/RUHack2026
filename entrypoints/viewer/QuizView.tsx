@@ -3,7 +3,6 @@ import { isCorrectAnswer } from '@/lib/ai';
 import type { Question, Seed } from '@/lib/storage';
 import { COLORS } from '@/lib/theme';
 import { Pond } from './Pond';
-import { Screenshot } from './Screenshot';
 import { forestHref, settingsHref } from './route';
 import { useQuiz, type QuizMaker } from './useQuiz';
 
@@ -45,7 +44,7 @@ function MakeQuiz({ count, hasKey, making, onMake }: { count: number; hasKey: bo
   return (
     <section className="space-y-4 rounded-xl border-2 border-edge bg-surface p-5">
       <p>
-        {count} lily {count === 1 ? 'pad' : 'pads'} of this color. Each screenshot becomes a question (up to 10).
+        {count} lily {count === 1 ? 'pad' : 'pads'} of this color. Each one becomes a question (up to 10).
       </p>
       <div className="flex flex-wrap gap-2">
         <button className={mainButton} disabled={!hasKey || making !== null} onClick={() => onMake('gemini')}>
@@ -57,7 +56,7 @@ function MakeQuiz({ count, hasKey, making, onMake }: { count: number; hasKey: bo
       </div>
       <p className="text-xs text-ink-muted">
         {hasKey ? (
-          <>The Gemini option sends these lily pads' screenshots and text to Google to write the questions. Nothing is sent until you press it.</>
+          <>The Gemini option sends the text of these lily pads to Google to write the questions. Nothing is sent until you press it.</>
         ) : (
           <>
             To use Gemini, add your API key on the <a className="text-primary underline" href={settingsHref}>Settings page</a>. Without it the quiz is fill in the blank, made in your browser.
@@ -134,7 +133,7 @@ function PlayQuiz({ questions, pads, color, hasKey, onRemake }: PlayProps) {
             <button className={mainButton} onClick={restart}>Try again</button>
             <button className={button} onClick={onRemake}>{hasKey ? 'New questions from Gemini' : 'New questions'}</button>
           </div>
-          {hasKey && <p className="text-xs text-ink-muted">New questions from Gemini sends these lily pads' screenshots and text to Google.</p>}
+          {hasKey && <p className="text-xs text-ink-muted">New questions from Gemini sends the text of these lily pads to Google.</p>}
         </section>
       ) : question ? (
         <section className="space-y-4 rounded-xl border-2 border-edge bg-surface p-5">
@@ -171,8 +170,6 @@ function PlayQuiz({ questions, pads, color, hasKey, onRemake }: PlayProps) {
             </form>
           )}
 
-          {/* The lily pad's screenshot is shown once answered, so it does not give the answer away. */}
-          {answered && question.seedId && <Screenshot seedId={question.seedId} className="max-h-64 max-w-full" />}
           {answered && (
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className={answered.right ? 'font-semibold text-primary' : ''}>

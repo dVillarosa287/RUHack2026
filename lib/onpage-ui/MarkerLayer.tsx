@@ -23,8 +23,7 @@ const HOLD_AFTER_DROP_MS = 1500;
  * right place when the page scrolls, resizes, reflows, or a section opens or closes.
  */
 export function MarkerLayer({ seeds, markerScale, digging, flashId, onDig, onMove }: MarkerLayerProps) {
-  // Lily pad screenshots (`media`) are drawn as markers too, at the corner of the box they were taken of.
-  const markers = useMemo(() => seeds.filter((s) => (s.kind === 'sprite' || s.kind === 'link' || s.kind === 'media') && s.anchor), [seeds]);
+  const markers = useMemo(() => seeds.filter((s) => (s.kind === 'sprite' || s.kind === 'link') && s.anchor), [seeds]);
   const elements = useRef(new Map<string, HTMLDivElement>());
   const trackers = useRef(new Map<string, { anchor: Anchor; tracker: MarkerTracker }>());
   // A marker being dragged, or just dropped and waiting for its new anchor to arrive from storage.
@@ -66,8 +65,7 @@ export function MarkerLayer({ seeds, markerScale, digging, flashId, onDig, onMov
   }, [markers]);
 
   const startDrag = (seed: Seed, e: ReactPointerEvent<HTMLDivElement>) => {
-    // Lily pads stay where their screenshot was taken: they can only be removed with the shovel.
-    if (digging || e.button !== 0 || seed.spriteType === 'lilypad') return;
+    if (digging || e.button !== 0) return;
     e.preventDefault();
     const el = e.currentTarget;
     const start = { x: e.clientX, y: e.clientY };
@@ -112,7 +110,7 @@ export function MarkerLayer({ seeds, markerScale, digging, flashId, onDig, onMov
             if (el) elements.current.set(seed.id, el);
             else elements.current.delete(seed.id);
           }}
-          className={`fo-marker${digging ? ' fo-dig' : ''}${seed.spriteType === 'lilypad' ? ' fo-fixed' : ''}${flashId === seed.id ? ' fo-flash' : ''}`}
+          className={`fo-marker${digging ? ' fo-dig' : ''}${flashId === seed.id ? ' fo-flash' : ''}`}
           style={{ visibility: 'hidden' }}
           title={seed.linkTarget ? `${seed.text} → ${seed.linkTarget}` : seed.text}
           onPointerDown={(e) => startDrag(seed, e)}

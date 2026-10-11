@@ -32,6 +32,11 @@ Entry format:
 
 ### Page engine notes
 
+- [Oct 11, 6:00 AM] (Teobobeo99)
+  - Did: removed the lily pad screenshot feature (user's request): `lib/engine/screenshot.ts`, `Screenshot.tsx`, `saveScreenshot`/`getScreenshot`, the `forest:capture-tab` message and `unlimitedStorage` are gone, and Gemini is text-only again. The lily pad now only highlights text: `usePlanting` ignores clicks with it and says "Lily pads go on text". The toolbar order and the "Quiz generation" tip stay.
+  - Others can use / need to know: the note below (5:30 AM) is out of date. Any `media` lily pads made while testing screenshots are no longer drawn on pages. Tested in Chromium on Wikipedia.
+  - Need from someone else: a person to check it in Chrome.
+
 - [Oct 11, 5:30 AM] (Teobobeo99)
   - Did: the lily pad is now a screenshot tool (user's request). `lib/engine/screenshot.ts`: `startAreaSelect` (drag a box), `textInArea` (visible page text inside it), `captureArea` (asks the background worker for `captureVisibleTab`, crops to the box, JPEG at most 1000px wide). `usePlanting` uses it when the sprite is `lilypad`: hides our UI, captures, saves a `media` seed with the marker at the box's top-left corner, then `saveScreenshot`. Lily pad markers cannot be dragged (`MarkerLayer`). Toolbar order is sprout, apple, mushroom, flower, lily pad, shovel, with a "Quiz generation" tip on the lily pad.
   - Others can use / need to know: `getScreenshot(seedId)` from `@/lib/storage`; the viewer's `Screenshot` component shows one. Gemini now gets each lily pad's image plus its text. New permission `unlimitedStorage`; new record `shot:<id>` (`BACKLOG.md` D7, tell the team). Old lily pad highlights still work in quizzes. Tested in Chromium on Wikipedia with a stand-in for Gemini.
@@ -438,7 +443,7 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 - [ ] [Data] Lily pad seeds of the same color in the same forest form one quiz (a fruit) (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [Viewer] Quiz screen: lily pads in a row (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [UI] Frog art (sitting, jumping, talking) and the hop animation from pad to pad (in progress: sitting and jumping frog and the hop are in, tested in Chromium; the talking frog art is still missing)
-- [ ] [Engine] The lily pad takes a screenshot of a box the user drags, saved with the text inside it; lily pad markers cannot be moved, only shoveled (in progress: built and tested by the agent in Chromium on Wikipedia, still needs a check in Chrome by a person)
+- [ ] [Engine] The lily pad only goes on text (drag over a sentence); a click with it places nothing (in progress: built and tested by the agent in Chromium on Wikipedia, still needs a check in Chrome by a person)
 - [ ] [UI] Notice in the UI that AI features send saved text to Google (in progress: on the quiz start and results screens and the Settings page, tested in Chromium; needs a check in Chrome)
 
 ### Priority 2: Growth

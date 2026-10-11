@@ -4,7 +4,6 @@ export { flashHighlight, getHighlightRange, highlightIdAtPoint, paintHighlights 
 export { MarkerTracker } from './markers';
 export { placeMarker } from './placeMarker';
 export { createLineBoil } from './lineBoil';
-export { captureArea, startAreaSelect, textInArea, type Area } from './screenshot';
 export { scrollToHighlight, scrollToPageY } from './scroll';
 export { UI_HOST_TAG } from './textIndex';
 export type { Tool } from './types';

@@ -31,8 +31,7 @@ export default defineConfig({
   manifest: {
     name: 'Forest',
     description: 'Plant notes on any web page and watch them grow into a forest.',
-    // unlimitedStorage: lily pad screenshots would soon fill the normal 10 MB.
-    permissions: ['storage', 'alarms', 'unlimitedStorage'],
+    permissions: ['storage', 'alarms'],
     host_permissions: ['<all_urls>'],
     // An action with no popup lets background.ts react when the icon is clicked.
     action: { default_title: 'Forest: show or hide the toolbar' },

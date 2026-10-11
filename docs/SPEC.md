@@ -118,7 +118,7 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 ### Active recall
 
 - The user plants a fruit sprout over a segment of text they want to review. Five minutes later (the time passing, not a correct answer, is what makes it grow) the fruit sprout grows into an apple tree and the user gets a single question on the text. The tree stays as a fully grown apple tree after the question is answered. This is separate from the lily pad quiz below. (Stage 3)
-- The lily pad is a special sprite: with it the user drags a box over the page and that part of the screen is saved as a screenshot (a figure, a table, a passage), along with the page text inside the box. Lily pad seeds of the same color in the same forest form one quiz, and Gemini writes the questions from the screenshots. A lily pad marker sits at the top-left corner of its box and cannot be dragged; only the shovel removes it. Dragging a lily pad from the toolbar just picks it up. Hovering it in the toolbar shows "Quiz generation". (Stage 3, changed 2026-10-11 from "highlights marked with the lily pad")
+- The lily pad only goes on text: the user drags over a sentence to highlight it as quiz material. A click with the lily pad places nothing, and dragging it off the toolbar just picks it up. Lily pad seeds of the same color in the same forest form one quiz. Hovering the lily pad in the toolbar shows "Quiz generation". (Stage 3; a screenshot version was tried on 2026-10-11 and removed at the user's request)
 - The quiz is the "fruit" the forest produces. In the quiz screen the lily pads sit in a row and a frog jumps from pad to pad as the user moves to the next question. (Stage 3)
 - Gemini generates the questions. Fill-in-the-blank questions are the fallback: blank out a key term from the saved text, which needs no AI and works offline. (Stage 3)
 - Details decided for Stage 3 (2026-10-11, the user left these to the agent):
@@ -239,7 +239,7 @@ There are two kinds of quiz. A fruit sprout planted over text grows into an appl
 Different sprites stand for different kinds of notes. A proposed starting set:
 
 - **Sprout:** a general note or key idea. It grows into a tree when the page is reloaded.
-- **Lily pad:** "quiz me on this". It takes a screenshot of a box the user drags. Lily pad seeds of the same color in the same forest form a quiz.
+- **Lily pad:** "quiz me on this". It only goes on text. Lily pad seeds of the same color in the same forest form a quiz.
 - **Mushroom:** something confusing to come back to.
 - **Flower:** a definition or key term.
 - **Fruit sprout (`fruitsprout`):** text to review soon. Five minutes after planting it grows into an apple tree and asks one question about that text. The apple tree stays after the question. (The sprite is in the toolbar from Stage 1 as a placeholder; the timer and question are Stage 3.)

@@ -15,10 +15,6 @@ A well-known focus-timer app is already called Forest. Pick a distinct name befo
 
 Blocks: write-up and extension name in Wrap-up.
 
-### D7. New storage record for lily pad screenshots (team to confirm)
-
-The user asked for lily pads to take screenshots (2026-10-11). The picture is kept in a new record `shot:<seedId>` (a JPEG data URL), not in the `Seed`, so no existing shape changed. Lily pad seeds are `kind: 'media'`. The extension now asks for `unlimitedStorage`. Tell the team; if anyone objects, say so before more code depends on it.
-
 ## Needs fixing
 
 Format:
@@ -108,5 +104,6 @@ These are expected problems from SPEC section 6. Turn one into a "Needs fixing" 
 - A2. Graph node positions: approved. `Seed` has optional `graphX` and `graphY`. The graph spreads nodes out automatically once (d3-force), then keeps the positions the user gives them (2026-10-10).
 - D1. Active recall, how the five-minute review works: decided (2026-10-10). `fruitsprout` is the fifth toolbar sprite. It grows into an apple tree after five minutes, not because of a correct answer, and stays an apple tree after its question. Its review is one question, separate from the lily pad quiz (lily pads of one color in one forest). Only the sprout and the fruit sprout grow; the lily pad, mushroom and flower never change. The one-question review is stored as a `Fruit` with a single question, so no new data type is needed.
 - D2. Name of the general toolbar sprite: decided it is called "sprout" (2026-10-10). Growth has two stages, sprout then tree, and a sprout becomes a tree when the page is reloaded.
+- D7. Lily pad screenshots: tried and removed (2026-10-11). The user chose text-only lily pads instead, so there is no `shot:` record and no `unlimitedStorage` permission.
 - D5. Gemini model name: `gemini-3.8-flash`, chosen by the user (2026-10-11). It is set once as `GEMINI_MODEL` in `lib/ai/gemini.ts`. The Settings page's "Test key" button checks that the key and this name work.
 - D4. React and WXT, or the plain fallback: decided WXT with React (2026-10-10). The plain fallback is not used.
