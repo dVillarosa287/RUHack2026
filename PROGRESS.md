@@ -32,6 +32,11 @@ Entry format:
 
 ### Page engine notes
 
+- [Oct 10, 10:15 PM] (GitHub Copilot)
+  - Did: added guarded page keybinds in `lib/onpage-ui/App.tsx`: `1`-`5` select the visible sprite hotbar slots, Escape puts the tool down, minus/plus resize markers, and Ctrl/Cmd+Z plus Ctrl/Cmd+Shift+Z undo/redo seed create, delete and move actions. Marker rendering accepts the live size in `MarkerLayer.tsx`; seed restoration lives in `lib/storage/index.ts`.
+  - Others can use / need to know: keybinds return immediately for input, textarea, select and contenteditable targets, so websites in editing mode keep their shortcuts. `npm run compile`, `npm run build`, and `npm run check:theme` pass.
+  - Need from someone else: test shortcuts in Chrome on a normal page and in an editable site such as Google Docs.
+
 - [Oct 10, 11:00 PM] (Teobobeo99)
   - Did: F2 (jump highlight holds 2.5s, fades over 1.5s: `flashHighlight`, `JUMP_HIGHLIGHT_MS`), F3 (sprites centered on the mouse: `MarkerTracker` returns the middle of the text line), drop from toolbar (`useDropSprite`, `placeMarker`), sprites on links (`placeMarker` saves `kind: 'link'` with `linkTarget`), `jumpToSeed` from `useSeedsOnPage`.
   - Others can use / need to know: both a click and a drop go through `placeMarker` (`lib/engine/placeMarker.ts`). Link seeds are drawn as markers like `sprite` ones. Tested only in Chromium with Playwright, not in Chrome.

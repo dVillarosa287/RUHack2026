@@ -5,6 +5,7 @@ import { SpriteIcon } from '@/lib/theme/SpriteIcon';
 
 interface MarkerLayerProps {
   seeds: Seed[];
+  markerScale: number;
   digging: boolean;
   flashId: string | null;
   onDig(seedId: string): void;
@@ -21,7 +22,7 @@ const HOLD_AFTER_DROP_MS = 1500;
  * on every frame it asks where that text or element is now and moves there. That keeps markers in the
  * right place when the page scrolls, resizes, reflows, or a section opens or closes.
  */
-export function MarkerLayer({ seeds, digging, flashId, onDig, onMove }: MarkerLayerProps) {
+export function MarkerLayer({ seeds, markerScale, digging, flashId, onDig, onMove }: MarkerLayerProps) {
   const markers = useMemo(() => seeds.filter((s) => (s.kind === 'sprite' || s.kind === 'link') && s.anchor), [seeds]);
   const elements = useRef(new Map<string, HTMLDivElement>());
   const trackers = useRef(new Map<string, { anchor: Anchor; tracker: MarkerTracker }>());
@@ -117,7 +118,7 @@ export function MarkerLayer({ seeds, digging, flashId, onDig, onMove }: MarkerLa
         >
           <SpriteIcon
             type={seed.spriteType}
-            size={MARKER_SIZE}
+            size={MARKER_SIZE * markerScale}
             color={seed.color}
             grown={seed.growth === 'tree'}
           />

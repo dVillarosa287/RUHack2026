@@ -124,6 +124,11 @@ export async function saveSeed(input: SeedInput): Promise<Seed> {
   return seed;
 }
 
+/** Restores an existing seed exactly, for local undo and redo history. */
+export async function restoreSeed(seed: Seed): Promise<void> {
+  await writeRecord(PREFIX.seed + seed.id, seed);
+}
+
 export async function getSeed(id: string): Promise<Seed | undefined> {
   return readRecord<Seed>(PREFIX.seed + id);
 }

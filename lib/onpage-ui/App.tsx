@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
 import { buildMarkerAnchor, nearbyText, useDropSprite, usePlanting, useSeedsOnPage, type Tool } from '@/lib/engine';
-import { createForest, updateSeed, updateSettings, updateToolbarState, type SpriteType } from '@/lib/storage';
+import { createForest, deleteSeed, restoreSeed, updateSeed, updateSettings, updateToolbarState, type Seed, type SpriteType } from '@/lib/storage';
 import { CursorSprite } from './CursorSprite';
-import { DEFAULT_COLOR_ID, FOREST_ICONS, spriteImageUrl } from '@/lib/theme';
+import { DEFAULT_COLOR_ID, FOREST_ICONS, SPRITE_ORDER } from '@/lib/theme';
 import { MarkerLayer } from './MarkerLayer';
 import { ScrollRail } from './ScrollRail';
 import { Toolbar } from './Toolbar';
@@ -24,6 +24,9 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
   const [spriteType, setSpriteType] = useState<SpriteType>('sprout');
   const [colorId, setColorId] = useState(DEFAULT_COLOR_ID);
   const [status, setStatus] = useState('');
+  const [markerScale, setMarkerScale] = useState(1);
+  const history = useRef<Array<{ undo(): Promise<void>; redo(): Promise<void> }>>([]);
+  const undone = useRef<Array<{ undo(): Promise<void>; redo(): Promise<void> }>>([]);
 
   const say = useCallback((message: string) => {
     setStatus(message);
@@ -32,9 +35,16 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
 
   const isInsideUi = useCallback((target: EventTarget | null) => target instanceof Node && shadowHost.contains(target), [shadowHost]);
 
+  const record = useCallback((action: { undo(): Promise<void>; redo(): Promise<void> }) => {
+    history.current.push(action);
+    undone.current = [];
+  }, []);
+  const onCreated = useCallback((seed: Seed) => record({ undo: () => deleteSeed(seed.id), redo: () => restoreSeed(seed) }), [record]);
+  const onDeleted = useCallback((seed: Seed) => record({ undo: () => restoreSeed(seed), redo: () => deleteSeed(seed.id) }), [record]);
+
   const { flashId, jumpToSeed } = useSeedsOnPage(seeds);
-  const { removeSeed } = usePlanting({ tool, spriteType, colorId, forestId: currentForestId, isInsideUi, say });
-  const dropSprite = useDropSprite({ colorId, forestId: currentForestId, isInsideUi, say });
+  const { removeSeed } = usePlanting({ tool, spriteType, colorId, forestId: currentForestId, isInsideUi, say, onCreated, onDeleted });
+  const dropSprite = useDropSprite({ colorId, forestId: currentForestId, isInsideUi, say, onCreated });
   // The three sprites used last are kept in settings, newest first, and shown on the toolbar.
   const { dragging, startSpriteDrag } = useSpriteDrag({
     onDrop: (type, x, y) => {
@@ -51,7 +61,39 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
   }, [visible]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setTool('none');
+      const target = e.target;
+      const editing = target instanceof HTMLElement && (target.isContentEditable || target.closest('input, textarea, select, [contenteditable="true"]'));
+      if (editing) return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        const source = e.shiftKey ? undone : history;
+        const destination = e.shiftKey ? history : undone;
+        const action = source.current.pop();
+        if (!action) return;
+        void (e.shiftKey ? action.redo() : action.undo()).then(() => destination.current.push(action));
+        return;
+      }
+      const slot = Number(e.key) - 1;
+      if (!e.ctrlKey && !e.metaKey && !e.altKey && Number.isInteger(slot) && SPRITE_ORDER[slot]) {
+        e.preventDefault();
+        setSpriteType(SPRITE_ORDER[slot]);
+        setTool('plant');
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setTool('none');
+        return;
+      }
+      if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        setMarkerScale((scale) => Math.max(0.5, Math.round((scale - 0.1) * 10) / 10));
+        return;
+      }
+      if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        setMarkerScale((scale) => Math.min(2, Math.round((scale + 0.1) * 10) / 10));
+      }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -63,10 +105,16 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
     <>
       <MarkerLayer
         seeds={seeds}
+        markerScale={markerScale}
         digging={tool === 'dig'}
         flashId={flashId}
         onDig={(id) => void removeSeed(id)}
-        onMove={(id, x, y, target) => void updateSeed(id, { anchor: buildMarkerAnchor(x, y, target), ...(seeds.find((s) => s.id === id)?.linkTarget ? {} : { text: nearbyText(target) }) })}
+        onMove={async (id, x, y, target) => {
+          const previous = seeds.find((seed) => seed.id === id);
+          if (!previous) return;
+          const next = await updateSeed(id, { anchor: buildMarkerAnchor(x, y, target), ...(previous.linkTarget ? {} : { text: nearbyText(target) }) });
+          record({ undo: () => restoreSeed(previous), redo: () => restoreSeed(next) });
+        }}
       />
       <CursorSprite type={visible ? spriteOnMouse : null} color={colorId} showOverUi={dragging !== null} isInsideUi={isInsideUi} />
       {toolbar && visible && (
