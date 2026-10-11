@@ -384,10 +384,113 @@ export const MINIMAL_THEME: ThemeDefinition = {
   },
 };
 
+export const FOREST_LIGHT_THEME: ThemeDefinition = {
+  id: "forest-light",
+  name: "Light Forest",
+  palette: [
+    {
+      id: "red",
+      name: "Red",
+      hex: "#E53935",
+      light: "#FF6E40",
+      dark: "#B71C1C",
+    },
+    {
+      id: "orange",
+      name: "Orange",
+      hex: "#E65100",
+      light: "#F57C00",
+      dark: "#BF360C",
+    },
+    {
+      id: "yellow",
+      name: "Yellow",
+      hex: "#F57F17",
+      light: "#FBC02D",
+      dark: "#E65100",
+    },
+    {
+      id: "green",
+      name: "Green",
+      hex: "#00897B",
+      light: "#26A69A",
+      dark: "#004D40",
+    },
+    {
+      id: "blue",
+      name: "Blue",
+      hex: "#1E88E5",
+      light: "#42A5F5",
+      dark: "#0D47A1",
+    },
+    {
+      id: "cyan",
+      name: "Cyan",
+      hex: "#00ACC1",
+      light: "#26C6DA",
+      dark: "#006064",
+    },
+    {
+      id: "purple",
+      name: "Purple",
+      hex: "#8E24AA",
+      light: "#AB47BC",
+      dark: "#4A148C",
+    },
+    {
+      id: "magenta",
+      name: "Magenta",
+      hex: "#D81B60",
+      light: "#EC407A",
+      dark: "#880E4F",
+    },
+  ],
+  base: [
+    {
+      id: "background",
+      name: "Background",
+      hex: "#F2F2FA", // Pale, soft cool paper tint
+      light: "#FFFFFF", // Crisp white card surface
+      dark: "#E2E2F0", // Slightly darker surface border/edge
+    },
+    {
+      id: "foreground",
+      name: "Foreground",
+      hex: "#1E1E36", // Deep midnight blue-gray text
+      light: "#0A0A18", // Darkest text for high contrast
+      dark: "#525270", // Muted ink / secondary text
+    },
+  ],
+  tokens: {
+    // Surfaces use light background colors, text uses dark foreground colors
+    page: color("background"),
+    surface: color("background", "light"),
+    "surface-alt": color("background", "dark"),
+    ink: color("foreground"),
+    "ink-muted": color("foreground", "dark"),
+    edge: color("background", "dark"),
+    // Main color: Red, with light text on it for contrast
+    primary: color("red"),
+    "primary-strong": color("red", "dark"),
+    "primary-ink": color("background", "light"),
+    // Hover and selected fills
+    "primary-soft": color("background", "dark"),
+    // Accent set to Red as requested
+    accent: color("red"),
+    // Glows and highlights
+    flash: color("orange"),
+    "danger-soft": color("red", "light"),
+    // Soft dark drop shadows
+    shadow: color("foreground", "dark"),
+    glow: color("red", "light"),
+  },
+};
+
 export const THEMES: Record<string, ThemeDefinition> = {
   [JUNGLE_THEME.id]: JUNGLE_THEME,
   [MINIMAL_THEME.id]: MINIMAL_THEME,
   [FOREST_THEME.id]: FOREST_THEME,
+  [FOREST_LIGHT_THEME.id]: FOREST_LIGHT_THEME,
 };
 
 export const DEFAULT_THEME_ID = JUNGLE_THEME.id;
