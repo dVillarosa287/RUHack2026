@@ -13,6 +13,7 @@ import { SpriteIcon } from "@/lib/theme/SpriteIcon";
 import { openOnPage } from "./ForestList";
 import { seedLabel } from "./GraphNodes";
 import { ColorPicker } from "./Pickers";
+import { Screenshot } from './Screenshot';
 
 const KIND_LABEL: Record<Seed["kind"], string> = {
   highlight: "Highlight",
@@ -115,6 +116,8 @@ export function NodeDetail({
             draft !== seed.text && void updateSeed(seed.id, { text: draft })
           }
         />
+      ) : seed.kind === 'media' ? (
+        <Screenshot seedId={seed.id} className="w-full" />
       ) : (
         <p className="break-words rounded-lg bg-surface-alt p-3 text-sm">
           {seed.kind === "highlight"

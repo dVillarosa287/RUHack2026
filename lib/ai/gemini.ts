@@ -9,6 +9,17 @@ const MAX_QUESTIONS = 10;
 
 /** What the viewer sends: just the saved text, so nothing else from storage leaves the browser. */
 export type QuizSource = Pick<Seed, 'id' | 'text' | 'pageTitle'>;
+/** The same, plus the lily pad's screenshot (a JPEG data URL), which the background worker adds. */
+export type QuizNote = QuizSource & { image?: string | null };
+
+/** One piece of a request: some text, or an image. */
+type Part = { text: string } | { inline_data: { mime_type: string; data: string } };
+
+/** A data URL ("data:image/jpeg;base64,...") as the image part Gemini expects. */
+function imagePart(dataUrl: string): Part | null {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  return match?.[1] && match[2] ? { inline_data: { mime_type: match[1], data: match[2] } } : null;
+}
 
 /** A failure the user can act on, with a message to show them. */
 export class GeminiError extends Error {}
@@ -34,7 +45,7 @@ const QUIZ_SCHEMA = {
   required: ['questions'],
 };
 
-async function generate(key: string, prompt: string, schema?: object): Promise<string> {
+async function generate(key: string, parts: Part[], schema?: object): Promise<string> {
   if (!key) throw new GeminiError('Add your Gemini API key on the Settings page first.');
   let response: Response;
   try {
@@ -42,7 +53,7 @@ async function generate(key: string, prompt: string, schema?: object): Promise<s
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        contents: [{ role: 'user', parts }],
         generationConfig: schema ? { responseMimeType: 'application/json', responseSchema: schema } : {},
       }),
     });
@@ -66,26 +77,37 @@ async function generate(key: string, prompt: string, schema?: object): Promise<s
 
 /** A tiny request to check that the key and the model name work. Used by the "Test key" button in Settings. */
 export async function testGemini(key: string): Promise<void> {
-  await generate(key, 'Reply with the single word: ok');
+  await generate(key, [{ text: 'Reply with the single word: ok' }]);
 }
 
-/** Multiple-choice questions for a quiz: one request for all of them. Bad items from Gemini are dropped, not shown. */
-export async function quizQuestions(key: string, sources: QuizSource[]): Promise<Question[]> {
-  const usable = sources.filter((s) => s.text.trim().split(/\s+/).length >= 4).slice(0, MAX_QUESTIONS);
-  if (usable.length === 0) throw new GeminiError('These lily pads have too little saved text to ask about.');
+/**
+ * Multiple-choice questions for a quiz: one request for all of them. Each lily pad is a screenshot the user took,
+ * sent as an image, with the page's text from inside it. Bad items from Gemini are dropped, not shown.
+ */
+export async function quizQuestions(key: string, notes: QuizNote[]): Promise<Question[]> {
+  const usable = notes.filter((n) => n.image || n.text.trim().split(/\s+/).length >= 4).slice(0, MAX_QUESTIONS);
+  if (usable.length === 0) throw new GeminiError('These lily pads have no screenshot or text to ask about.');
 
-  const notes = usable.map((s) => ({ seedId: s.id, page: s.pageTitle, text: s.text.slice(0, 1500) }));
-  const prompt = [
-    'You write study questions for a student, for active recall.',
-    'Below are notes the student highlighted on web pages, as JSON. Write exactly one multiple-choice question for each note,',
-    'using that note\'s seedId. Each question must be answerable from its note alone and test the key idea, not a trivial detail.',
-    'Give exactly 4 short choices, one of them correct and three plausible but wrong. The answer must be copied exactly from the choices.',
-    'Do not mention "the note" or "the text" in the question.',
-    '',
-    JSON.stringify(notes),
-  ].join('\n');
+  const parts: Part[] = [
+    {
+      text: [
+        'You write study questions for a student, for active recall.',
+        'Below are notes the student saved from web pages. Each note is a screenshot of part of a page (a figure, a table,',
+        'a formula or a passage), given with the text found inside it. Write exactly one multiple-choice question for each',
+        "note, using that note's seedId. Base it on what the screenshot shows, using the text to help read it. Each question",
+        'must be answerable from its note alone and test the key idea, not a trivial detail.',
+        'Give exactly 4 short choices, one of them correct and three plausible but wrong. The answer must be copied exactly from the choices.',
+        'Do not mention "the note", "the image" or "the screenshot" in the question.',
+      ].join('\n'),
+    },
+  ];
+  for (const note of usable) {
+    parts.push({ text: `\nNote seedId=${note.id}, from the page "${note.pageTitle}". Text inside it: ${note.text.slice(0, 1500) || '(none)'}` });
+    const image = note.image ? imagePart(note.image) : null;
+    if (image) parts.push(image);
+  }
 
-  const raw = await generate(key, prompt, QUIZ_SCHEMA);
+  const raw = await generate(key, parts, QUIZ_SCHEMA);
   let parsed: { questions?: unknown };
   try {
     parsed = JSON.parse(raw);

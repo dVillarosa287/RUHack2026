@@ -15,6 +15,10 @@ A well-known focus-timer app is already called Forest. Pick a distinct name befo
 
 Blocks: write-up and extension name in Wrap-up.
 
+### D7. New storage record for lily pad screenshots (team to confirm)
+
+The user asked for lily pads to take screenshots (2026-10-11). The picture is kept in a new record `shot:<seedId>` (a JPEG data URL), not in the `Seed`, so no existing shape changed. Lily pad seeds are `kind: 'media'`. The extension now asks for `unlimitedStorage`. Tell the team; if anyone objects, say so before more code depends on it.
+
 ## Needs fixing
 
 Format:

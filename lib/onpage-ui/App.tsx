@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
-import { buildMarkerAnchor, nearbyText, useDropSprite, usePlanting, useSeedsOnPage, type Tool } from '@/lib/engine';
+import { buildMarkerAnchor, nearbyText, useDropSprite, usePlanting, useSeedsOnPage, type Area, type Tool } from '@/lib/engine';
 import { createForest, deleteSeed, restoreSeed, updateSeed, updateSettings, updateToolbarState, type Seed, type SpriteType } from '@/lib/storage';
 import { CursorSprite } from './CursorSprite';
 import { DEFAULT_COLOR_ID, FOREST_ICONS, SPRITE_ORDER } from '@/lib/theme';
@@ -25,6 +25,10 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
   const [colorId, setColorId] = useState(DEFAULT_COLOR_ID);
   const [status, setStatus] = useState('');
   const [markerScale, setMarkerScale] = useState(1);
+  // The lily pad's screenshot box while it is being dragged.
+  const [area, setArea] = useState<Area | null>(null);
+  // Our toolbar and markers are hidden for a moment while a screenshot is taken, so they are not in it.
+  const hideUi = useCallback((hidden: boolean) => void (shadowHost.style.visibility = hidden ? 'hidden' : ''), [shadowHost]);
   const history = useRef<Array<{ undo(): Promise<void>; redo(): Promise<void> }>>([]);
   const undone = useRef<Array<{ undo(): Promise<void>; redo(): Promise<void> }>>([]);
 
@@ -43,11 +47,17 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
   const onDeleted = useCallback((seed: Seed) => record({ undo: () => restoreSeed(seed), redo: () => deleteSeed(seed.id) }), [record]);
 
   const { flashId, jumpToSeed } = useSeedsOnPage(seeds);
-  const { removeSeed } = usePlanting({ tool, spriteType, colorId, forestId: currentForestId, isInsideUi, say, onCreated, onDeleted });
+  const { removeSeed } = usePlanting({ tool, spriteType, colorId, forestId: currentForestId, isInsideUi, say, onCreated, onDeleted, onAreaDrag: setArea, hideUi });
   const dropSprite = useDropSprite({ colorId, forestId: currentForestId, isInsideUi, say, onCreated });
   // The three sprites used last are kept in settings, newest first, and shown on the toolbar.
   const { dragging, startSpriteDrag } = useSpriteDrag({
     onDrop: (type, x, y) => {
+      // A lily pad is not dropped: it takes a screenshot, so dropping it just picks it up as the tool.
+      if (type === 'lilypad') {
+        setSpriteType('lilypad');
+        setTool('plant');
+        return say('Drag a box over the page to screenshot it');
+      }
       dropSprite(type, x, y);
     },
   });
@@ -116,6 +126,7 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
           record({ undo: () => restoreSeed(previous), redo: () => restoreSeed(next) });
         }}
       />
+      {area && <div className="fo-area" style={{ left: area.left, top: area.top, width: area.width, height: area.height }} />}
       <CursorSprite type={visible ? spriteOnMouse : null} color={colorId} showOverUi={dragging !== null} isInsideUi={isInsideUi} />
       {toolbar && visible && (
         <Toolbar
@@ -135,6 +146,7 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
             if (tool === 'plant' && spriteType === type) return setTool('none');
             setSpriteType(type);
             setTool('plant');
+            if (type === 'lilypad') say('Drag a box over the page to screenshot it');
           }}
           onSpritePointerDown={startSpriteDrag}
           onPickShovel={() => setTool(tool === 'dig' ? 'none' : 'dig')}

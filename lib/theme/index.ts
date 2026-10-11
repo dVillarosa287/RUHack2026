@@ -50,7 +50,7 @@ export const SPRITES: Record<SpriteType, ThemeSprite> = {
 };
 
 /** The order sprites appear in the toolbar. */
-export const SPRITE_ORDER: SpriteType[] = ['sprout', 'lilypad', 'mushroom', 'flower', 'fruitsprout'];
+export const SPRITE_ORDER: SpriteType[] = ['sprout', 'fruitsprout', 'mushroom', 'flower', 'lilypad'];
 
 /** Web address of a sprite's art, or null if the file is missing. */
 export function spriteImageUrl(type: SpriteType, grown = false): string | null {
