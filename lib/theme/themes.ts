@@ -239,8 +239,105 @@ export const JUNGLE_THEME: ThemeDefinition = {
   },
 };
 
+export const MINIMAL_THEME: ThemeDefinition = {
+  id: "minimal",
+  name: "Minimal Biome",
+  palette: [
+    {
+      id: "red",
+      name: "Red",
+      hex: "#B08080", // Highly muted grayish red
+      light: "#C59898",
+      dark: "#956868",
+    },
+    {
+      id: "orange",
+      name: "Orange",
+      hex: "#B09078", // Highly muted grayish orange/tan
+      light: "#C5A890",
+      dark: "#957860",
+    },
+    {
+      id: "yellow",
+      name: "Yellow",
+      hex: "#A8A078", // Highly muted grayish yellow
+      light: "#C0B890",
+      dark: "#908860",
+    },
+    {
+      id: "green",
+      name: "Green",
+      hex: "#8AA08A", // Highly muted grayish sage
+      light: "#A2B8A2",
+      dark: "#728872",
+    },
+    {
+      id: "blue",
+      name: "Blue",
+      hex: "#8290A0", // Highly muted grayish blue
+      light: "#9AA8B8",
+      dark: "#6A7888",
+    },
+    {
+      id: "cyan",
+      name: "Cyan",
+      hex: "#82A0A0", // Highly muted grayish cyan
+      light: "#9AA8A8",
+      dark: "#6A8888",
+    },
+    {
+      id: "purple",
+      name: "Purple",
+      hex: "#9582A0", // Highly muted grayish lavender
+      light: "#AD9AA8",
+      dark: "#7D6A88",
+    },
+    {
+      id: "magenta",
+      name: "Magenta",
+      hex: "#A08298", // Highly muted grayish mauve
+      light: "#B89AB0",
+      dark: "#886A80",
+    },
+  ],
+  base: [
+    {
+      id: "background",
+      name: "Background",
+      hex: "#1A1A1A", // Neutral dark gray base
+      light: "#262626", // Neutral surface gray
+      dark: "#121212", // Deep charcoal background
+    },
+    {
+      id: "foreground",
+      name: "Foreground",
+      hex: "#A0A0A0", // Muted mid-gray text (low contrast)
+      light: "#C0C0C0",
+      dark: "#707070", // Darker desaturated ink
+    },
+  ],
+  tokens: {
+    page: color("background", "dark"),
+    surface: color("background", "light"),
+    "surface-alt": color("background", "dark"),
+    ink: color("foreground"),
+    "ink-muted": color("foreground", "dark"),
+    edge: color("background", "light"),
+    primary: color("green"),
+    "primary-strong": color("green", "dark"),
+    "primary-ink": color("background", "dark"),
+    "primary-soft": color("background", "light"),
+    accent: color("green"),
+    flash: color("orange"),
+    "danger-soft": color("red", "dark"),
+    shadow: color("background", "dark"),
+    glow: color("foreground", "light"),
+  },
+};
+
 export const THEMES: Record<string, ThemeDefinition> = {
   [JUNGLE_THEME.id]: JUNGLE_THEME,
+  [MINIMAL_THEME.id]: MINIMAL_THEME,
   [FOREST_THEME.id]: FOREST_THEME,
 };
 
