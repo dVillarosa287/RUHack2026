@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { growFromLink } from '@/lib/ai';
-import type { Seed } from '@/lib/storage';
+import { growFromLink, type AiProvider } from '@/lib/ai';
+import { getSettings, type Seed } from '@/lib/storage';
 import { countOf, useWords } from '@/lib/theme';
 import { graphHref } from './route';
 
@@ -15,20 +15,27 @@ export function GrowFromLink({ forestId, seeds, showGraphLink }: { forestId: str
   const [step, setStep] = useState(''); // what it is doing now; empty when idle
   const [error, setError] = useState('');
   const [done, setDone] = useState('');
+  const [provider, setProvider] = useState<AiProvider>('gemini');
+  const [keys, setKeys] = useState({ gemini: false, cerebras: false });
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) input.current?.focus();
   }, [open]);
 
+  useEffect(() => {
+    if (open) void getSettings().then((settings) => setKeys({ gemini: Boolean(settings.geminiKey), cerebras: Boolean(settings.cerebrasKey) }));
+  }, [open]);
+
   async function grow() {
     setError('');
     setDone('');
     try {
-      const result = await growFromLink(forestId, address, seeds, setStep);
+      const result = await growFromLink(forestId, address, seeds, provider, setStep);
       setDone(`From “${result.title}”: ${countOf(result.seeds, words.seed, words.seeds)} and ${countOf(result.roots, words.root, words.roots)}.`);
       setAddress('');
     } catch (reason) {
+      console.error(`[${provider}] grow-from-link generation failed`, reason);
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
       setStep('');
@@ -63,12 +70,16 @@ export function GrowFromLink({ forestId, seeds, showGraphLink }: { forestId: str
             onKeyDown={(event) => event.key === 'Escape' && setOpen(false)}
           />
           <div className="flex gap-2">
+            <select className="min-w-0 flex-1 rounded-lg border border-edge bg-surface-alt px-2 py-1.5 text-xs" value={provider} disabled={!!step} onChange={(event) => setProvider(event.target.value as AiProvider)}>
+              <option value="gemini" disabled={!keys.gemini}>Gemini</option>
+              <option value="cerebras" disabled={!keys.cerebras}>Cerebras</option>
+            </select>
             <button
               type="submit"
               className="flex-1 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink hover:bg-primary-strong disabled:opacity-60"
               disabled={!!step || !address.trim()}
             >
-              {step || 'Read and connect'}
+              {step || `Read and connect with ${provider === 'cerebras' ? 'Cerebras' : 'Gemini'}`}
             </button>
             <button type="button" className="rounded-lg border border-edge px-3 py-1.5 text-sm hover:bg-primary-soft" onClick={() => setOpen(false)}>
               Close

@@ -22,6 +22,7 @@ const DEFAULT_SETTINGS: Settings = {
   recentSprites: [],
   theme: DEFAULT_THEME_ID, // Vibrant Jungle; the themes are in lib/theme/themes.ts
   geminiKey: '',
+  cerebrasKey: '',
   autoConnections: true,
   reviewMinutes: 5,
 };

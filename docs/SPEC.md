@@ -46,7 +46,7 @@ No, for the hackathon. Build the viewer as a full-tab page that lives inside the
 | Highlights | CSS Custom Highlight API | Colors a range of text without inserting any elements into the page, so it cannot break the page's layout. Wrapping text in tags fails when a selection crosses paragraphs or links. |
 | Storage | `chrome.storage.local`, behind one shared storage module | Readable from the page script, the background worker and the viewer. About 10 MB by default, and the `unlimitedStorage` permission removes the cap. Do not use IndexedDB from the page script: there it belongs to whichever website you are on, so notes from one site would be invisible on another. |
 | Graph view | React Flow (`@xyflow/react`) | Each node is a React component, so a node can be a sprite image. Dragging nodes and drawing a line from one node to another come built in, which covers manual "roots". |
-| AI | Gemini API, current Flash model on the free tier, called from the background service worker with JSON output | Free to prototype with. Check Google AI Studio for the exact model name on the day: the 2.0 models were shut down in June 2026 and the 2.5 models are reported to shut down in mid-October 2026, so older tutorials name models that no longer respond. |
+| AI | Gemini API or Cerebras API, using Gemini Flash or Cerebras Qwen 3.8 27B, called from the background service worker with JSON output | Users provide either key in Settings; every AI action chooses its provider explicitly. |
 | Timers | `chrome.alarms` | Manifest V3 background workers go to sleep after about 30 seconds idle, so a normal five-minute timer would be lost. An alarm wakes the worker back up. |
 | Frog voice | Browser `speechSynthesis` first, ElevenLabs as the upgrade | `speechSynthesis` is free, needs no key and works offline, so the feature cannot fail in the demo. ElevenLabs sounds far better and has its own prize category at many MLH events. |
 | Art and animation | PNG or SVG sprites at one fixed size (64 by 64), CSS animations | CSS handles grow, fade and frog-hop animations with no extra library. Draw in Figma, Piskel or Aseprite. |
@@ -67,8 +67,8 @@ Agree on this in the first 30 minutes. Everyone's code reads and writes these sh
 - **Seed (one node):** id, forestId, folderId, kind (highlight, sprite, link, note, media), spriteType (sprout, lilypad, mushroom, flower, fruitsprout, cat, grass, owl, rock, house), color, growth (sprout, tree), url, pageTitle, text, linkTarget, anchor, nextReviewAt, createdAt, an optional note (the user's own words, added 2026-10-11), and an optional scale (the size its sprite was planted at, added 2026-10-11).
 - **Anchor (where a seed sits on its page):** the exact quoted text plus a few words before and after it, a selector for the nearest page element with an x and y offset inside it, and the scroll position as a percentage of page height.
 - **Root (one connection):** id, forestId, fromSeedId, toSeedId, source (manual or ai), reason.
-- **Fruit (one quiz):** id, forestId, color, questions (seedId, type, prompt, choices, answer), createdAt.
-- **Settings:** currentForestId, the three most recent sprites, theme, Gemini API key, auto-connections on or off, reviewMinutes.
+- **Fruit (one quiz):** id, forestId, color, questions (seedId, type, prompt, choices, answer), optional AI provider, createdAt.
+- **Settings:** currentForestId, the three most recent sprites, theme, Gemini API key, Cerebras API key, auto-connections on or off, reviewMinutes.
 
 ---
 
@@ -187,7 +187,7 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 - **Finding the same spot again.** Pixel coordinates break as soon as the window is resized or the page changes. Save the quoted text with a few words around it and search for it on load. For click-placed sprites, save the nearest page element and an offset inside it, with the scroll percentage as the last resort.
 - **Pages that do not cooperate.** Extensions cannot run on Chrome's own pages or the Chrome Web Store. Chrome's built-in PDF viewer does not expose its text, so PDFs are opened in the extension's own PDF page instead (see "PDFs" below). Pages that load content as you scroll may not have the text yet when annotations are restored. Demo on stable article pages such as Wikipedia or OpenStax.
 - **The same page under different addresses.** Tracking parameters and the part after # make one page look like several. Clean the URL before using it as the key.
-- **The API key.** Anything shipped inside an extension can be read by its users. For the hackathon, each user pastes their own Gemini key into settings and it stays in local storage. Keep keys out of GitHub. A public release needs a small server that holds the key.
+- **The API keys.** Anything shipped inside an extension can be read by its users. For the hackathon, each user pastes their own Gemini or Cerebras key into settings and it stays in local storage. Keep keys out of GitHub. A public release needs a small server that holds the keys.
 - **Free-tier limits.** The free Gemini tier allows only a handful of requests per minute. Call AI when the user asks for it, send one request per quiz instead of one per question, and keep the fill-in-the-blank fallback.
 - **Privacy.** AI features send the user's saved text to Google. Say so in the UI, and never send anything automatically.
 - **"Seed" and "sprout".** "Seed" means a saved annotation, whatever its sprite. The general-purpose toolbar sprite is called the sprout, and growth has two stages: sprout, then tree. There is no separate "seed" growth stage. (Decided in D2.)

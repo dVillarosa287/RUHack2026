@@ -277,7 +277,7 @@ Entry format:
   - Need from someone else: a person to try it in Chrome with a real key.
 
 - [Oct 11] (GitHub Copilot)
-  - Did: added a centered, wider "Summarize & export" panel in `entrypoints/viewer/ForestExport.tsx`, placed below the React Flow graph; its trigger now matches the graph's primary "Text note" button styling and smoothly scrolls into view when opened or when export options appear. Gemini creates a study-guide summary, and the user can download it as PDF or DOCX. Raw HTML-looking seed text is excluded from Gemini and both exports. Added `forest:ai-summary` through the background worker and `docx`/`jspdf` dependencies.
+  - Did: added a centered, wider "Summarize & export" panel in `entrypoints/viewer/ForestExport.tsx`, placed below the React Flow graph; its trigger now matches the graph's primary "Text note" button styling and smoothly scrolls into view when opened or when export options appear. PDF exports now have title/divider hierarchy, wrapped sections, bullets and page numbers; DOCX exports have title/subtitle, headings, real bullet lists and spacing. Gemini creates a study-guide summary, and raw HTML-looking seed text is excluded from Gemini and both exports. Added `forest:ai-summary` through the background worker and `docx`/`jspdf` dependencies.
   - Others can use / need to know: open a forest's Graph view, scroll below the graph, press "Summarize & export", then "Summarize with Gemini" after saving a key in Settings. The page only shows "Summary ready" plus PDF/DOCX options after generation; the full text stays inside the export handlers. The background listener must include `forest:ai-summary` so the message channel stays open, and the extension must be reloaded after rebuilding. `npm run compile`, `npm run check:theme`, and `npm run build` pass; build reports only a bundle-size warning. Not tested with a real Gemini key in Chrome yet.
   - Need from someone else: check the panel and downloaded files in Chrome with a real key.
 
@@ -396,6 +396,26 @@ Entry format:
   - Need from someone else: nothing
 
 ### Data, AI and integration notes
+
+- [Oct 11] (GitHub Copilot)
+  - Did: fallback quizzes now retain a question for every pad with usable text, AI errors/logs identify their provider and operation, and Settings save/remove messages are scoped to the key changed. Failed AI attempts no longer label fallback questions as AI-generated.
+  - Others can use / need to know: short or common-word pads now use a typed-answer fallback instead of disappearing. `npm run compile` passes.
+  - Need from someone else: nothing.
+
+- [Oct 11] (GitHub Copilot)
+  - Did: quiz remakes now read lily pads directly from storage at click time and force a fresh quiz reload after saving, so new pads are included instead of reusing the prior quiz.
+  - Others can use / need to know: Cerebras remake availability and requests remain independent of the Gemini key. `npm run compile` passes.
+  - Need from someone else: nothing.
+
+- [Oct 11] (GitHub Copilot)
+  - Did: fixed provider test feedback in `entrypoints/viewer/SettingsPage.tsx` so Gemini and Cerebras results only appear under the clicked key; saved quizzes now retain their AI provider in `Fruit` and display Cerebras correctly in `QuizView.tsx`.
+  - Others can use / need to know: older multiple-choice quizzes without the new field are treated as Gemini quizzes. `npm run compile` passes.
+  - Need from someone else: nothing.
+
+- [Oct 11] (GitHub Copilot)
+  - Did: added a Cerebras API key to Settings and provider choices for quizzes, Grow from link, and study-guide summaries used by PDF/DOCX export. Cerebras uses `qwen-3.8-27b` through the background worker; files include `lib/ai/gemini.ts`, `lib/ai/index.ts`, `entrypoints/background.ts`, and viewer controls.
+  - Others can use / need to know: existing Gemini remains the default; fill-in-the-blank remains the offline fallback. `npm run compile`, `npm run check:theme`, and `npm run build` pass. Needs real-key Chrome verification.
+  - Need from someone else: nothing.
 
 - [Oct 11] (Teobobeo99)
   - Did: the Minimal theme now uses the colored art in `minimal-images/` (drawn as is, no tint; X is `symbolx.png`, tree is `cloud.png`); `minimal-icons/` is gone. Every tree (grown sprout, large tree in the graph, 'tree' forest icon) is now `images/tree.png`; the apple tree keeps `appletree.png`. Files: `lib/theme/index.ts`, `wxt.config.ts`. The teammate-added "Light Forest" theme had no `sprites` and broke compile; it now borrows Night Forest's sprite colors.

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { GEMINI_MODEL, testGeminiKey } from "@/lib/ai";
+import { CEREBRAS_MODEL, GEMINI_MODEL, testAiKey, type AiProvider } from "@/lib/ai";
 import { getSettings, updateSettings } from "@/lib/storage";
 import { DEFAULT_THEME_ID, THEMES, useWords } from "@/lib/theme";
 
@@ -8,18 +8,21 @@ import { DEFAULT_THEME_ID, THEMES, useWords } from "@/lib/theme";
  */
 export function SettingsPage() {
   const [key, setKey] = useState<string | null>(null); // null while loading
+  const [cerebrasKey, setCerebrasKey] = useState<string | null>(null);
   const [theme, setTheme] = useState<string>(DEFAULT_THEME_ID);
   // Minutes before a planted apple grows into an apple tree and asks its question.
   const [reviewMinutes, setReviewMinutes] = useState(5);
   const [show, setShow] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [showCerebras, setShowCerebras] = useState(false);
+  const [saved, setSaved] = useState<AiProvider | null>(null);
   // The result of the "Test key" button: null before it is pressed.
-  const [test, setTest] = useState<{ ok: boolean; text: string } | null>(null);
+  const [test, setTest] = useState<{ provider: AiProvider; ok: boolean; text: string } | null>(null);
   const words = useWords(); // nature words, or plain ones in the Minimal theme
 
   useEffect(() => {
     void getSettings().then((s) => {
       setKey(s.geminiKey);
+      setCerebrasKey(s.cerebrasKey);
       if (s.theme) setTheme(s.theme);
       setReviewMinutes(s.reviewMinutes);
     });
@@ -28,7 +31,14 @@ export function SettingsPage() {
   async function save(value: string) {
     await updateSettings({ geminiKey: value.trim() });
     setKey(value.trim());
-    setSaved(true);
+    setSaved('gemini');
+    setTest(null);
+  }
+
+  async function saveCerebras(value: string) {
+    await updateSettings({ cerebrasKey: value.trim() });
+    setCerebrasKey(value.trim());
+    setSaved('cerebras');
     setTest(null);
   }
 
@@ -40,20 +50,21 @@ export function SettingsPage() {
   }
 
   /** Sends one tiny request to Gemini with the saved key, so the user knows the key and the model name work. */
-  async function runTest() {
-    setTest({ ok: true, text: "Testing…" });
+  async function runTest(provider: AiProvider) {
+    setTest({ provider, ok: true, text: "Testing…" });
     try {
-      await testGeminiKey();
-      setTest({ ok: true, text: `The key works with ${GEMINI_MODEL}.` });
+      await testAiKey(provider);
+      setTest({ provider, ok: true, text: `The key works with ${provider === 'cerebras' ? CEREBRAS_MODEL : GEMINI_MODEL}.` });
     } catch (error) {
       setTest({
+        provider,
         ok: false,
         text: error instanceof Error ? error.message : String(error),
       });
     }
   }
 
-  if (key === null) return <p>Loading…</p>;
+  if (key === null || cerebrasKey === null) return <p>Loading…</p>;
 
   return (
     <>
@@ -89,7 +100,7 @@ export function SettingsPage() {
             value={key}
             onChange={(e) => {
               setKey(e.target.value);
-              setSaved(false);
+              setSaved(null);
             }}
           />
           <button
@@ -109,7 +120,7 @@ export function SettingsPage() {
             <button
               type="button"
               className="rounded-lg border border-edge px-3 py-2 text-sm hover:bg-primary-soft"
-              onClick={() => void save(key).then(runTest)}
+              onClick={() => void save(key).then(() => runTest('gemini'))}
             >
               Test key
             </button>
@@ -124,22 +135,50 @@ export function SettingsPage() {
             </button>
           )}
         </form>
-        {saved && !test && (
+        {saved === 'gemini' && !test && (
           <p className="text-sm text-primary">
             {key ? "Key saved." : "Key removed."}
           </p>
         )}
-        {test && (
+        {test?.provider === 'gemini' && (
           <p className={`text-sm ${test.ok ? "text-primary" : "text-ink"}`}>
             {test.ok ? "" : "Not working: "}
             {test.text}
           </p>
         )}
         <p className="text-xs text-ink-muted">
-          The key stays in this browser. When you use an AI feature, the text
-          you saved in that {words.forest} is sent to Google to write the questions or
+          Keys stay in this browser. When you use an AI feature, the text
+          you saved in that {words.forest} is sent to the selected provider to write the questions or
           summary. Nothing is sent unless you ask for it.
         </p>
+      </section>
+
+      <br />
+
+      <section className="space-y-3 rounded-xl border-2 border-edge bg-surface p-5">
+        <h2 className="text-lg font-semibold">Cerebras API key</h2>
+        <p className="text-sm text-ink-muted">
+          Use Cerebras with the {CEREBRAS_MODEL} model for quizzes, link growth, and study-guide exports.
+          Get a key at{" "}
+          <a href="https://cloud.cerebras.ai/" target="_blank" rel="noreferrer" className="text-primary underline">cloud.cerebras.ai</a>.
+        </p>
+        <form className="flex flex-wrap gap-2" onSubmit={(e) => { e.preventDefault(); void saveCerebras(cerebrasKey); }}>
+          <input
+            type={showCerebras ? "text" : "password"}
+            className="min-w-0 flex-1 rounded-lg border border-edge bg-surface-alt px-3 py-2 font-mono text-sm"
+            placeholder="Paste your Cerebras key"
+            autoComplete="off"
+            spellCheck={false}
+            value={cerebrasKey}
+            onChange={(e) => { setCerebrasKey(e.target.value); setSaved(null); }}
+          />
+          <button type="button" className="rounded-lg border border-edge px-3 py-2 text-sm hover:bg-primary-soft" onClick={() => setShowCerebras(!showCerebras)}>{showCerebras ? "Hide" : "Show"}</button>
+          <button type="submit" className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-ink hover:bg-primary-strong">Save</button>
+          {cerebrasKey && <button type="button" className="rounded-lg border border-edge px-3 py-2 text-sm hover:bg-primary-soft" onClick={() => void saveCerebras(cerebrasKey).then(() => runTest('cerebras'))}>Test key</button>}
+          {cerebrasKey && <button type="button" className="rounded-lg border border-edge px-3 py-2 text-sm hover:bg-danger-soft" onClick={() => void saveCerebras("")}>Remove</button>}
+        </form>
+        {saved === 'cerebras' && !test && <p className="text-sm text-primary">{cerebrasKey ? "Key saved." : "Key removed."}</p>}
+        {test?.provider === 'cerebras' && <p className={`text-sm ${test.ok ? "text-primary" : "text-ink"}`}>{test.ok ? "" : "Not working: "}{test.text}</p>}
       </section>
 
       <br />

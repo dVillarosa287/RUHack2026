@@ -1,7 +1,7 @@
 // The background service worker. It sleeps after about 30 seconds idle, so keep it stateless.
 import { browser } from 'wxt/browser';
 import type { AiReply, AiRequest } from '@/lib/ai';
-import { forestSummary, linkConnections, quizQuestions, testGemini } from '@/lib/ai/gemini';
+import { forestSummary, linkConnections, quizQuestions, testAi } from '@/lib/ai/gemini';
 import { getSeed, getSettings, getToolbarState, updateSeed, updateToolbarState } from '@/lib/storage';
 import { watchForPdfs } from './pdf/redirect';
 
@@ -81,18 +81,19 @@ async function captureTab(windowId: number | undefined): Promise<{ ok: boolean; 
 
 async function answerAi(request: AiRequest): Promise<AiReply<unknown>> {
   try {
-    const { geminiKey } = await getSettings();
+    const settings = await getSettings();
+    const key = request.provider === 'cerebras' ? settings.cerebrasKey : settings.geminiKey;
     if (request.type === 'forest:ai-test') {
-      await testGemini(geminiKey);
+      await testAi(request.provider, key);
       return { ok: true, value: true };
     }
     if (request.type === 'forest:ai-link') {
-      return { ok: true, value: await linkConnections(geminiKey, request.page, request.sources) };
+      return { ok: true, value: await linkConnections(key, request.page, request.sources, request.provider) };
     }
     if (request.type === 'forest:ai-summary') {
-      return { ok: true, value: await forestSummary(geminiKey, request.forestName, request.sources) };
+      return { ok: true, value: await forestSummary(key, request.forestName, request.sources, request.provider) };
     }
-    return { ok: true, value: await quizQuestions(geminiKey, request.sources) };
+    return { ok: true, value: await quizQuestions(key, request.sources, request.provider) };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) };
   }

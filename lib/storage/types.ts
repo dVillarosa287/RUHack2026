@@ -87,6 +87,8 @@ export interface Fruit {
   forestId: string;
   color: string;
   questions: Question[];
+  /** The AI provider used to write this quiz. Missing on older quizzes, which were Gemini quizzes. */
+  provider?: 'gemini' | 'cerebras';
   createdAt: number;
 }
 
@@ -109,6 +111,7 @@ export interface Settings {
   recentSprites: SpriteType[];
   theme: string;
   geminiKey: string;
+  cerebrasKey: string;
   autoConnections: boolean;
   /** Minutes after planting an apple (fruit sprout) before it grows into an apple tree and asks its question. */
   reviewMinutes: number;

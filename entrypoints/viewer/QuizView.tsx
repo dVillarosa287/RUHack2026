@@ -33,16 +33,16 @@ export function QuizView({ forestId, color }: { forestId: string; color: string 
       {data.pads.length === 0 ? (
         <p className="rounded-xl bg-surface p-6 text-ink-muted">There are no {pad.toLowerCase()}s in this {words.forest} yet.</p>
       ) : !data.fruit || making ? (
-        <MakeQuiz count={data.pads.length} hasKey={data.hasKey} making={making} onMake={make} />
+        <MakeQuiz count={data.pads.length} hasGeminiKey={data.hasGeminiKey} hasCerebrasKey={data.hasCerebrasKey} making={making} onMake={make} />
       ) : (
-        <PlayQuiz key={data.fruit.id} questions={data.fruit.questions} pads={data.pads} color={color} onRemake={(maker) => void make(maker)} hasKey={data.hasKey} />
+        <PlayQuiz key={data.fruit.id} questions={data.fruit.questions} pads={data.pads} color={color} provider={data.fruit.provider} onRemake={(maker) => void make(maker)} hasGeminiKey={data.hasGeminiKey} hasCerebrasKey={data.hasCerebrasKey} />
       )}
     </>
   );
 }
 
 /** The start screen: how to make the quiz, with the notice that the Gemini option sends text to Google. */
-function MakeQuiz({ count, hasKey, making, onMake }: { count: number; hasKey: boolean; making: QuizMaker | null; onMake(m: QuizMaker): void }) {
+function MakeQuiz({ count, hasGeminiKey, hasCerebrasKey, making, onMake }: { count: number; hasGeminiKey: boolean; hasCerebrasKey: boolean; making: QuizMaker | null; onMake(m: QuizMaker): void }) {
   const themeId = useThemeId();
   const pad = spriteLabel('lilypad', themeId).toLowerCase(); // "lily pad", or the theme's own name for it
   const words = getWords(themeId);
@@ -52,19 +52,22 @@ function MakeQuiz({ count, hasKey, making, onMake }: { count: number; hasKey: bo
         {count} {count === 1 ? pad : `${pad}s`} in this {words.forest}. Each one becomes a question (up to 10).
       </p>
       <div className="flex flex-wrap gap-2">
-        <button className={mainButton} disabled={!hasKey || making !== null} onClick={() => onMake('gemini')}>
+        <button className={mainButton} disabled={!hasGeminiKey || making !== null} onClick={() => onMake('gemini')}>
           {making === 'gemini' ? 'Gemini is writing the questions…' : 'Make the quiz with Gemini'}
+        </button>
+        <button className={button} disabled={!hasCerebrasKey || making !== null} onClick={() => onMake('cerebras')}>
+          {making === 'cerebras' ? 'Cerebras is writing the questions…' : 'Make the quiz with Cerebras'}
         </button>
         <button className={button} disabled={making !== null} onClick={() => onMake('fill-blank')}>
           {making === 'fill-blank' ? 'Making…' : 'Make it without AI (fill in the blank)'}
         </button>
       </div>
       <p className="text-xs text-ink-muted">
-        {hasKey ? (
-          <>The Gemini option sends the text of these {pad}s to Google to write the questions. Nothing is sent until you press it.</>
+        {hasGeminiKey || hasCerebrasKey ? (
+          <>AI options send the text of these {pad}s to the selected provider to write the questions. Nothing is sent until you press one.</>
         ) : (
           <>
-            To use Gemini, add your API key on the <a className="text-primary underline" href={settingsHref}>Settings page</a>. Without it the quiz is fill in the blank, made in your browser.
+            To use AI, add a Gemini or Cerebras API key on the <a className="text-primary underline" href={settingsHref}>Settings page</a>. Without it the quiz is fill in the blank, made in your browser.
           </>
         )}
       </p>
@@ -76,12 +79,14 @@ interface PlayProps {
   questions: Question[];
   pads: Seed[];
   color: string;
-  hasKey: boolean;
+  provider?: 'gemini' | 'cerebras';
+  hasGeminiKey: boolean;
+  hasCerebrasKey: boolean;
   onRemake(maker: QuizMaker): void;
 }
 
 /** Answering the questions one by one, then the results. */
-function PlayQuiz({ questions, pads, color, hasKey, onRemake }: PlayProps) {
+function PlayQuiz({ questions, pads, color, provider, hasGeminiKey, hasCerebrasKey, onRemake }: PlayProps) {
   const words = useWords(); // the frog's praise and "Hop to the next pad", or plain words in Minimal
   const [at, setAt] = useState(0);
   const [answers, setAnswers] = useState<{ given: string; right: boolean }[]>([]);
@@ -109,9 +114,9 @@ function PlayQuiz({ questions, pads, color, hasKey, onRemake }: PlayProps) {
   const results = questions.map((_, i) => answers[i]?.right);
   const pad = pads.find((p) => p.id === question?.seedId);
   const score = answers.filter((a) => a.right).length;
-  // Gemini's questions are always 'multiple-choice' and the ones made in the browser are 'fill-blank', so the type tells which kind this quiz is.
+  const aiProvider = provider ?? 'gemini';
   const isAi = questions.some((q) => q.type === 'multiple-choice');
-  const madeBy = isAi ? 'Questions written by Gemini.' : 'Fill-in-the-blank questions, made without AI.';
+  const madeBy = isAi ? `Questions written by ${aiProvider === 'cerebras' ? 'Cerebras' : 'Gemini'}.` : 'Fill-in-the-blank questions, made without AI.';
 
   return (
     <>
@@ -192,29 +197,30 @@ function PlayQuiz({ questions, pads, color, hasKey, onRemake }: PlayProps) {
         </section>
       ) : null}
 
-      <Remake isAi={isAi} hasKey={hasKey} onRemake={onRemake} />
+      <Remake isAi={isAi} hasGeminiKey={hasGeminiKey} hasCerebrasKey={hasCerebrasKey} onRemake={onRemake} />
     </>
   );
 }
 
 /** Lets the user swap the quiz for a new one, made either way, so an AI quiz can become non-AI and the other way round. */
-function Remake({ isAi, hasKey, onRemake }: { isAi: boolean; hasKey: boolean; onRemake(maker: QuizMaker): void }) {
+function Remake({ isAi, hasGeminiKey, hasCerebrasKey, onRemake }: { isAi: boolean; hasGeminiKey: boolean; hasCerebrasKey: boolean; onRemake(maker: QuizMaker): void }) {
   const pad = spriteLabel('lilypad', useThemeId()).toLowerCase(); // "lily pad", or the theme's own name for it
   return (
     <section className="mt-4 space-y-2 rounded-xl border border-edge bg-surface p-4">
       <p className="text-sm">
-        This quiz was {isAi ? 'written by Gemini' : 'made without AI (fill in the blank)'}. Make a new one:
+        This quiz was {isAi ? 'written by AI' : 'made without AI (fill in the blank)'}. Make a new one:
       </p>
       <div className="flex flex-wrap gap-2">
-        <button className={button} disabled={!hasKey} onClick={() => onRemake('gemini')}>Remake with Gemini</button>
+        <button className={button} disabled={!hasGeminiKey} onClick={() => onRemake('gemini')}>Remake with Gemini</button>
+        <button className={button} disabled={!hasCerebrasKey} onClick={() => onRemake('cerebras')}>Remake with Cerebras</button>
         <button className={button} onClick={() => onRemake('fill-blank')}>Remake without AI</button>
       </div>
       <p className="text-xs text-ink-muted">
-        {hasKey ? (
-          `Gemini sends the text of these ${pad}s to Google. Nothing is sent until you press it.`
+        {hasGeminiKey || hasCerebrasKey ? (
+          `The selected AI provider sends the text of these ${pad}s to write new questions. Nothing is sent until you press it.`
         ) : (
           <>
-            To remake it with Gemini, add your API key on the <a className="text-primary underline" href={settingsHref}>Settings page</a>.
+            To remake it with AI, add a key on the <a className="text-primary underline" href={settingsHref}>Settings page</a>.
           </>
         )}
       </p>

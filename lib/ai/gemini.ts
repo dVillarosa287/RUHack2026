@@ -4,8 +4,12 @@ import type { Question, Seed } from '@/lib/storage';
 
 /** The free-tier Flash model listed in Google AI Studio on the day (BACKLOG.md D5). Change it here when Google retires it. */
 export const GEMINI_MODEL = 'gemini-3.8-flash';
+export const CEREBRAS_MODEL = 'qwen-3.8-27b';
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const CEREBRAS_ENDPOINT = 'https://api.cerebras.ai/v1/chat/completions';
 const MAX_QUESTIONS = 10;
+export type AiProvider = 'gemini' | 'cerebras';
+const providerName = (provider: AiProvider) => provider === 'cerebras' ? 'Cerebras' : 'Gemini';
 
 /** What the viewer sends: just the saved text, so nothing else from storage leaves the browser. */
 export type QuizSource = Pick<Seed, 'id' | 'text' | 'pageTitle'>;
@@ -37,43 +41,53 @@ const QUIZ_SCHEMA = {
   required: ['questions'],
 };
 
-async function generate(key: string, parts: Part[], schema?: object): Promise<string> {
-  if (!key) throw new GeminiError('Add your Gemini API key on the Settings page first.');
+async function generate(provider: AiProvider, key: string, parts: Part[], schema?: object): Promise<string> {
+  if (!key) throw new GeminiError(`Add your ${providerName(provider)} API key on the Settings page first.`);
   let response: Response;
   try {
-    response = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts }],
-        generationConfig: schema ? { responseMimeType: 'application/json', responseSchema: schema } : {},
-      }),
-    });
+    response = provider === 'cerebras'
+      ? await fetch(CEREBRAS_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+          body: JSON.stringify({ model: CEREBRAS_MODEL, messages: [{ role: 'user', content: parts.map((part) => part.text).join('\n') }], ...(schema ? { response_format: { type: 'json_object' } } : {}) }),
+        })
+      : await fetch(ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts }],
+            generationConfig: schema ? { responseMimeType: 'application/json', responseSchema: schema } : {},
+          }),
+        });
   } catch {
-    throw new GeminiError('Could not reach Gemini. Check your internet connection.');
+    throw new GeminiError(`Could not reach ${providerName(provider)}. Check your internet connection.`);
   }
   const body = (await response.json().catch(() => ({}))) as {
     error?: { message?: string };
     candidates?: { content?: { parts?: { text?: string }[] } }[];
+    choices?: { message?: { content?: string } }[];
   };
   if (!response.ok) {
-    if (response.status === 429) throw new GeminiError('Gemini says too many requests. Wait a minute and try again.');
-    if (response.status === 400 || response.status === 403) throw new GeminiError(`Gemini did not accept the key or request: ${body.error?.message ?? response.status}`);
-    if (response.status === 404) throw new GeminiError(`Gemini does not know the model "${GEMINI_MODEL}". Its name may have changed (lib/ai/gemini.ts).`);
-    throw new GeminiError(`Gemini returned an error: ${body.error?.message ?? response.status}`);
+    const name = providerName(provider);
+    if (response.status === 429) throw new GeminiError(`${name} says too many requests. Wait a minute and try again.`);
+    if (response.status === 400 || response.status === 403) throw new GeminiError(`${name} did not accept the key or request: ${body.error?.message ?? response.status}`);
+    if (response.status === 404) throw new GeminiError(`${name} does not know the model "${provider === 'cerebras' ? CEREBRAS_MODEL : GEMINI_MODEL}".`);
+    throw new GeminiError(`${name} returned an error: ${body.error?.message ?? response.status}`);
   }
-  const text = body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
-  if (!text) throw new GeminiError('Gemini sent an empty answer. Try again.');
+  const text = provider === 'cerebras'
+    ? body.choices?.[0]?.message?.content ?? ''
+    : body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
+  if (!text) throw new GeminiError(`${providerName(provider)} sent an empty answer. Try again.`);
   return text;
 }
 
 /** A tiny request to check that the key and the model name work. Used by the "Test key" button in Settings. */
-export async function testGemini(key: string): Promise<void> {
-  await generate(key, [{ text: 'Reply with the single word: ok' }]);
+export async function testAi(provider: AiProvider, key: string): Promise<void> {
+  await generate(provider, key, [{ text: 'Reply with the single word: ok' }]);
 }
 
 /** Multiple-choice questions for a quiz: one request for all of them. Bad items from Gemini are dropped, not shown. */
-export async function quizQuestions(key: string, sources: QuizSource[]): Promise<Question[]> {
+export async function quizQuestions(key: string, sources: QuizSource[], provider: AiProvider = 'gemini'): Promise<Question[]> {
   const usable = sources.filter((s) => s.text.trim().split(/\s+/).length >= 4).slice(0, MAX_QUESTIONS);
   if (usable.length === 0) throw new GeminiError('There is too little saved text here to ask about.');
 
@@ -92,12 +106,12 @@ export async function quizQuestions(key: string, sources: QuizSource[]): Promise
     },
   ];
 
-  const raw = await generate(key, parts, QUIZ_SCHEMA);
+  const raw = await generate(provider, key, parts, QUIZ_SCHEMA);
   let parsed: { questions?: unknown };
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new GeminiError('Gemini sent questions that could not be read. Try again.');
+    throw new GeminiError(`${providerName(provider)} sent questions that could not be read. Try again.`);
   }
 
   const ids = new Set(usable.map((s) => s.id));
@@ -112,18 +126,18 @@ export async function quizQuestions(key: string, sources: QuizSource[]): Promise
     seen.add(seedId);
     questions.push({ seedId, type: 'multiple-choice', prompt: String(q.prompt).trim(), choices, answer });
   }
-  if (questions.length === 0) throw new GeminiError('Gemini did not send any usable questions. Try again.');
+  if (questions.length === 0) throw new GeminiError(`${providerName(provider)} did not send any usable questions. Try again.`);
   // Keep the order of the lily pads, which is the order the frog hops in.
   return usable.map((s) => questions.find((q) => q.seedId === s.id)).filter((q): q is Question => q !== undefined);
 }
 
 /** A concise study guide for the saved notes in one forest. */
-export async function forestSummary(key: string, forestName: string, sources: SummarySource[]): Promise<string> {
+export async function forestSummary(key: string, forestName: string, sources: SummarySource[], provider: AiProvider = 'gemini'): Promise<string> {
   const usable = sources.filter((s) => s.text.trim().length > 0).slice(0, 100);
   if (usable.length === 0) throw new GeminiError('There is no saved text here to summarize.');
 
   const notes = usable.map((s) => ({ page: s.pageTitle || 'Untitled page', text: s.text.slice(0, 2000), note: s.note?.slice(0, 500) }));
-  const raw = await generate(key, [{
+  const raw = await generate(provider, key, [{
     text: [
       `Create a useful study guide for the forest named "${forestName}".`,
       'Summarize the saved highlights into a short title, an overview paragraph, and concise bullet points grouped by page.',
@@ -184,12 +198,12 @@ const LINK_SCHEMA = {
  * Reads one web page and picks its key ideas, then says which of the forest's seeds each idea connects to (and which
  * ideas connect to each other), with a short reason. One request. Bad items from Gemini are dropped, not shown.
  */
-export async function linkConnections(key: string, page: LinkPage, sources: LinkSource[]): Promise<{ ideas: LinkIdea[]; roots: LinkRoot[] }> {
+export async function linkConnections(key: string, page: LinkPage, sources: LinkSource[], provider: AiProvider = 'gemini'): Promise<{ ideas: LinkIdea[]; roots: LinkRoot[] }> {
   const notes = sources
     .filter((s) => s.text.trim() || s.note?.trim())
     .slice(0, 150)
     .map((s) => ({ seedId: s.id, page: s.pageTitle, text: s.text.slice(0, 300), note: s.note?.slice(0, 200) }));
-  const raw = await generate(key, [{
+  const raw = await generate(provider, key, [{
     text: [
       'A student is collecting notes on a topic. They gave you a new web page to add to their notes.',
       `1. Pick the 3 to ${MAX_IDEAS} most important ideas on the page. For each, copy ONE sentence from the page text exactly,`,
@@ -211,7 +225,7 @@ export async function linkConnections(key: string, page: LinkPage, sources: Link
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new GeminiError('Gemini sent an answer that could not be read. Try again.');
+    throw new GeminiError(`${providerName(provider)} sent an answer that could not be read. Try again.`);
   }
 
   // Keep the good ideas, and remember what each of Gemini's numbers is now, as some may have been dropped.
@@ -224,7 +238,7 @@ export async function linkConnections(key: string, page: LinkPage, sources: Link
     ideas.push({ quote: quote.slice(0, 500), label: String(idea.label ?? '').trim().slice(0, 60) });
     renumber.set(`new-${i + 1}`, `new-${ideas.length}`);
   });
-  if (ideas.length === 0) throw new GeminiError('Gemini did not find any key ideas on that page. Try another link.');
+  if (ideas.length === 0) throw new GeminiError(`${providerName(provider)} did not find any key ideas on that page. Try another link.`);
 
   const ids = new Set(notes.map((n) => n.seedId));
   // An idea's new number, or a seed id that was sent. Anything else (a dropped idea, a made-up id) is undefined.

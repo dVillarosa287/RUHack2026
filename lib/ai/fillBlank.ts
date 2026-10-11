@@ -11,8 +11,8 @@ const COMMON_WORDS = new Set(
 /** A prompt is cut to the sentence around the blank, at most this many characters, so it fits on a lily pad. */
 const MAX_PROMPT_LENGTH = 220;
 const CHOICES = 4;
-/** Text with fewer words than this gives no context around the blank, so it gets no question. */
-const MIN_WORDS = 4;
+/** At least one word is enough to make a typed-answer question; every pad should remain represented. */
+const MIN_WORDS = 1;
 
 /** Words as they are written, with their position in the text. Only letters, digits, hyphens and apostrophes. */
 function wordsIn(text: string): { word: string; index: number }[] {
@@ -70,9 +70,14 @@ function shuffle<T>(items: T[]): T[] {
 export function fillBlankQuestion(seed: Seed, others: Seed[] = []): Question | null {
   const text = seed.text.replace(/\s+/g, ' ').trim();
   if (wordsIn(text).length < MIN_WORDS) return null;
-  const best = wordsIn(text)
+  const allWords = wordsIn(text);
+  const best = allWords
     .filter(({ word }) => isCandidate(word))
-    .sort((a, b) => score(b.word, b.index) - score(a.word, a.index))[0];
+    .sort((a, b) => score(b.word, b.index) - score(a.word, a.index))[0]
+    ?? allWords
+      .filter(({ word }) => word.length > 1)
+      .sort((a, b) => b.word.length - a.word.length)[0]
+    ?? allWords[0];
   if (!best) return null;
 
   const { text: sentence, offset } = sentenceAround(text, best.index, best.word.length);
