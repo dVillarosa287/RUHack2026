@@ -284,7 +284,7 @@
   will-change: transform;
 }
 
-/* After a jump the glow stays on for a while, then fades out. 4s matches JUMP_HIGHLIGHT_MS in lib/engine/highlights.ts. */
+/* After a jump the orange glow stays on for a while, then fades out. 4s matches JUMP_HIGHLIGHT_MS in lib/engine/highlights.ts. */
 .fo-marker.fo-flash {
   animation: fo-glow 4s linear forwards;
   font-family: "Crafty Girls", sans-serif;
@@ -293,7 +293,7 @@
 @keyframes fo-glow {
   0%,
   62% {
-    filter: drop-shadow(0 2px 3px var(--fo-shadow)) drop-shadow(0 0 3px var(--fo-accent)) drop-shadow(0 0 8px var(--fo-accent));
+    filter: drop-shadow(0 2px 3px var(--fo-shadow)) drop-shadow(0 0 3px var(--fo-flash)) drop-shadow(0 0 8px var(--fo-flash));
   }
   100% {
     filter: drop-shadow(0 2px 3px var(--fo-shadow)) drop-shadow(0 0 3px transparent) drop-shadow(0 0 8px transparent);
@@ -302,14 +302,15 @@
 
 @keyframes fo-pulse {
     50% {
-        filter: drop-shadow(0 0 3px var(--fo-accent))
-            drop-shadow(0 0 8px var(--fo-accent));
+        filter: drop-shadow(0 0 3px var(--fo-flash))
+            drop-shadow(0 0 8px var(--fo-flash));
         font-family: "Crafty Girls", sans-serif;
     }
 }
 
 /* The scroll rail: a slim bar down the left edge, standing for the whole page. Its sprites (26px) are bigger than
-   the bar (10px) and stick out past it on purpose. Sprites at the same height stack on top of each other. */
+   the bar (10px) and stick out past it on purpose. Sprites at the same height stack on top of each other, and each has
+   a very faint white glow. */
 .fo-rail {
   position: fixed;
   top: 24px;
@@ -342,7 +343,7 @@
   padding: 0;
   border: 0;
   background: none;
-  filter: drop-shadow(0 2px 3px var(--fo-shadow));
+  filter: drop-shadow(0 0 1px var(--fo-glow)) drop-shadow(0 2px 3px var(--fo-shadow));
   cursor: pointer;
   pointer-events: auto;
   transition: transform 0.12s ease-out;

@@ -69,6 +69,16 @@ Entry format:
 
 ### On-page UI and art notes
 
+- [Oct 11, 2:30 AM] (Teobobeo99)
+  - Did: the glow around a sprite you jump to (click it on the scroll rail) is orange now, not green: new token `flash` (palette orange) in `lib/theme/themes.ts`, used by `fo-glow` and `fo-pulse` in `lib/onpage-ui/toolbar.css`; listed in `docs/THEME.md`.
+  - Others can use / need to know: `accent` is still green and is not used for this glow any more. Tested in Chromium (clicked a rail sprite, the marker on the page glowed orange).
+  - Need from someone else: a person to check it in Chrome.
+
+- [Oct 11, 2:15 AM] (Teobobeo99)
+  - Did: the faint white glow is on the scroll rail sprites only (removed from the toolbar tiles), and lowered to a 1px blur (`.fo-rail-stop` in `lib/onpage-ui/toolbar.css`, token `glow` in `themes.ts`).
+  - Others can use / need to know: to change the strength, edit the blur in `drop-shadow(0 0 1px var(--fo-glow))`. Chromium screenshots only.
+  - Need from someone else: a person to check it in Chrome.
+
 - [Oct 11, 1:40 AM] (Teobobeo99)
   - Did: backgrounds are the Background colors only (page `#18182A`, cards and chips `#50505F`) and text the Foreground colors only, no dark-green dimming or layers any more. Toolbar shortened: no instruction text, no Recent row, no Current Forest / View Forests / Create new forest buttons. A white tree button sits under the shovel and opens the current forest; "+ Create new forest" is the last option of the forest drop-down. Hover is `filter: brightness(1.3)`. Files: `Toolbar.tsx`, `toolbar.css`, `App.tsx`, `themes.ts`, `entrypoints/viewer/style.css`, and `border-edge/30`, `bg-surface/40` and `/80` (see-through mixes) replaced by solid classes in the viewer.
   - Others can use / need to know: `Settings.recentSprites` still exists but nothing writes or shows it. The `*-filter` tokens are gone. Checked in Chromium with screenshots; the font did not load there.

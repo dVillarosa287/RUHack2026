@@ -66,9 +66,11 @@ In CSS the three tones of a color are `var(--c-green)`, `var(--c-green-light)` a
 | `primary-strong` | Pressed or hovered primary |
 | `primary-ink` | Text that sits on `primary` |
 | `primary-soft` | Hover and selected backgrounds (lighter background, made brighter with a filter) |
-| `accent` | Small highlights, such as the glow on a marker that stays and then fades when jumping to a seed (green, the same as `primary`) |
+| `accent` | Small highlights (green, the same as `primary`) |
+| `flash` | The orange glow around a sprite on the page after you jump to it, which stays and then fades |
 | `danger-soft` | Hover on delete buttons |
 | `shadow` | Shadows (the darkest background; the blur fades it) |
+| `glow` | The faint white glow around the sprites on the scroll rail only (the lightest foreground) |
 
 To restyle one thing, change the token in `themes.ts`. Do not add a one-off color to a component. For a hover state on a button, use `filter: brightness(...)` (rule 4).
 

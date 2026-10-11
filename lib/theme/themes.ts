@@ -65,9 +65,13 @@ export const FOREST_THEME: ThemeDefinition = {
     'primary-soft': color('background', 'light'),
     // Smaller accents
     accent: color('green'),
+    // The glow around a sprite you just jumped to
+    flash: color('orange'),
     'danger-soft': color('red', 'dark'),
     // Shadows are the darkest background; the blur already fades them out, so they need no transparency
     shadow: color('background', 'dark'),
+    // The faint glow around sprites
+    glow: color('foreground', 'light'),
   },
 };
 
