@@ -49,7 +49,14 @@ async function generate(provider: AiProvider, key: string, parts: Part[], schema
       ? await fetch(CEREBRAS_ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-          body: JSON.stringify({ model: CEREBRAS_MODEL, messages: [{ role: 'user', content: parts.map((part) => part.text).join('\n') }], ...(schema ? { response_format: { type: 'json_object' } } : {}) }),
+          body: JSON.stringify({
+            model: CEREBRAS_MODEL,
+            messages: [
+              ...(schema ? [{ role: 'system', content: `Return only valid JSON matching this schema: ${JSON.stringify(schema)}` }] : []),
+              { role: 'user', content: parts.map((part) => part.text).join('\n') },
+            ],
+            ...(schema ? { response_format: { type: 'json_object' } } : {}),
+          }),
         })
       : await fetch(ENDPOINT, {
           method: 'POST',
@@ -81,6 +88,21 @@ async function generate(provider: AiProvider, key: string, parts: Part[], schema
   return text;
 }
 
+/** Qwen may wrap JSON in reasoning text or a Markdown fence even when JSON mode is requested. */
+function parseJsonResponse(raw: string, provider: AiProvider): unknown {
+  const withoutThinking = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  const fenced = withoutThinking.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1]?.trim();
+  const candidate = fenced ?? withoutThinking;
+  const start = candidate.indexOf('{');
+  const end = candidate.lastIndexOf('}');
+  const json = start >= 0 && end > start ? candidate.slice(start, end + 1) : candidate;
+  try {
+    return JSON.parse(json);
+  } catch {
+    throw new GeminiError(`${providerName(provider)} sent questions that could not be read. Try again.`);
+  }
+}
+
 /** A tiny request to check that the key and the model name work. Used by the "Test key" button in Settings. */
 export async function testAi(provider: AiProvider, key: string): Promise<void> {
   await generate(provider, key, [{ text: 'Reply with the single word: ok' }]);
@@ -100,6 +122,7 @@ export async function quizQuestions(key: string, sources: QuizSource[], provider
         "using that note's seedId. Each question must be answerable from its note alone and test the key idea, not a trivial detail.",
         'Give exactly 4 short choices, one of them correct and three plausible but wrong. The answer must be copied exactly from the choices.',
         'Do not mention "the note" or "the text" in the question.',
+        'Return exactly one JSON object with a "questions" array. Each item must contain exactly these fields: seedId, prompt, choices, answer.',
         '',
         JSON.stringify(notes),
       ].join('\n'),
@@ -107,12 +130,7 @@ export async function quizQuestions(key: string, sources: QuizSource[], provider
   ];
 
   const raw = await generate(provider, key, parts, QUIZ_SCHEMA);
-  let parsed: { questions?: unknown };
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    throw new GeminiError(`${providerName(provider)} sent questions that could not be read. Try again.`);
-  }
+  const parsed = parseJsonResponse(raw, provider) as { questions?: unknown };
 
   const ids = new Set(usable.map((s) => s.id));
   const seen = new Set<string>();
@@ -120,9 +138,11 @@ export async function quizQuestions(key: string, sources: QuizSource[], provider
   for (const item of Array.isArray(parsed.questions) ? parsed.questions : []) {
     const q = item as Partial<Question>;
     const choices = Array.isArray(q.choices) ? [...new Set(q.choices.map((c) => String(c).trim()).filter(Boolean))] : [];
-    const answer = String(q.answer ?? '').trim();
+    const answerText = String(q.answer ?? '').trim();
     const seedId = String(q.seedId ?? '');
-    if (!ids.has(seedId) || seen.has(seedId) || !q.prompt || choices.length < 2 || !choices.includes(answer)) continue;
+    const answer = choices.find((choice) => choice === answerText)
+      ?? choices.find((choice) => choice.toLowerCase() === answerText.toLowerCase());
+    if (!ids.has(seedId) || seen.has(seedId) || !q.prompt || choices.length < 2 || !answer) continue;
     seen.add(seedId);
     questions.push({ seedId, type: 'multiple-choice', prompt: String(q.prompt).trim(), choices, answer });
   }
@@ -221,12 +241,7 @@ export async function linkConnections(key: string, page: LinkPage, sources: Link
     ].join('\n'),
   }], LINK_SCHEMA);
 
-  let parsed: { ideas?: unknown; connections?: unknown };
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    throw new GeminiError(`${providerName(provider)} sent an answer that could not be read. Try again.`);
-  }
+  const parsed = parseJsonResponse(raw, provider) as { ideas?: unknown; connections?: unknown };
 
   // Keep the good ideas, and remember what each of Gemini's numbers is now, as some may have been dropped.
   const ideas: LinkIdea[] = [];

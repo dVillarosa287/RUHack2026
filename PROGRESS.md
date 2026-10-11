@@ -403,6 +403,11 @@ Entry format:
 ### Data, AI and integration notes
 
 - [Oct 11] (GitHub Copilot)
+  - Did: Cerebras quiz/link requests now receive an explicit Gemini-shaped JSON contract; Qwen responses tolerate `<think>` reasoning and Markdown fences, and quiz answers are normalized case-insensitively before validation.
+  - Others can use / need to know: invalid seed IDs or malformed question objects are still rejected. `npm run compile` passes.
+  - Need from someone else: test a real Cerebras quiz with the browser console open.
+
+- [Oct 11] (GitHub Copilot)
   - Did: fallback quizzes now retain a question for every pad with usable text, AI errors/logs identify their provider and operation, and Settings save/remove messages are scoped to the key changed. Failed AI attempts no longer label fallback questions as AI-generated.
   - Others can use / need to know: short or common-word pads now use a typed-answer fallback instead of disappearing. `npm run compile` passes.
   - Need from someone else: nothing.
