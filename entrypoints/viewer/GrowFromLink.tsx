@@ -5,7 +5,7 @@ import { countOf, useWords } from '@/lib/theme';
 import { graphHref } from './route';
 
 /**
- * The "Grow from link" button in a forest's header, left of "Graph view". The user pastes a link; Gemini reads that
+ * The "Grow from link" button in a forest's header, left of "Graph view". The user pastes a link; the selected provider reads that
  * page, plants its key ideas as seeds and grows roots from them to related seeds already in the forest (lib/ai).
  */
 export function GrowFromLink({ forestId, seeds, showGraphLink }: { forestId: string; seeds: Seed[]; showGraphLink: boolean }) {
@@ -46,7 +46,7 @@ export function GrowFromLink({ forestId, seeds, showGraphLink }: { forestId: str
     <div className="relative">
       <button
         className="rounded-lg border border-edge px-3 py-1.5 text-sm hover:bg-primary-soft"
-        title="Paste a link: Gemini reads the page and connects its key ideas to this forest"
+        title="Paste a link: the selected AI provider reads the page and connects its key ideas to this forest"
         onClick={() => setOpen((value) => !value)}
       >
         {words.fromLink}

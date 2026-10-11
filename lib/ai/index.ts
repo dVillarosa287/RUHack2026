@@ -44,14 +44,14 @@ export function aiForestSummary(forestName: string, seeds: Seed[], provider: AiP
 export const LINK_SPRITE: SpriteType = 'grass';
 
 /**
- * "Grow from link": reads the page at `address`, asks Gemini (one request) for its key ideas and how they connect to
+ * "Grow from link": reads the page at `address`, asks the selected AI provider (one request) for its key ideas and how they connect to
  * the forest's `seeds`, then saves each idea as a seed from that page and each connection as a root (source 'ai').
  * Two or more seeds from one page also get a large tree in the graph. Throws with a readable message if anything fails.
  */
 export async function growFromLink(forestId: string, address: string, seeds: Seed[], provider: AiProvider, onStep?: (step: string) => void): Promise<{ title: string; seeds: number; roots: number }> {
   onStep?.('Reading the page…');
   const page = await readPage(address);
-  onStep?.('Asking Gemini…');
+  onStep?.(`Asking ${provider === 'cerebras' ? 'Cerebras' : 'Gemini'}…`);
   const sources = seeds.map(({ id, text, pageTitle, note }) => ({ id, text, pageTitle, note }));
   const { ideas, roots } = await ask<{ ideas: LinkIdea[]; roots: LinkRoot[] }>({ type: 'forest:ai-link', provider, page, sources });
 

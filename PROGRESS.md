@@ -413,6 +413,11 @@ Entry format:
 ### Data, AI and integration notes
 
 - [Oct 11] (GitHub Copilot)
+  - Did: Grow from link now labels its in-progress step and tooltip with the selected provider, so Cerebras no longer appears as Gemini during graph generation.
+  - Others can use / need to know: request routing was already provider-aware; this fixed the remaining hard-coded UI text. `npm run compile` passes.
+  - Need from someone else: nothing.
+
+- [Oct 11] (GitHub Copilot)
   - Did: Cerebras quiz/link requests now receive an explicit Gemini-shaped JSON contract; Qwen responses tolerate `<think>` reasoning and Markdown fences, and quiz answers are normalized case-insensitively before validation.
   - Others can use / need to know: invalid seed IDs or malformed question objects are still rejected. `npm run compile` passes.
   - Need from someone else: test a real Cerebras quiz with the browser console open.
