@@ -2,13 +2,16 @@
 // (entrypoints/background.ts), so these functions send it a message and wait for the answer.
 import { browser } from 'wxt/browser';
 import type { Question, Seed } from '@/lib/storage';
-import type { QuizSource } from './gemini';
+import type { SummarySource, QuizSource } from './gemini';
 
 export { fillBlankQuestion, fillBlankQuestions, isCorrectAnswer } from './fillBlank';
 export { GEMINI_MODEL } from './gemini';
 
 /** The messages the background worker answers. */
-export type AiRequest = { type: 'forest:ai-test' } | { type: 'forest:ai-quiz'; sources: QuizSource[] };
+export type AiRequest =
+  | { type: 'forest:ai-test' }
+  | { type: 'forest:ai-quiz'; sources: QuizSource[] }
+  | { type: 'forest:ai-summary'; forestName: string; sources: SummarySource[] };
 export type AiReply<T> = { ok: true; value: T } | { ok: false; error: string };
 
 async function ask<T>(request: AiRequest): Promise<T> {
@@ -26,4 +29,9 @@ export function testGeminiKey(): Promise<true> {
 /** Gemini's multiple-choice questions for these lily pads, in one request. Throws with a readable message if it fails. */
 export function geminiQuizQuestions(seeds: Seed[]): Promise<Question[]> {
   return ask<Question[]>({ type: 'forest:ai-quiz', sources: seeds.map(({ id, text, pageTitle }) => ({ id, text, pageTitle })) });
+}
+
+/** Gemini's study-guide summary for a forest. */
+export function geminiForestSummary(forestName: string, seeds: Seed[]): Promise<string> {
+  return ask<string>({ type: 'forest:ai-summary', forestName, sources: seeds.map(({ text, pageTitle, note }) => ({ text, pageTitle, note })) });
 }

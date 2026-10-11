@@ -9,6 +9,7 @@ const MAX_QUESTIONS = 10;
 
 /** What the viewer sends: just the saved text, so nothing else from storage leaves the browser. */
 export type QuizSource = Pick<Seed, 'id' | 'text' | 'pageTitle'>;
+export type SummarySource = Pick<Seed, 'text' | 'pageTitle' | 'note'>;
 /** One piece of a request. */
 type Part = { text: string };
 
@@ -114,4 +115,23 @@ export async function quizQuestions(key: string, sources: QuizSource[]): Promise
   if (questions.length === 0) throw new GeminiError('Gemini did not send any usable questions. Try again.');
   // Keep the order of the lily pads, which is the order the frog hops in.
   return usable.map((s) => questions.find((q) => q.seedId === s.id)).filter((q): q is Question => q !== undefined);
+}
+
+/** A concise study guide for the saved notes in one forest. */
+export async function forestSummary(key: string, forestName: string, sources: SummarySource[]): Promise<string> {
+  const usable = sources.filter((s) => s.text.trim().length > 0).slice(0, 100);
+  if (usable.length === 0) throw new GeminiError('There is no saved text here to summarize.');
+
+  const notes = usable.map((s) => ({ page: s.pageTitle || 'Untitled page', text: s.text.slice(0, 2000), note: s.note?.slice(0, 500) }));
+  const raw = await generate(key, [{
+    text: [
+      `Create a useful study guide for the forest named "${forestName}".`,
+      'Summarize the saved highlights into a short title, an overview paragraph, and concise bullet points grouped by page.',
+      'Use only the supplied material. Do not invent facts, citations, or sections for pages with no useful text.',
+      'Return plain Markdown only. Do not wrap the answer in a code fence.',
+      '',
+      JSON.stringify(notes),
+    ].join('\n'),
+  }]);
+  return raw.trim();
 }

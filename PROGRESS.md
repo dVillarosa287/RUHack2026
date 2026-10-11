@@ -246,6 +246,11 @@ Entry format:
 
 ### Viewer notes
 
+- [Oct 11] (GitHub Copilot)
+  - Did: added a centered, wider "Summarize & export" panel in `entrypoints/viewer/ForestExport.tsx`, placed below the React Flow graph; its trigger now matches the graph's primary "Text note" button styling and smoothly scrolls into view when opened or when export options appear. Gemini creates a study-guide summary, and the user can download it as PDF or DOCX. Raw HTML-looking seed text is excluded from Gemini and both exports. Added `forest:ai-summary` through the background worker and `docx`/`jspdf` dependencies.
+  - Others can use / need to know: open a forest's Graph view, scroll below the graph, press "Summarize & export", then "Summarize with Gemini" after saving a key in Settings. The page only shows "Summary ready" plus PDF/DOCX options after generation; the full text stays inside the export handlers. The background listener must include `forest:ai-summary` so the message channel stays open, and the extension must be reloaded after rebuilding. `npm run compile`, `npm run check:theme`, and `npm run build` pass; build reports only a bundle-size warning. Not tested with a real Gemini key in Chrome yet.
+  - Need from someone else: check the panel and downloaded files in Chrome with a real key.
+
 - [Oct 11] (Teobobeo99)
   - Did: the Minimal theme (renamed from "Minimal Biome") now uses plain words everywhere: new `lib/theme/words.ts` (`getWords(themeId)`, `useWords()`, `cap`, `countOf`), used across the viewer, the toolbar, the review pop-up and the planting messages. App name "Notes", forest→folder, folder→section, seed→item, root→link, "Lily pad quiz"→"Quiz". The other themes' text is unchanged.
   - Others can use / need to know: new user-visible text must come from `useWords()` if it names a nature thing. `removeSeed` (ForestList) and `removeSeedAndRoots` (NodeDetail) now take `words`. Toolbar aria-labels stay English. Tested in Chromium.

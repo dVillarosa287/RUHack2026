@@ -20,6 +20,7 @@ import {
 import { addRoot, deleteRoot, getFolders, getForest, getRoots, getSeedsForForest, saveSeed, updateSeed, type Folder, type Root, type Seed, type SpriteType } from '@/lib/storage';
 import { countOf, useWords } from '@/lib/theme';
 import { ForestHeader } from './ForestHeader';
+import { ForestExport } from './ForestExport';
 import { NODE_TYPES, type GraphNode, type LargeTreeNodeType, type SeedNodeType } from './GraphNodes';
 import { clearSpotNear, largeTreePages, largeTreeSpot, layoutAllSeeds, layoutNewSeeds, type Point } from './graphLayout';
 import { NewNoteForm } from './NewNoteForm';
@@ -43,12 +44,19 @@ export function GraphView({ forestId }: { forestId: string }) {
       <ForestHeader
         forest={data.forest}
         summary={`${countOf(data.seeds.length, words.seed, words.seeds)}, ${countOf(data.roots.length, words.root, words.roots)}`}
-        actions={<a href={forestHref(forestId)} className="rounded-lg border border-edge px-3 py-1.5 text-sm hover:bg-primary-soft">List view</a>}
+        actions={
+          <>
+            <a href={forestHref(forestId)} className="rounded-lg border border-edge px-3 py-1.5 text-sm hover:bg-primary-soft">List view</a>
+          </>
+        }
       />
       {/* The provider lets the parts inside use React Flow's helpers, such as finding the middle of the view. */}
       <ReactFlowProvider>
         <ForestGraph forestId={forestId} seeds={data.seeds} roots={data.roots} folders={data.folders} />
       </ReactFlowProvider>
+      <div className="mt-4 flex justify-center">
+        <ForestExport forest={data.forest} seeds={data.seeds} />
+      </div>
     </>
   );
 }
