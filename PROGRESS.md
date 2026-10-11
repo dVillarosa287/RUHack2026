@@ -69,6 +69,26 @@ Entry format:
 
 ### On-page UI and art notes
 
+- [Oct 11, 1:40 AM] (Teobobeo99)
+  - Did: backgrounds are the Background colors only (page `#18182A`, cards and chips `#50505F`) and text the Foreground colors only, no dark-green dimming or layers any more. Toolbar shortened: no instruction text, no Recent row, no Current Forest / View Forests / Create new forest buttons. A white tree button sits under the shovel and opens the current forest; "+ Create new forest" is the last option of the forest drop-down. Hover is `filter: brightness(1.3)`. Files: `Toolbar.tsx`, `toolbar.css`, `App.tsx`, `themes.ts`, `entrypoints/viewer/style.css`, and `border-edge/30`, `bg-surface/40` and `/80` (see-through mixes) replaced by solid classes in the viewer.
+  - Others can use / need to know: `Settings.recentSprites` still exists but nothing writes or shows it. The `*-filter` tokens are gone. Checked in Chromium with screenshots; the font did not load there.
+  - Need from someone else: a person to check it in Chrome.
+
+- [Oct 11, 1:10 AM] (Teobobeo99)
+  - Did: toolbar restyled as one rounded card: header with the forest and close button, even sprite tiles with a green ring on the chosen one, round color dots, quiet buttons and one solid green "Create new forest" button (`lib/onpage-ui/toolbar.css`, small markup changes in `Toolbar.tsx`: `fo-colors`, `fo-actions`, placeholder "Forest name"). Still only palette colors, no gradients, dark greens from filters on layers.
+  - Others can use / need to know: the card is `.fo-scale` (fixed 300px wide before the zoom). New filled boxes go in the `::before` list at the end of `toolbar.css`. Checked in Chromium with close-up screenshots; the Crafty Girls font did not load in that browser, so check the look in Chrome.
+  - Need from someone else: a person to check it in Chrome.
+
+- [Oct 11, 12:40 AM] (Teobobeo99)
+  - Did: every background is dark green now (user's request): the palette's darker green dimmed with a CSS filter, on a layer behind each box so text and sprites are not dimmed (`::before` rules at the end of `toolbar.css` and in `entrypoints/viewer/style.css`). New tokens `page-filter`, `surface-filter`, `surface-alt-filter`, `primary-soft-filter` in `lib/theme/themes.ts`. Text is light again, borders are the palette's darker green. `docs/THEME.md` explains the technique.
+  - Others can use / need to know: use `bg-surface`, `bg-surface-alt`, `bg-primary-soft` as before, they do the layer themselves. Inputs and selects have a transparent background (they cannot have a layer). A new filled box in `toolbar.css` needs `position: relative; isolation: isolate` and a line in the `::before` list at the end. Compile, check:theme and build pass; screenshots in Chromium only.
+  - Need from someone else: a person to check it in Chrome.
+
+- [Oct 10, 11:50 PM] (Teobobeo99)
+  - Did: no gradients anywhere (the `grad-*` tokens are gone; `npm run check:theme` now fails on a gradient), accent is green, toolbar default size is smaller (`DEFAULT_ZOOM` 0.85 in `Toolbar.tsx`, a saved scale of 1 now means this size), scroll rail moved to the left edge with 26px sprites that stack on top of each other (no more lanes in `ScrollRail.tsx`). `docs/THEME.md`, `CLAUDE.md`, `docs/SPEC.md`, `BACKLOG.md` A8 updated.
+  - Others can use / need to know: the sprite under the mouse comes to the front on hover (`.fo-rail-stop:hover`). Checked in Chromium on Wikipedia with screenshots; compile, check:theme and build pass. Nobody has checked it in Chrome yet.
+  - Need from someone else: a person to check it in Chrome.
+
 - [Oct 10, 11:00 PM] (Teobobeo99)
   - Did: F4 (`CursorSprite`: chosen sprite follows the mouse; `useSpriteDrag`: carry a sprite from the toolbar onto the page), recent sprites (a "Recent" row, `Settings.recentSprites`), "Create new forest" button (replaced "+ New"), scroll rail (`ScrollRail.tsx`: slim bar, sprites stick out, shaded block for the visible part, animal).
   - Others can use / need to know: the animal is an orange circle until the artist adds `images/uncolored-animal.png` and it is named in `lib/theme/index.ts` (`ScrollRail` already checks `artUrl('uncolored-animal.png')`). Sprites at the same height fan out sideways into up to 4 lanes. The rail only shows while the toolbar is open and the page has seeds.
@@ -197,6 +217,11 @@ Entry format:
 
 ### Data, AI and integration notes
 
+- [Oct 10, 11:30 PM] (Teobobeo99)
+  - Did: new palette in `lib/theme/themes.ts`: 10 colors (background, foreground, and the 8 seed colors) in 3 given tones each (normal, lighter, darker). The `shade` and `fade` helpers are gone; colors outside the palette are made only with CSS filters or gradients. Toolbar and viewer restyled through tokens. `docs/THEME.md`, `CLAUDE.md` and `docs/SPEC.md` reworded to match.
+  - Others can use / need to know: tones are `var(--c-green)`, `var(--c-green-light)`, `var(--c-green-dark)`; `background` and `foreground` work the same way. `COLORS` is still the 8 seed colors. The only transparency left is the page highlight (`lib/engine/highlights.ts`), because `::highlight()` takes no gradient or filter. `npm run compile`, `npm run check:theme` and `npm run build` pass; screenshots taken in Chromium (viewer list, graph, toolbar on Wikipedia).
+  - Need from someone else: a person to check the new look in Chrome.
+
 - [Oct 10, 8:00 PM] (Teobobeo99)
   - Did: added optional `x`, `y` to `Forest` and `graphX`, `graphY` to `Seed` (approved), installed `@xyflow/react`, `d3-force` and `@types/d3-force`. No fixed roles now; jobs are claimed in `docs/DIVIDING_WORK.md`.
   - Others can use / need to know: David is adding line boil and Aryan is doing fonts (listed in `docs/DIVIDING_WORK.md`). Notes for both are in `docs/THEME.md`. The graph spreads nodes out once, then keeps the user's positions.
@@ -258,8 +283,8 @@ Goal: the core loop works from start to finish with plain visuals.
 - [ ] [UI] Current forest's name shown above the toolbar (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
 - [ ] [UI] Switch forests from the toolbar (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
 - [ ] [UI] Create a new forest from the toolbar (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
-- [ ] [UI] "Current Forest" button opens the forest you are in, in a new tab (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
-- [ ] [UI] "View Forests" button opens all forests, in a new tab (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
+- [ ] [UI] The white tree button under the shovel opens the forest you are in, in a new tab (replaces the "Current Forest" button) (in progress: built and tested by the agent in Chromium on a real Wikipedia page, still needs a check in Chrome by a person)
+- [x] [UI] ~~"View Forests" button~~ removed by the user to shorten the toolbar; all forests open from the viewer's "All forests" link
 - [ ] [UI] Toolbar opens top right, can be dragged, and stays open in the same place in every tab until the user closes it (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [UI] Toolbar can be resized, and is drawn above everything on a page, including site pop-ups (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 
@@ -301,16 +326,16 @@ Goal: it looks and feels like a forest.
 ### On-page UI and art
 
 - [ ] [UI] Rectangular toolbar with the sprite icons (sprout, lily pad, mushroom, flower, apple tree) (in progress: toolbar shows all five sprites as real art, tinted in the chosen color; the final look is still to do, and a person needs to check it in Chrome)
-- [ ] [UI] The three most recently used sprites shown on the toolbar (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
+- [x] [UI] ~~Recent sprites row~~ removed by the user to shorten the toolbar (`Settings.recentSprites` is no longer written)
 - [ ] [UI] Color palette under the toolbar (in progress: the eight colors are on the toolbar and work; styling is basic)
 - [ ] [UI] On highlight, the sprite appears at the highlight for about a second, then fades
-- [ ] [UI] "Create new forest" button on the toolbar, clearly labelled (today a small "+ New"; `BACKLOG.md` A7) (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
+- [ ] [UI] Create a new forest from the forest drop-down's last option, "+ Create new forest" (replaces the button, `BACKLOG.md` A7) (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [UI] Scroll rail on the right edge with a marker for every annotation on the page; a slim bar whose sprites are larger than the bar and stick out past it (`BACKLOG.md` A8) (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [UI] Clicking a rail marker scrolls to that annotation (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [UI] The animal: the rail saves where you were before the jump, and clicking it takes you back (use a placeholder until the artist's animal art arrives, see Stage 3) (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [UI] Sprite art for each sprite type (in progress: sprout, tree, lily pad, mushroom, flower, apple and shovel are in; the apple tree and the animal marker are not drawn yet)
 - [ ] [UI] Forest icons (in progress: forests use the sprite art as their icon; no dedicated forest art, and the user cannot choose one yet)
-- [ ] [UI] Forest color palette (greens and browns) (in progress: covered by the theme system, `docs/THEME.md`; a person needs to check it in Chrome)
+- [ ] [UI] Forest color palette (in progress: the palette is now the team's blue background and light text with three tones per color, `docs/THEME.md`; a person needs to check it in Chrome)
 - [ ] [UI] Theme picker (the "custom style" dropdown), see `BACKLOG.md` A5
 - [ ] [UI] Sprites tinted with the palette colors (line art from `images/`, see `docs/THEME.md`) (in progress: built and tested by the agent in Chromium on local and Wikipedia pages, still needs a check in Chrome by a person)
 
@@ -331,7 +356,7 @@ Goal: it looks and feels like a forest.
 
 - [ ] [Data] One theme file that all sprites and colors load from (in progress: `lib/theme/` holds the palette, the art lookup and the tinting components; there is no theme picker yet)
 - [ ] [Data] Storage for roots, folders, forest icons and grid positions (in progress: roots, folders and forest icons have functions, untested; grid positions need a data model change, see `BACKLOG.md` A1)
-- [ ] [Data] Recent sprites saved in settings
+- [x] [Data] ~~Recent sprites saved in settings~~ no longer used (the toolbar's Recent row was removed)
 - [ ] [Data] Settings screen where the user pastes their Gemini key (in progress: built and tested by the agent in Chromium on real Wikipedia pages, still needs a check in Chrome by a person)
 - [ ] [Data] All four branches merged into main, and main still runs
 

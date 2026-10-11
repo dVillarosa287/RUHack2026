@@ -23,7 +23,7 @@ Not in either lane (ask the user first, or leave to the person who already has i
 
 1. **Fix F2 and F3** (jump highlight stays yellow then fades; sprites centered on the mouse). Small, quick wins.
 2. **Fix F4 together with drag-from-toolbar.** The selected sprite follows the cursor, and dragging a sprite from the toolbar and dropping it uses the same piece. One new hook in `lib/engine/` (`onDropSprite(type, clientX, clientY)`) and one new component in `lib/onpage-ui/`. This is the hard one.
-3. **Recent sprites** on the toolbar (saved in `Settings.recentSprites`) and the **"Create new forest"** button (A7).
+3. ~~Recent sprites~~ (removed) and **Create new forest** (A7, now an option in the forest drop-down).
 4. **Scroll rail** with a marker per seed, the animal (placeholder art), and the look from A8: a slim bar with sprites larger than the bar that stick out past it.
 5. **Sprites on links**: stay on the page, store the destination.
 6. Test the sturdier-anchoring items in Chrome and tick them.

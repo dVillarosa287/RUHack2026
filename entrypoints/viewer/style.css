@@ -30,6 +30,18 @@ body {
   color: var(--fo-ink);
 }
 
+/* Hover and selected fills are the lighter background made brighter with a CSS filter. */
+.bg-primary-soft,
+.hover\:bg-primary-soft:hover {
+  filter: brightness(1.3);
+}
+
+/* The open list of a drop-down is drawn by the browser, so give it colors of its own. */
+select option {
+  background: var(--fo-surface-alt);
+  color: var(--fo-ink);
+}
+
 * {
   font-family: "Crafty Girls", sans-serif;
 }

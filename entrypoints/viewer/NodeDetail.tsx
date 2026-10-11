@@ -26,7 +26,7 @@ export function NodeDetail({ seed, roots, seedsById, folders, onClose }: { seed:
   const myRoots = roots.filter((r) => r.fromSeedId === seed.id || r.toSeedId === seed.id);
 
   return (
-    <aside className="w-72 shrink-0 space-y-4 overflow-y-auto rounded-xl border-2 border-edge/30 bg-surface p-4">
+    <aside className="w-72 shrink-0 space-y-4 overflow-y-auto rounded-xl border-2 border-edge bg-surface p-4">
       <div className="flex items-start gap-3">
         <SpriteIcon type={seed.spriteType} size={56} color={seed.color} grown={seed.growth === 'tree'} />
         <div className="min-w-0 flex-1">

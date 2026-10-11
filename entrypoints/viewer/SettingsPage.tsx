@@ -23,7 +23,7 @@ export function SettingsPage() {
   return (
     <>
       <h1 className="mb-4 text-2xl font-semibold">Settings</h1>
-      <section className="space-y-3 rounded-xl border-2 border-edge/30 bg-surface p-5">
+      <section className="space-y-3 rounded-xl border-2 border-edge bg-surface p-5">
         <h2 className="text-lg font-semibold">Gemini API key</h2>
         <p className="text-sm text-ink-muted">
           Quizzes, suggested roots and the frog's summaries use Google's Gemini. Get a free key at{' '}

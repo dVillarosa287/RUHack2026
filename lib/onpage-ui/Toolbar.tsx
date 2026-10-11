@@ -11,12 +11,10 @@ interface ToolbarProps {
   tool: Tool;
   spriteType: SpriteType;
   colorId: string;
-  /** The three sprites used last, newest first. */
-  recentSprites: SpriteType[];
   status: string;
   /** Distance in px from the top and right edges of the window. */
   position: { top: number; right: number };
-  /** Size of the toolbar, 1 is normal. */
+  /** Size of the toolbar, 1 is the default size. */
   scale: number;
   onMoved(position: { top: number; right: number }): void;
   onResized(scale: number): void;
@@ -28,13 +26,17 @@ interface ToolbarProps {
   onPickColor(id: string): void;
   onSwitchForest(id: string): void;
   onCreateForest(name: string): void;
+  /** The tree button: open the current forest in the viewer. */
   onOpenCurrentForest(): void;
-  onOpenAllForests(): void;
 }
 
 const INTERACTIVE = 'button, select, input, option';
+/** The value of the last option in the forest drop-down, which creates a forest instead of switching to one. */
+const NEW_FOREST = '__new__';
 const MIN_SCALE = 0.7;
 const MAX_SCALE = 1.8;
+/** What a saved scale of 1 looks like. The toolbar's default size is a little smaller than the art's natural size. */
+const DEFAULT_ZOOM = 0.85;
 
 /** Keeps the toolbar fully inside the window, so it can never end up out of reach. */
 function clampToWindow(position: { top: number; right: number }, el: HTMLElement | null) {
@@ -124,7 +126,7 @@ export function Toolbar(props: ToolbarProps) {
 
   return (
     <div ref={rootRef} className={`fo-toolbar${dragPosition ? ' fo-dragging' : ''}`} style={{ top: shown.top, right: shown.right }} onPointerDown={startDrag}>
-      <div className="fo-scale" style={{ zoom: scale }}>
+      <div className="fo-scale" style={{ zoom: scale * DEFAULT_ZOOM }}>
         <div className="fo-forest-row">
           <span className="fo-grip" title="Drag to move the toolbar" aria-hidden="true">⠿</span>
           {naming ? (
@@ -132,7 +134,7 @@ export function Toolbar(props: ToolbarProps) {
               <input
                 autoFocus
                 value={draftName}
-                placeholder="Name of the new forest"
+                placeholder="Forest name"
                 onChange={(e) => setDraftName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') submitName();
@@ -144,10 +146,15 @@ export function Toolbar(props: ToolbarProps) {
           ) : (
             <>
               <ForestIcon icon={props.forests.find((f) => f.id === props.currentForestId)?.icon ?? ''} size={24} />
-            <select aria-label="Current forest" value={props.currentForestId ?? ''} onChange={(e) => props.onSwitchForest(e.target.value)}>
+              <select
+                aria-label="Current forest"
+                value={props.currentForestId ?? ''}
+                onChange={(e) => (e.target.value === NEW_FOREST ? setNaming(true) : props.onSwitchForest(e.target.value))}
+              >
                 {props.forests.map((f) => (
                   <option key={f.id} value={f.id}>{f.name}</option>
                 ))}
+                <option value={NEW_FOREST}>+ Create new forest</option>
               </select>
             </>
           )}
@@ -155,47 +162,25 @@ export function Toolbar(props: ToolbarProps) {
         </div>
 
         <div className="fo-panel">
-          <div className="fo-row">
+          <div className="fo-tools">
             {SPRITE_ORDER.map((type) => (
               <button key={type} className="fo-tool" title={SPRITES[type].label} aria-pressed={props.tool === 'plant' && props.spriteType === type} onClick={() => props.onPickSprite(type)} onPointerDown={(e) => props.onSpritePointerDown(type, e)}>
-                <SpriteIcon type={type} size={30} color={props.colorId} />
+                <SpriteIcon type={type} size={28} color={props.colorId} />
               </button>
             ))}
-            <div className="fo-divider" />
             <button className="fo-tool" title="Shovel: click a highlight or marker to remove it" aria-pressed={props.tool === 'dig'} onClick={props.onPickShovel}>
-              <ShovelIcon size={30} />
+              <ShovelIcon size={28} />
             </button>
-          </div>
 
-          {props.recentSprites.length > 0 && (
-            <div className="fo-row fo-recent">
-              <span className="fo-recent-label">Recent</span>
-              {props.recentSprites.map((type) => (
-                <button key={type} className="fo-recent-tool" title={`Recent: ${SPRITES[type].label}`} aria-pressed={props.tool === 'plant' && props.spriteType === type} onClick={() => props.onPickSprite(type)} onPointerDown={(e) => props.onSpritePointerDown(type, e)}>
-                  <SpriteIcon type={type} size={22} color={props.colorId} />
-                </button>
+            <div className="fo-colors">
+              {COLORS.map((c) => (
+                <button key={c.id} className="fo-swatch" title={c.name} aria-label={c.name} aria-pressed={props.colorId === c.id} style={{ background: `var(--c-${c.id})` }} onClick={() => props.onPickColor(c.id)} />
               ))}
             </div>
-          )}
-
-          <div className="fo-row">
-            {COLORS.map((c) => (
-              <button key={c.id} className="fo-swatch" title={c.name} aria-label={c.name} aria-pressed={props.colorId === c.id} style={{ background: `var(--c-${c.id})` }} onClick={() => props.onPickColor(c.id)} />
-            ))}
+            <button className="fo-tool" title="Open this forest" aria-label="Open this forest" onClick={props.onOpenCurrentForest}>
+              <ForestIcon icon="tree" size={28} />
+            </button>
           </div>
-
-          <div className="fo-hint">
-            {props.tool === 'plant' && 'Drag over text to highlight it, or click to place a marker. Esc to stop.'}
-            {props.tool === 'dig' && 'Click a highlight or a marker to remove it. Esc to stop.'}
-            {props.tool === 'none' && 'Pick a sprite, or drag one onto the page. Drag markers to move them.'}
-          </div>
-
-          <div className="fo-row">
-            <button className="fo-button" onClick={props.onOpenCurrentForest}>Current Forest</button>
-            <button className="fo-button" onClick={props.onOpenAllForests}>View Forests</button>
-          </div>
-
-          <button className="fo-button fo-wide" onClick={() => setNaming(true)}>Create new forest</button>
 
           <div className="fo-status" role="status">{props.status}</div>
         </div>

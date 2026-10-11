@@ -19,7 +19,7 @@ import { useSpriteDrag } from './useSpriteDrag';
  *  - MarkerLayer, CursorSprite, Toolbar and ScrollRail draw the markers, the sprite on the mouse, the toolbar and the rail (this folder)
  */
 export function App({ shadowHost }: { shadowHost: HTMLElement }) {
-  const { toolbar, forests, currentForestId, recentSprites, seeds } = usePageData();
+  const { toolbar, forests, currentForestId, seeds } = usePageData();
   const [tool, setTool] = useState<Tool>('none');
   const [spriteType, setSpriteType] = useState<SpriteType>('sprout');
   const [colorId, setColorId] = useState(DEFAULT_COLOR_ID);
@@ -36,10 +36,8 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
   const { removeSeed } = usePlanting({ tool, spriteType, colorId, forestId: currentForestId, isInsideUi, say });
   const dropSprite = useDropSprite({ colorId, forestId: currentForestId, isInsideUi, say });
   // The three sprites used last are kept in settings, newest first, and shown on the toolbar.
-  const rememberSprite = (type: SpriteType) => void updateSettings({ recentSprites: [type, ...recentSprites.filter((t) => t !== type)].slice(0, 3) });
   const { dragging, startSpriteDrag } = useSpriteDrag({
     onDrop: (type, x, y) => {
-      rememberSprite(type);
       dropSprite(type, x, y);
     },
   });
@@ -83,14 +81,12 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
           tool={tool}
           spriteType={spriteType}
           colorId={colorId}
-          recentSprites={recentSprites}
           status={status}
           onPickSprite={(type) => {
             // Clicking the active sprite again puts it down.
             if (tool === 'plant' && spriteType === type) return setTool('none');
             setSpriteType(type);
             setTool('plant');
-            rememberSprite(type);
           }}
           onSpritePointerDown={startSpriteDrag}
           onPickShovel={() => setTool(tool === 'dig' ? 'none' : 'dig')}
@@ -102,7 +98,6 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
             say(`Created ${name}`);
           }}
           onOpenCurrentForest={() => openViewer(currentForestId ?? undefined)}
-          onOpenAllForests={() => openViewer()}
         />
       )}
       {visible && <ScrollRail seeds={seeds} onJump={jumpToSeed} />}

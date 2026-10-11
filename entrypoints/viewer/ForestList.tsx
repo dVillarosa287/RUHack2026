@@ -43,7 +43,7 @@ export function ForestList({ seeds, emptyText }: { seeds: Seed[]; emptyText?: st
   return (
     <div className="space-y-6">
       {pages.map((page) => (
-        <section key={page.url} className="rounded-xl border-2 border-edge/30 bg-surface p-4">
+        <section key={page.url} className="rounded-xl border-2 border-edge bg-surface p-4">
           <h2 className="font-semibold">{page.title}</h2>
           {page.url && <a href={page.url} target="_blank" rel="noreferrer" className="block truncate text-sm text-primary underline">{page.url}</a>}
           <ul className="mt-3 space-y-2">

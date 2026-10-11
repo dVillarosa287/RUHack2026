@@ -105,8 +105,8 @@ These are expected problems from SPEC section 6. Turn one into a "Needs fixing" 
 - F2. Jump highlight flashed for one second: fixed (2026-10-10). It now stays lit 2.5s and fades over 1.5s (`lib/engine/highlights.ts`); marker glow does the same in `toolbar.css`. Tested in Chromium; needs a check in Chrome.
 - F3. Sprites landed off-center from the mouse: fixed (2026-10-10). Sprites are centered on the spot and text anchors use the middle of the line. Tested in Chromium; needs a check in Chrome.
 - F4. Selected sprite did not follow the mouse: fixed (2026-10-10) with `CursorSprite`. Tested in Chromium; needs a check in Chrome.
-- A7. "Create new forest" button: done (2026-10-10), replaced "+ New" in the toolbar. Tested in Chromium.
-- A8. Rail sprites stick out past the bar: done (2026-10-10) in `ScrollRail`. Tested in Chromium.
+- A7. "Create new forest" button: done (2026-10-10), replaced "+ New" in the toolbar. Changed later (2026-10-11): the button is gone, and "+ Create new forest" is the last option of the forest drop-down.
+- A8. Rail sprites stick out past the bar: done (2026-10-10) in `ScrollRail`. Tested in Chromium. Changed later (2026-10-10): the rail is on the left, sprites are 26px and stack on top of each other instead of fanning out.
 - D6. Who has which role: there are no fixed roles; people just take jobs (2026-10-10). Jobs are claimed in `docs/DIVIDING_WORK.md`.
 - A1. Forest grid positions: approved. `Forest` has optional `x` and `y`, added to `lib/storage/types.ts` (2026-10-10).
 - A2. Graph node positions: approved. `Seed` has optional `graphX` and `graphY`. The graph spreads nodes out automatically once (d3-force), then keeps the positions the user gives them (2026-10-10).

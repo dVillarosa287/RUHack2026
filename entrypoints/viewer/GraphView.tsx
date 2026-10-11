@@ -187,7 +187,7 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
 
   return (
     <div className="fo-graph flex gap-4" style={{ height: 'calc(100vh - 190px)', minHeight: 420 }}>
-      <div ref={box} className="relative min-w-0 flex-1 overflow-hidden rounded-xl border-2 border-edge/30 bg-surface-alt">
+      <div ref={box} className="relative min-w-0 flex-1 overflow-hidden rounded-xl border-2 border-edge bg-surface-alt">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -220,7 +220,7 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
           {seeds.length === 0 ? (
             <Panel position="top-center" className="rounded-lg bg-surface px-3 py-2 text-sm text-ink-muted">Nothing planted yet. Plant seeds on a web page, or add a text note.</Panel>
           ) : (
-            <Panel position="bottom-center" className="rounded-lg bg-surface/80 px-3 py-1 text-xs text-ink-muted">Drag from a sprite's dot to another sprite to grow a root. Click a root and press Delete to remove it.</Panel>
+            <Panel position="bottom-center" className="rounded-lg bg-surface px-3 py-1 text-xs text-ink-muted">Drag from a sprite's dot to another sprite to grow a root. Click a root and press Delete to remove it.</Panel>
           )}
         </ReactFlow>
       </div>
