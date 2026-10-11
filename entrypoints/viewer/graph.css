@@ -6,13 +6,13 @@
   --xy-edge-stroke-selected: var(--fo-accent);
   --xy-connectionline-stroke: var(--fo-accent);
   --xy-connectionline-stroke-width: 3;
-  --xy-controls-button-background-color: var(--fo-surface);
-  --xy-controls-button-background-color-hover: var(--fo-primary-soft);
-  --xy-controls-button-color: var(--fo-ink);
-  --xy-controls-button-color-hover: var(--fo-ink);
+  --xy-controls-button-background-color: var(--fo-primary);
+  --xy-controls-button-background-color-hover: var(--fo-primary-strong);
+  --xy-controls-button-color: var(--fo-primary-ink);
+  --xy-controls-button-color-hover: var(--fo-primary-ink);
   --xy-controls-button-border-color: var(--fo-edge);
   --xy-controls-box-shadow: 0 1px 4px var(--fo-shadow);
-  --xy-selection-background-color: var(--fo-primary-soft);
+  --xy-selection-background-color: transparent;
   --xy-selection-border: 1px dashed var(--fo-primary);
   --xy-attribution-background-color: transparent;
 }
@@ -23,7 +23,7 @@
   stroke-width: 3;
 }
 .fo-graph .fo-root-edge.selected path {
-  stroke: var(--fo-accent);
+  stroke: var(--fo-ink);
   stroke-width: 4;
 }
 
@@ -50,8 +50,7 @@
 }
 
 .fo-seed-node.is-selected .fo-seed-sprite {
-  background: var(--fo-primary-soft);
-  box-shadow: 0 0 0 3px var(--fo-accent);
+  box-shadow: 0 0 0 3px var(--fo-primary);
 }
 
 .fo-seed-label,
@@ -104,7 +103,7 @@
   width: 14px;
   height: 14px;
   background: var(--fo-primary);
-  border: 2px solid var(--fo-surface);
+  border: 2px solid var(--fo-primary-ink);
   opacity: 0.55;
   cursor: crosshair;
 }
@@ -121,6 +120,7 @@
   border: 0;
   border-radius: 12px;
   transform: none;
-  background: var(--fo-primary-soft);
-  opacity: 0.35;
+  background: transparent;
+  outline: 2px dashed var(--fo-primary);
+  opacity: 0.6;
 }

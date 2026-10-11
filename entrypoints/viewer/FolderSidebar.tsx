@@ -55,7 +55,7 @@ export function FolderSidebar({ forestId, folders, seeds, choice, onChoose }: { 
     `group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${active ? 'bg-primary-soft font-semibold' : 'hover:bg-primary-soft'} ${over === key ? 'ring-2 ring-accent' : ''}`;
 
   return (
-    <nav className="w-52 shrink-0 space-y-1 self-start rounded-xl border-2 border-edge/30 bg-surface p-3" aria-label="Folders">
+    <nav className="w-52 shrink-0 space-y-1 self-start rounded-xl border-2 border-edge bg-surface p-3" aria-label="Folders">
       <p className="mb-1 px-2 text-xs uppercase tracking-wide text-ink-muted">Folders</p>
       <button className={row('all', choice === 'all')} onClick={() => onChoose('all')}>
         <span className="flex-1">All seeds</span>
@@ -73,7 +73,7 @@ export function FolderSidebar({ forestId, folders, seeds, choice, onChoose }: { 
         </div>
       ))}
       <form
-        className="mt-2 flex gap-1 border-t border-edge/30 pt-2"
+        className="mt-2 flex gap-1 border-t border-edge pt-2"
         onSubmit={(e) => {
           e.preventDefault();
           void addFolder();

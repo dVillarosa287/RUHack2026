@@ -1,6 +1,6 @@
 # Forest annotation extension (working title "Forest")
 
-HackRU project. A Chrome extension (Manifest V3) for annotating web pages for later reference and studying. The whole app is plant and forest themed, in greens and browns.
+HackRU project. A Chrome extension (Manifest V3) for annotating web pages for later reference and studying. The whole app is plant and forest themed (sprites, words and art). Its colors are the palette in `docs/THEME.md`.
 
 ## What it does
 
@@ -62,7 +62,7 @@ Reasons for each choice: `docs/SPEC.md` section 2.
 - Gemini is called only from the background service worker, only when the user asks, with one request per quiz and JSON output. The key comes from settings in local storage. Never commit a key.
 - Use `chrome.alarms` for anything that waits longer than a few seconds. The background worker sleeps after about 30 seconds idle.
 - Sprites and colors are loaded from the theme (`lib/theme/`). Do not hard-code sprite paths or colors in components.
-- Every color and style follows `docs/THEME.md`: only the palette's exact colors, those made brighter or darker, or gradients of them, always through theme tokens (`var(--fo-...)`). No hex codes, `rgb()` or stock Tailwind color classes outside `lib/theme/themes.ts`. Run `npm run check:theme` before you finish; it must pass.
+- Every color and style follows `docs/THEME.md`: only the palette's exact colors (each has a normal, lighter and darker tone), always through theme tokens (`var(--fo-...)`). No gradients. Backgrounds use only the Background colors and text only the Foreground colors, never mixed with other colors. A color outside the palette may only be made with a CSS filter. No hex codes, `rgb()` or stock Tailwind color classes outside `lib/theme/themes.ts`. Run `npm run check:theme` before you finish; it must pass.
 - Use placeholder art (colored circles) when a sprite is not ready. Art never blocks code.
 
 ## Data model

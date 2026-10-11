@@ -17,10 +17,7 @@ interface Stop {
   fraction: number;
 }
 
-const SPRITE_SIZE = 32;
-const LANES = 4; // sprites at nearly the same height fan out sideways, so none is hidden under another
-const LANE_SHIFT_PX = 16;
-const RAIL_MARGINS_PX = 52; // the rail's top and bottom gaps (toolbar.css) plus its border // bigger than the 10px bar on purpose: the sprites stick out past it
+const SPRITE_SIZE = 26; // bigger than the 10px bar on purpose: the sprites stick out past it
 const MEASURE_EVERY_MS = 500;
 /** In case the browser sends no "scrollend" (it is already where it should be), the animal goes after this long. */
 const ANIMAL_LEAVES_AFTER_MS = 1500;
@@ -31,7 +28,7 @@ const pageHeight = () => Math.max(1, document.documentElement.scrollHeight);
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 
 /**
- * A slim bar down the right edge of the window, standing for the whole page. Every seed on the page is a small
+ * A slim bar down the left edge of the window, standing for the whole page. Every seed on the page is a small
  * sprite on it, at the same height as the seed is down the page. Clicking one scrolls there. When you jump, the
  * rail remembers where you were as "the animal"; clicking the animal takes you back.
  */
@@ -87,21 +84,6 @@ export function ScrollRail({ seeds, onJump }: ScrollRailProps) {
     };
   }, [located]);
 
-  // Stops are in page order. Each one takes the first lane whose last sprite is far enough above it.
-  const laneOf = useMemo(() => {
-    const railHeight = Math.max(1, window.innerHeight - RAIL_MARGINS_PX);
-    const lastY: number[] = [];
-    const lanes = new Map<string, number>();
-    for (const { seed, fraction } of [...stops].sort((a, b) => a.fraction - b.fraction)) {
-      const y = fraction * railHeight;
-      let lane = lastY.findIndex((last) => y - last >= SPRITE_SIZE - 4);
-      if (lane === -1) lane = lastY.length < LANES ? lastY.length : lastY.indexOf(Math.min(...lastY));
-      lastY[lane] = y;
-      lanes.set(seed.id, lane);
-    }
-    return lanes;
-  }, [stops]);
-
   if (located.length === 0) return null;
 
   const jump = (seedId: string) => {
@@ -129,7 +111,7 @@ export function ScrollRail({ seeds, onJump }: ScrollRailProps) {
     <div className="fo-rail">
       <div ref={thumbRef} className="fo-rail-thumb" />
       {stops.map(({ seed, fraction }) => (
-        <button key={seed.id} className="fo-rail-stop" style={{ top: `${fraction * 100}%`, translate: `${-(laneOf.get(seed.id) ?? 0) * LANE_SHIFT_PX}px 0` }} title={seed.text || seed.pageTitle} onClick={() => jump(seed.id)}>
+        <button key={seed.id} className="fo-rail-stop" style={{ top: `${fraction * 100}%` }} title={seed.text || seed.pageTitle} onClick={() => jump(seed.id)}>
           <SpriteIcon type={seed.spriteType} size={SPRITE_SIZE} color={seed.color} grown={seed.growth === 'tree'} />
         </button>
       ))}

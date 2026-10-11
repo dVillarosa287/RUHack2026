@@ -11,7 +11,7 @@ export function NewNoteForm({ onPlant, onCancel }: { onPlant: (note: { spriteTyp
 
   return (
     <form
-      className="w-72 space-y-3 rounded-xl border-2 border-edge/30 bg-surface p-3 shadow-md shadow-drop"
+      className="w-72 space-y-3 rounded-xl border-2 border-edge bg-surface p-3 shadow-md shadow-drop"
       onSubmit={(e) => {
         e.preventDefault();
         if (text.trim()) onPlant({ spriteType, color, text: text.trim() });

@@ -13,6 +13,7 @@ const checks = [
   { name: 'hex color code', regex: /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b(?![\w-])/g },
   { name: 'rgb/hsl/hwb color function', regex: /\b(?:rgba?|hsla?|hwb)\(/g },
   { name: 'Tailwind color class', regex: new RegExp(`\\b(?:${UTILITIES})-(?:${TAILWIND_COLOR_NAMES})(?:-\\d{2,3})?\\b`, 'g') },
+  { name: 'gradient (not allowed)', regex: /\b(?:repeating-)?(?:linear|radial|conic)-gradient\(/g },
   { name: 'color keyword', regex: /(?:color|background(?:-color)?|border(?:-color)?|fill|stroke)\s*:\s*(?:white|black|red|green|blue|yellow|orange|purple|gray|grey)\b/g },
 ];
 

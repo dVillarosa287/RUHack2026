@@ -4,66 +4,74 @@
 export interface ThemeColor {
   id: string;
   name: string;
+  /** The normal color. */
   hex: string;
+  /** The lighter color, given by the palette (not computed). */
+  light: string;
+  /** The darker color, given by the palette (not computed). */
+  dark: string;
 }
 
 export interface ThemeDefinition {
   id: string;
   name: string;
-  /** The exact colors. Seeds store a color `id`, so a theme can change a hex code without touching saved data. */
+  /** The eight colors a seed can have. Seeds store a color `id`, so a theme can change a hex code without touching saved data. */
   palette: ThemeColor[];
+  /** The two base colors every surface and text color is made from. They are not seed colors. */
+  base: ThemeColor[];
   /**
    * Named roles for styling (page background, text, borders, ...), written as CSS values.
-   * They may only use a palette color as it is, a palette color made brighter or darker with
-   * the `shade` helper, a see-through version of one (`fade`), or a gradient of those.
+   * They may only use a palette color in one of its three tones (`color`). No gradients.
    * Components use them as var(--fo-<name>).
    */
   tokens: Record<string, string>;
 }
 
-/** Reference to a palette color as a CSS value. */
-const color = (id: string) => `var(--c-${id})`;
+type Tone = 'normal' | 'light' | 'dark';
 
-/** A palette color made brighter (factor above 1) or darker (factor below 1). Same hue, same strength of color. */
-const shade = (id: string, factor: number) => `oklch(from ${color(id)} calc(l * ${factor}) c h)`;
-
-/** A see-through version of a palette color. Only for shadows, and for highlights that sit over text. */
-const fade = (id: string, factor: number, alpha: number) => `oklch(from ${color(id)} calc(l * ${factor}) c h / ${alpha})`;
+/** Reference to a palette color as a CSS value. The normal tone is `--c-<id>`, the others are `--c-<id>-light` and `--c-<id>-dark`. */
+const color = (id: string, tone: Tone = 'normal') => `var(--c-${id}${tone === 'normal' ? '' : `-${tone}`})`;
 
 export const FOREST_THEME: ThemeDefinition = {
   id: 'forest',
   name: 'Forest',
   palette: [
-    { id: 'red', name: 'Red', hex: '#FF5555' },
-    { id: 'orange', name: 'Orange', hex: '#FFAA00' },
-    { id: 'yellow', name: 'Yellow', hex: '#FFEE88' },
-    { id: 'green', name: 'Green', hex: '#00CC99' },
-    { id: 'blue', name: 'Blue', hex: '#0099FF' },
-    { id: 'cyan', name: 'Cyan', hex: '#00FFEE' },
-    { id: 'purple', name: 'Purple', hex: '#AA00FF' },
-    { id: 'magenta', name: 'Magenta', hex: '#FF00CC' },
+    { id: 'red', name: 'Red', hex: '#FF5555', light: '#FF7777', dark: '#DD3333' },
+    { id: 'orange', name: 'Orange', hex: '#FFAA00', light: '#FFCC33', dark: '#DD8800' },
+    { id: 'yellow', name: 'Yellow', hex: '#FFEE88', light: '#FFF5B8', dark: '#E0D178' },
+    { id: 'green', name: 'Green', hex: '#00CC99', light: '#66E0C2', dark: '#00B487' },
+    { id: 'blue', name: 'Blue', hex: '#0099FF', light: '#66C2FF', dark: '#0087E0' },
+    { id: 'cyan', name: 'Cyan', hex: '#00FFEE', light: '#66FFF5', dark: '#00E0D1' },
+    { id: 'purple', name: 'Purple', hex: '#AA00FF', light: '#CC66FF', dark: '#9600E0' },
+    { id: 'magenta', name: 'Magenta', hex: '#FF00CC', light: '#FF66E0', dark: '#E000B4' },
+  ],
+  base: [
+    { id: 'background', name: 'Background', hex: '#3535FF', light: '#50505F', dark: '#18182A' },
+    { id: 'foreground', name: 'Foreground', hex: '#EAEAFF', light: '#FFFFFF', dark: '#D3D3F3' },
   ],
   tokens: {
-    // Surfaces: deep forest greens, from the green darkened
-    page: shade('green', 0.2),
-    surface: shade('green', 0.32),
-    'surface-alt': shade('green', 0.26),
-    // Text and lines: cream from the yellow, brown from the orange darkened
-    ink: color('yellow'),
-    'ink-muted': shade('yellow', 0.78),
-    edge: shade('orange', 0.55),
-    // Main color: the palette green itself, with dark text on it
+    // Surfaces use the Background colors only, text uses the Foreground colors only (nothing is mixed)
+    page: color('background', 'dark'),
+    surface: color('background', 'light'),
+    'surface-alt': color('background', 'dark'),
+    ink: color('foreground'),
+    'ink-muted': color('foreground', 'dark'),
+    edge: color('background', 'light'),
+    // Main color: green, with the darkest background as text on it
     primary: color('green'),
-    'primary-strong': shade('green', 0.85),
-    'primary-ink': shade('green', 0.18),
-    'primary-soft': shade('green', 0.5),
+    'primary-strong': color('green', 'dark'),
+    'primary-ink': color('background', 'dark'),
+    // Hover and selected fills are the lighter background, brightened with a filter (see viewer/style.css and toolbar.css)
+    'primary-soft': color('background', 'light'),
     // Smaller accents
-    accent: color('orange'),
-    'danger-soft': shade('red', 0.55),
-    shadow: fade('green', 0.05, 0.55),
-    // Gradients
-    'grad-primary': `linear-gradient(${color('green')}, ${shade('green', 0.82)})`,
-    'grad-surface': `linear-gradient(${shade('green', 0.36)}, ${shade('green', 0.28)})`,
+    accent: color('green'),
+    // The glow around a sprite you just jumped to
+    flash: color('orange'),
+    'danger-soft': color('red', 'dark'),
+    // Shadows are the darkest background; the blur already fades them out, so they need no transparency
+    shadow: color('background', 'dark'),
+    // The faint glow around sprites
+    glow: color('foreground', 'light'),
   },
 };
 
@@ -79,7 +87,7 @@ export function getTheme(id: string): ThemeDefinition {
 /** The CSS that defines a theme's palette and tokens as custom properties on `selector`. */
 export function themeToCss(theme: ThemeDefinition, selector: string): string {
   const lines = [
-    ...theme.palette.map((c) => `  --c-${c.id}: ${c.hex};`),
+    ...[...theme.palette, ...theme.base].flatMap((c) => [`  --c-${c.id}: ${c.hex};`, `  --c-${c.id}-light: ${c.light};`, `  --c-${c.id}-dark: ${c.dark};`]),
     ...Object.entries(theme.tokens).map(([name, value]) => `  --fo-${name}: ${value};`),
   ];
   return `${selector} {\n${lines.join('\n')}\n}`;

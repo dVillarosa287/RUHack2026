@@ -108,7 +108,7 @@ export function ForestGrid() {
   return (
     <>
       <h1 className="mb-4 text-xl font-semibold">Your forests</h1>
-      <div className="rounded-xl border-2 border-edge/30 bg-surface/40 p-4" onClick={(e) => e.target === e.currentTarget && setSelectedId(null)}>
+      <div className="rounded-xl border-2 border-edge bg-surface-alt p-4" onClick={(e) => e.target === e.currentTarget && setSelectedId(null)}>
         <div ref={box} className="relative" style={{ height }} onClick={(e) => e.target === e.currentTarget && setSelectedId(null)}>
           {forests.map(({ forest, seedCount }) => {
             const spot = spotOf(forest.id);
@@ -137,7 +137,7 @@ export function ForestGrid() {
       </div>
 
       {selected ? (
-        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border-2 border-edge/30 bg-surface p-3">
+        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border-2 border-edge bg-surface p-3">
           <span className="font-semibold">{selected.name}</span>
           <span className="text-sm text-ink-muted">Icon:</span>
           <div className="flex gap-1">

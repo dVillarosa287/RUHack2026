@@ -23,7 +23,7 @@ Sections:
 
 ## 1. What is the app?
 
-A Chrome extension for annotating web pages. A student highlights text and plants themed sprites (sprouts, lily pads, mushrooms, flowers, apple trees) anywhere on a page, and each annotation is saved to that page so it is still there on the next visit. Annotations are collected into "forests" (projects). Inside a forest they appear as a graph of sprite nodes, like Obsidian, where they can be linked to each other and turned into quizzes for active recall. The whole app is plant and forest themed, in greens and browns, and is meant for later reference and for studying.
+A Chrome extension for annotating web pages. A student highlights text and plants themed sprites (sprouts, lily pads, mushrooms, flowers, apple trees) anywhere on a page, and each annotation is saved to that page so it is still there on the next visit. Annotations are collected into "forests" (projects). Inside a forest they appear as a graph of sprite nodes, like Obsidian, where they can be linked to each other and turned into quizzes for active recall. The whole app is plant and forest themed, with a dark blue-and-green palette, and is meant for later reference and for studying.
 
 ### Two core components
 
@@ -93,15 +93,13 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 
 - A rectangular toolbar with the sprite icons, and a color palette under it. (Stage 2)
 - The toolbar opens in the top right corner and can be dragged anywhere in the window. It can be resized by dragging its bottom-left corner. It is opened and closed with the extension's icon in Chrome (or its close button), and it stays open, in the same place and size, in every tab until the user closes it. It is drawn above everything on the page, including a site's own pop-ups. (Stage 1)
-- The three most recently used sprites shown on the toolbar, as a small "Recent" row under the main sprites (newest first, saved in `Settings.recentSprites`). A sprite counts as used when it is picked or dropped. (Stage 2)
-- Above the toolbar, the name of the forest the annotations are going into, with a way to switch forests or create a new one. (Stage 1)
-- A clearly labelled "Create new forest" button on the toolbar. Stage 1 has only a small "+ New" next to the forest picker; this replaces it with a button that says what it does. (Stage 2)
-- Two buttons: "Current Forest" opens the forest you are in, and "View Forests" opens all of your forests. (Stage 1)
+- At the top of the toolbar, a drop-down with the forest the annotations are going into. It lists every forest, and its last option, "+ Create new forest", asks for a name and makes one. (Stage 1, the create option Stage 2)
+- The toolbar is kept short: one row with the five sprites and the shovel, and under it the color dots and a white tree icon (under the shovel) that opens the current forest in the viewer. There is no instruction text, no "Recent" row and no separate forest buttons. (Stage 2)
 
 ### Scroll rail
 
-- A thin rail on the right edge of the page with a small marker for every annotation on that page. Clicking a marker scrolls to it. (Stage 2)
-- Look: the rail is a smallish, slim bar, but the sprites on it are larger than the bar and stick out past its edge. This is on purpose; keep the bar slim and let the sprites overhang. Sprites at nearly the same height fan out sideways so none is hidden. A shaded block shows which part of the page is on screen. The animal is a plain circle until the artist's art arrives. (Stage 2)
+- A thin rail on the left edge of the page with a small marker for every annotation on that page. Clicking a marker scrolls to it. (Stage 2)
+- Look: the rail is a smallish, slim bar, but the sprites on it are larger than the bar and stick out past its edge. This is on purpose; keep the bar slim and let the sprites overhang. Sprites at nearly the same height stack on top of each other, and the one under the mouse comes to the front. A shaded block shows which part of the page is on screen. The animal is a plain circle until the artist's art arrives. (Stage 2)
 - When you jump, the rail saves where you were. That saved spot is the "animal", because the animal follows you around. Clicking it takes you back. (Stage 2)
 - Option to show the animal as a visible sprite on the page. (Future)
 
@@ -131,8 +129,8 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 
 ### Custom themes
 
-- The default theme is the forest: deep greens and browns, natural colors, every part of the app plant themed. (All stages)
-- There is a theme system. The user will be able to choose a theme from a dropdown ("custom style", Stage 2 or later). Every color in the product is one of the eight palette colors, a brighter or darker version of one, or a gradient of those. The full rules are in `docs/THEME.md`.
+- The default theme is the forest: a dark background and light text with the palette's colors (`docs/THEME.md`), every part of the app plant themed. (All stages)
+- There is a theme system. The user will be able to choose a theme from a dropdown ("custom style", Stage 2 or later). Every color in the product is one of the palette's colors (each in a normal, lighter and darker tone), there are no gradients, and a color outside the palette is made only with a CSS filter. The full rules are in `docs/THEME.md`.
 - Load sprites and colors from one theme file from the start, so other themes and texture packs can be added without changing code. (Stage 2 for the structure, Future for more themes)
 
 ### Export
@@ -154,7 +152,7 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 
 - **Extension shell:** the WXT project, manifest permissions (storage, alarms, access to web pages), and the extension icon.
 - **Page script:** capture the selected text, draw highlights, place sprites, build an anchor for each annotation, and restore every saved annotation when a page loads.
-- **On-page UI:** the toolbar, color palette, recent sprites, forest name and picker, the two forest buttons, the scroll rail and the animal marker, all inside a Shadow DOM.
+- **On-page UI:** the toolbar, color dots, forest drop-down, the tree button, the scroll rail and the animal marker, all inside a Shadow DOM.
 - **Storage module:** one file with functions such as getForests, saveSeed, getSeedsForUrl and addRoot. Nobody else touches chrome.storage directly.
 - **Background service worker:** Gemini requests, the five-minute alarms, and opening the viewer tab.
 - **Viewer page:** the forests grid, the forest list view, the graph view, the folder sidebar, a detail panel for a selected node, and a form for adding notes.
@@ -184,8 +182,8 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 
 ### On a web page
 
-1. Open the extension on any web page. A rectangular toolbar appears with the sprite icons (sprout, lily pad, mushroom, flower, apple tree) and the three most recently used sprites. The color palette sits under the toolbar.
-2. Above the toolbar is the name of the forest you are in, which is the folder your annotations go into. You can switch forests from here, or press "Create new forest".
+1. Open the extension on any web page. A rectangular toolbar appears with the sprite icons (sprout, lily pad, mushroom, flower, apple tree) and the shovel. The color dots sit under them, next to a tree icon that opens the current forest.
+2. At the top of the toolbar is a drop-down with the forest you are in, which is the folder your annotations go into. You can switch forests from it, or choose "+ Create new forest" at the bottom of its list.
 3. Click a sprite to select it. A copy of the sprite follows your mouse, as if you were dragging it. Then do one of the following.
    - **Click a spot on the page.** The sprite is placed there, centered on the mouse, and saved at that location.
    - **Highlight text.** The text is highlighted in the sprite's color. The sprite appears at the highlight for a second to show it was saved, then fades away.
@@ -195,11 +193,11 @@ Sprites can also be dragged from the toolbar and dropped on the page.
 
 ### The scroll rail
 
-A rail on the right side of the page shows where every sprite on the page is. It is a slim bar, and its sprites are bigger than the bar so they stick out past it. Click a marker to jump to that part of the page; the seed's highlight turns yellow, stays yellow for a while and then fades back. The spot you jumped from is saved as the "animal", since the animal follows you around, and clicking the animal returns you to it.
+A rail on the left side of the page shows where every sprite on the page is. It is a slim bar, and its sprites are bigger than the bar so they stick out past it. Click a marker to jump to that part of the page; the seed's highlight turns yellow, stays yellow for a while and then fades back. The spot you jumped from is saved as the "animal", since the animal follows you around, and clicking the animal returns you to it.
 
-### The two forest buttons
+### The tree button
 
-The toolbar has two more buttons. "Current Forest" takes you straight to the forest you are in. "View Forests" shows all of them.
+The white tree icon on the toolbar, under the shovel, takes you straight to the forest you are in. All forests are one click away from the viewer's "All forests" link.
 
 ### View Forests
 
@@ -269,7 +267,7 @@ There are no fixed roles: anyone takes any job, and jobs are claimed in `docs/DI
 | Area | Owns | Stage 1 | Stage 2 | Stage 3 |
 | --- | --- | --- | --- | --- |
 | Page engine | Page script: selection, highlights, placing, anchoring, restoring | Highlight, place a marker, save, restore on reload | Drag and drop, link sprites, sturdier anchoring | Five-minute review prompt on the page, frog summary bubble |
-| On-page UI and art | Toolbar, palette, scroll rail, sprites and animations | Basic toolbar, forest picker, the two buttons | Sprite set, recents, palette, fade animation, scroll rail and animal | Growth art, frog animation, polish |
+| On-page UI and art | Toolbar, palette, scroll rail, sprites and animations | Basic toolbar, forest picker, the tree button | Sprite set, palette, fade animation, scroll rail and animal | Growth art, frog animation, polish |
 | Viewer | The forests grid, list view, graph view | Forests grid, list of annotations by page | Graph with sprite nodes, roots, folder sidebar, notes | Quiz screen, automatic paths, suggested roots in the graph |
 | Data, AI and integration | Storage module, background worker, Gemini, repo and demo | Project setup, storage module, merging | Theme file, storage for roots and folders, Gemini key setup | Quiz generation, alarms, AI roots, export, demo script and write-up |
 
@@ -297,7 +295,7 @@ Hour ranges assume a 24-hour event and should be scaled to the real schedule. Th
 - Highlight text in a color and click to place a plain marker.
 - Annotations save per page and reappear after a reload.
 - Create a forest, switch forests, and see the current forest's name.
-- "Current Forest" and "View Forests" open the viewer in a new tab.
+- The tree button opens the current forest in the viewer in a new tab.
 - The viewer shows forests in a grid and lists each forest's annotations by page, with links back.
 
 **Done when:** a teammate can highlight three things on a Wikipedia article, close the tab, reopen it and see them, then find all three in the viewer.
@@ -306,7 +304,7 @@ Hour ranges assume a 24-hour event and should be scaled to the real schedule. Th
 
 **Goal:** it looks and feels like a forest. Hours 8 to 16.
 
-- The sprite set on the toolbar, with the three recent sprites and the color palette.
+- The sprite set on the toolbar, with the color palette.
 - Drag and drop sprites, and the appear-then-fade animation on highlights.
 - Sprites on links.
 - The scroll rail with markers and the animal.
