@@ -1,0 +1,62 @@
+/* The quiz pond (Pond.tsx). Colors come only from theme tokens, see docs/THEME.md. */
+
+/* The frog's spot over a lily pad. Changing `left` slides it to the next pad. */
+.fo-frog-slot {
+  position: absolute;
+  bottom: 64px;
+  width: 64px;
+  height: 64px;
+  transform: translateX(-50%);
+  transition: left 0.6s ease-in-out;
+}
+
+/* Each time the frog moves, this element is new, so the hop plays once: up in an arc, then down onto the pad. */
+.fo-frog {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  animation: fo-hop 0.6s ease-in-out;
+  filter: drop-shadow(0 4px 4px var(--fo-shadow));
+}
+
+@keyframes fo-hop {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-46px); }
+  100% { transform: translateY(0); }
+}
+
+/* While hopping the jumping frog shows; it then switches back to the sitting frog. */
+.fo-frog img {
+  position: absolute;
+  inset: 0;
+}
+.fo-frog-jump {
+  animation: fo-frog-jump 0.6s step-end forwards;
+}
+.fo-frog-sit {
+  animation: fo-frog-sit 0.6s step-end forwards;
+}
+@keyframes fo-frog-jump {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes fo-frog-sit {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* The first pad: the frog is already sitting, no hop. */
+.fo-frog.fo-still,
+.fo-frog.fo-still img {
+  animation: none;
+}
+.fo-frog.fo-still .fo-frog-jump {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fo-frog-slot { transition: none; }
+  .fo-frog,
+  .fo-frog img { animation: none; }
+  .fo-frog-jump { opacity: 0; }
+}

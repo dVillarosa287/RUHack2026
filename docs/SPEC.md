@@ -121,6 +121,14 @@ Each feature is tagged with the stage it belongs to. Stages are defined in secti
 - Highlights marked with the lily pad sprite are saved as quiz material. Lily pad seeds of the same color in the same forest form one quiz. (Stage 3)
 - The quiz is the "fruit" the forest produces. In the quiz screen the lily pads sit in a row and a frog jumps from pad to pad as the user moves to the next question. (Stage 3)
 - Gemini generates the questions. Fill-in-the-blank questions are the fallback: blank out a key term from the saved text, which needs no AI and works offline. (Stage 3)
+- Details decided for Stage 3 (2026-10-11, the user left these to the agent):
+  - **Quiz size:** one question per lily pad of that color, at most 10. A color with a single lily pad still makes a quiz.
+  - **Question types:** Gemini writes multiple choice (4 choices). The fallback is fill-in-the-blank: the sentence around the blanked key term, with 4 choices taken from the other lily pads' words; if there are too few other words, the user types the answer. Text under 4 words gets no question. Answers ignore case and surrounding punctuation.
+  - **Starting a quiz:** the forest page lists one "Quiz" button per color that has lily pads. The quiz has its own page (`#/forest/<id>/quiz/<color>`).
+  - **Saving:** a quiz is saved as a `Fruit`, so taking it again does not call Gemini again. A "New questions" button makes a fresh one.
+  - **End screen:** the score (for example 4 of 5), which questions were missed, and buttons to try again or go back to the forest.
+  - **Growth:** a sprout or fruit sprout becomes a tree the next time its page loads after the visit it was planted in.
+  - **Fruit sprout review:** the question appears in a small pop-up on the page, as multiple choice. If the page is not open when the five minutes are up, the question waits and appears the next time that page is opened (no Chrome notifications, so no new permission). The 30-second demo timing is a switch on the Settings page.
 
 ### The frog
 

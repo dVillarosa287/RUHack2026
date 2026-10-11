@@ -4,6 +4,7 @@ import { ForestIcon } from '@/lib/theme/SpriteIcon';
 import { ForestGrid } from './ForestGrid';
 import { ForestView } from './ForestView';
 import { GraphView } from './GraphView';
+import { QuizView } from './QuizView';
 import { SettingsPage } from './SettingsPage';
 import { parseRoute, settingsHref } from './route';
 
@@ -29,6 +30,7 @@ export function App() {
       {route.page === 'forests' && <ForestGrid />}
       {route.page === 'forest' && <ForestView forestId={route.forestId} />}
       {route.page === 'graph' && <GraphView forestId={route.forestId} />}
+      {route.page === 'quiz' && <QuizView forestId={route.forestId} color={route.color} />}
       {route.page === 'settings' && <SettingsPage />}
     </div>
   );

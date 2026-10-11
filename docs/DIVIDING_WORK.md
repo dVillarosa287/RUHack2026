@@ -62,9 +62,9 @@ Done already, waiting for a check in Chrome: sprites as real art tinted with pal
 | --- | --- | --- | --- | --- | --- |
 | Real art for the animal marker, the apple tree and the frog talking | `images/` | the artist, who is still drawing them | n/a | not code | the artist |
 | Sprout turns into a tree when the page is reloaded (sprout and fruit sprout only) | `lib/engine/`, `lib/storage/` | nothing | S | Sonnet | |
-| Fill-in-the-blank quiz questions, no AI needed | `lib/ai/` | nothing | S | Sonnet | |
-| Gemini writes the questions: one request, JSON output, sent from the background worker | `lib/ai/`, `entrypoints/background.ts` | Gemini key and model name | M | Larger (prompt and JSON handling are fiddly) | |
-| Quiz screen with lily pads and the frog (art is in `images/`) | `entrypoints/viewer/` | Quiz questions | L | Sonnet | |
+| Fill-in-the-blank quiz questions, no AI needed | `lib/ai/` | nothing | S | Sonnet | Done: Teobobeo99 (`lib/ai/fillBlank.ts`) |
+| Gemini writes the questions: one request, JSON output, sent from the background worker | `lib/ai/`, `entrypoints/background.ts` | Gemini key and model name | M | Larger (prompt and JSON handling are fiddly) | Done: Teobobeo99 (`lib/ai/gemini.ts`; needs a test with a real key) |
+| Quiz screen with lily pads and the frog (art is in `images/`) | `entrypoints/viewer/` | Quiz questions | L | Sonnet | Done: Teobobeo99 (`QuizView.tsx`, `Pond.tsx`; needs a check in Chrome) |
 | Fruit sprout: alarm after five minutes, grows into an apple tree, one question, stored as a `Fruit` with one question | `entrypoints/background.ts`, `lib/engine/` | The apple tree art | M | Larger (the alarm must survive the worker sleeping) | |
 | AI-suggested roots | `lib/ai/`, `entrypoints/viewer/` | Graph view, Gemini | M | Sonnet | |
 | Automatic same-site paths, with a switch | `entrypoints/viewer/` | Graph view | S | Sonnet | |

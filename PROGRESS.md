@@ -196,6 +196,11 @@ Entry format:
 
 ### Viewer notes
 
+- [Oct 11, 4:45 AM] (Teobobeo99)
+  - Did: the lily pad quiz. Forest page has a "Quizzes" bar (`QuizBar.tsx`) with one button per color that has lily pads. It opens `#/forest/<id>/quiz/<color>` (`QuizView.tsx`, `useQuiz.ts`, `Pond.tsx`, `quiz.css`): a start screen (make with Gemini, or without AI), questions one by one, the frog hops to the next pad, then the score, missed questions, Try again and New questions. Storage: `getFruits(forestId)` and `saveFruit(...)` (keeps only the latest quiz per color).
+  - Others can use / need to know: Gemini is only called when the user presses a button; if it fails the quiz is made with fill in the blank and the error is shown. Test: plant 2+ lily pads of one color over sentences, open the forest, press the color under "Quizzes". Tested in Chromium with a fake key; not with a real key.
+  - Need from someone else: the talking frog art (not used yet), and a person to try it in Chrome with a real key.
+
 - [Oct 10, 9:55 PM] (GitHub Copilot)
   - Did: right-button dragging now affects only the dragged node and its directly rooted neighbors; transitive root chains and central-tree trunk links are excluded (`entrypoints/viewer/GraphView.tsx`).
   - Others can use / need to know: `npm run compile` passes.
@@ -252,6 +257,16 @@ Entry format:
 
 ### Data, AI and integration notes
 
+- [Oct 11, 4:00 AM] (Teobobeo99)
+  - Did: Gemini quiz questions. `lib/ai/gemini.ts` (runs in the background only): `quizQuestions(key, sources)` makes one request with a JSON schema for up to 10 multiple-choice questions and drops bad ones; `GEMINI_MODEL = 'gemini-3.8-flash'`. `entrypoints/background.ts` answers the messages `forest:ai-test` and `forest:ai-quiz`. `lib/ai/index.ts` is what the viewer imports: `geminiQuizQuestions(seeds)`, `testGeminiKey()`, plus the fill-in-the-blank functions. Settings page has a "Test key" button.
+  - Others can use / need to know: the call throws an `Error` with a message fit to show the user (no key, bad key, rate limit, unknown model); fall back to `fillBlankQuestions`. Only `id`, `text` and `pageTitle` of each seed are sent. Tested: real request to Google with a fake key (clear error back), and parsing with a made-up reply.
+  - Need from someone else: the user to press "Test key" in Chrome with their real key.
+
+- [Oct 11, 3:30 AM] (Teobobeo99)
+  - Did: Stage 3 started (the user's call, before the Stage 2 boxes are checked in Chrome). `lib/ai/fillBlank.ts`: `fillBlankQuestions(seeds)` makes one fill-in-the-blank `Question` per seed (sentence around a blanked key term, 4 choices from the other seeds' words, or none so the user types it), `isCorrectAnswer(question, given)`. Stage 3 details the user left to the agent are written in `docs/SPEC.md` under "Active recall".
+  - Others can use / need to know: pure functions, no storage or network. Tested with `node --experimental-strip-types` on Wikipedia sentences. Next: Gemini questions, then the quiz screen.
+  - Need from someone else: the Gemini model name for `BACKLOG.md` D5, and a key pasted in the viewer's Settings page.
+
 - [Oct 10, 11:30 PM] (Teobobeo99)
   - Did: new palette in `lib/theme/themes.ts`: 10 colors (background, foreground, and the 8 seed colors) in 3 given tones each (normal, lighter, darker). The `shade` and `fade` helpers are gone; colors outside the palette are made only with CSS filters or gradients. Toolbar and viewer restyled through tokens. `docs/THEME.md`, `CLAUDE.md` and `docs/SPEC.md` reworded to match.
   - Others can use / need to know: tones are `var(--c-green)`, `var(--c-green-light)`, `var(--c-green-dark)`; `background` and `foreground` work the same way. `COLORS` is still the 8 seed colors. The only transparency left is the page highlight (`lib/engine/highlights.ts`), because `::highlight()` takes no gradient or filter. `npm run compile`, `npm run check:theme` and `npm run build` pass; screenshots taken in Chromium (viewer list, graph, toolbar on Wikipedia).
@@ -295,7 +310,7 @@ Entry format:
 - [ ] [Data] Storage module written with fake data so the other three can build against it (in progress: written against real `chrome.storage.local` from the start, with no fake data, because one person built every role in this session; waiting for a check in Chrome)
 - [ ] [All] Everyone can run the project and sees the extension load in Chrome
 - [ ] [All] Two or three demo pages picked (Wikipedia, OpenStax)
-- [ ] [Data] Gemini API key created in Google AI Studio and the current Flash model name written into `BACKLOG.md` D5
+- [x] [Data] Gemini API key created in Google AI Studio and the current Flash model name written into `BACKLOG.md` D5 (`gemini-3.8-flash`, closed D5)
 
 ## Stage 1: Annotation, saving and a separate viewer (hours 0 to 8)
 
@@ -403,12 +418,12 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 
 ### Priority 1: Lily pad quiz
 
-- [ ] [Data] Gemini writes the questions: one request per quiz, JSON output, sent from the background worker
-- [ ] [Data] Fill-in-the-blank fallback that needs no AI
-- [ ] [Data] Lily pad seeds of the same color in the same forest form one quiz (a fruit)
-- [ ] [Viewer] Quiz screen: lily pads in a row
-- [ ] [UI] Frog art (sitting, jumping, talking) and the hop animation from pad to pad
-- [ ] [UI] Notice in the UI that AI features send saved text to Google
+- [ ] [Data] Gemini writes the questions: one request per quiz, JSON output, sent from the background worker (in progress: built in `lib/ai/gemini.ts`; tested with a fake key and a made-up reply; needs the "Test key" button pressed with a real key in Chrome)
+- [ ] [Data] Fill-in-the-blank fallback that needs no AI (in progress: built in `lib/ai/fillBlank.ts`, used by the quiz screen, tested in Chromium; needs a check in Chrome)
+- [ ] [Data] Lily pad seeds of the same color in the same forest form one quiz (a fruit) (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [Viewer] Quiz screen: lily pads in a row (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [UI] Frog art (sitting, jumping, talking) and the hop animation from pad to pad (in progress: sitting and jumping frog and the hop are in, tested in Chromium; the talking frog art is still missing)
+- [ ] [UI] Notice in the UI that AI features send saved text to Google (in progress: on the quiz start and results screens and the Settings page, tested in Chromium; needs a check in Chrome)
 
 ### Priority 2: Growth
 

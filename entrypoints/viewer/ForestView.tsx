@@ -3,13 +3,14 @@ import { getFolders, getForest, getSeedsForForest } from '@/lib/storage';
 import { FolderSidebar, isUnfiled, type FolderChoice } from './FolderSidebar';
 import { ForestHeader } from './ForestHeader';
 import { ForestList } from './ForestList';
+import { QuizBar } from './QuizBar';
 import { graphHref } from './route';
 import { useStored } from './useStored';
 
 /**
  * A forest as a list of its annotations. This file is only the layout, so several people can work on the pieces
  * at once: the header (ForestHeader, with the "Graph view" button on the right), the folder sidebar on the left
- * (FolderSidebar), and the list itself (ForestList).
+ * (FolderSidebar), and the list itself (ForestList), and the quiz buttons (QuizBar).
  */
 export function ForestView({ forestId }: { forestId: string }) {
   const data = useStored(async () => ({ forest: await getForest(forestId), seeds: await getSeedsForForest(forestId), folders: await getFolders(forestId) }), [forestId]);
@@ -31,6 +32,7 @@ export function ForestView({ forestId }: { forestId: string }) {
         summary={summary}
         actions={<a href={graphHref(forestId)} className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink hover:bg-primary-strong">Graph view</a>}
       />
+      <QuizBar forestId={forestId} seeds={data.seeds} />
       <div className="flex gap-6">
         <FolderSidebar forestId={forestId} folders={data.folders} seeds={data.seeds} choice={folder} onChoose={setFolder} />
         <div className="min-w-0 flex-1">

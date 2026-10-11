@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { GEMINI_MODEL, testGeminiKey } from '@/lib/ai';
 import { getSettings, updateSettings } from '@/lib/storage';
 
 /**
@@ -9,6 +10,8 @@ export function SettingsPage() {
   const [key, setKey] = useState<string | null>(null); // null while loading
   const [show, setShow] = useState(false);
   const [saved, setSaved] = useState(false);
+  // The result of the "Test key" button: null before it is pressed.
+  const [test, setTest] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => void getSettings().then((s) => setKey(s.geminiKey)), []);
 
@@ -16,6 +19,18 @@ export function SettingsPage() {
     await updateSettings({ geminiKey: value.trim() });
     setKey(value.trim());
     setSaved(true);
+    setTest(null);
+  }
+
+  /** Sends one tiny request to Gemini with the saved key, so the user knows the key and the model name work. */
+  async function runTest() {
+    setTest({ ok: true, text: 'Testing…' });
+    try {
+      await testGeminiKey();
+      setTest({ ok: true, text: `The key works with ${GEMINI_MODEL}.` });
+    } catch (error) {
+      setTest({ ok: false, text: error instanceof Error ? error.message : String(error) });
+    }
   }
 
   if (key === null) return <p>Loading…</p>;
@@ -51,10 +66,14 @@ export function SettingsPage() {
           <button type="button" className="rounded-lg border border-edge px-3 py-2 text-sm hover:bg-primary-soft" onClick={() => setShow(!show)}>{show ? 'Hide' : 'Show'}</button>
           <button type="submit" className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-ink hover:bg-primary-strong">Save</button>
           {key && (
+            <button type="button" className="rounded-lg border border-edge px-3 py-2 text-sm hover:bg-primary-soft" onClick={() => void save(key).then(runTest)}>Test key</button>
+          )}
+          {key && (
             <button type="button" className="rounded-lg border border-edge px-3 py-2 text-sm hover:bg-danger-soft" onClick={() => void save('')}>Remove</button>
           )}
         </form>
-        {saved && <p className="text-sm text-primary">{key ? 'Key saved.' : 'Key removed.'}</p>}
+        {saved && !test && <p className="text-sm text-primary">{key ? 'Key saved.' : 'Key removed.'}</p>}
+        {test && <p className={`text-sm ${test.ok ? 'text-primary' : 'text-ink'}`}>{test.ok ? '' : 'Not working: '}{test.text}</p>}
         <p className="text-xs text-ink-muted">
           The key stays in this browser. When you use an AI feature, the text you saved in that forest is sent to Google to write the questions or summary. Nothing is sent unless you ask for it.
         </p>

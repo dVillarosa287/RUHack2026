@@ -4,7 +4,7 @@
 // same moment therefore never overwrite each other. Everything is async because chrome.storage is.
 import { browser } from 'wxt/browser';
 import { cleanUrl } from './url';
-import type { Folder, Forest, Root, Seed, SeedInput, Settings, ToolbarState } from './types';
+import type { Folder, Forest, Fruit, Root, Seed, SeedInput, Settings, ToolbarState } from './types';
 
 export * from './types';
 export { cleanUrl } from './url';
@@ -167,6 +167,23 @@ export async function addRoot(input: Omit<Root, 'id'>): Promise<Root> {
 
 export async function deleteRoot(id: string): Promise<void> {
   await browser.storage.local.remove(PREFIX.root + id);
+}
+
+// ---------- fruits (quizzes) ----------
+
+/** A forest's quizzes, oldest first. */
+export async function getFruits(forestId: string): Promise<Fruit[]> {
+  const fruits = await listRecords<Fruit>(PREFIX.fruit);
+  return fruits.filter((f) => f.forestId === forestId).sort(byCreatedAt);
+}
+
+/** Saves a new quiz. Older quizzes of the same forest and color are removed, so only the latest one is kept. */
+export async function saveFruit(input: Omit<Fruit, 'id' | 'createdAt'>): Promise<Fruit> {
+  const old = (await getFruits(input.forestId)).filter((f) => f.color === input.color);
+  const fruit: Fruit = { ...input, id: newId(), createdAt: Date.now() };
+  await writeRecord(PREFIX.fruit + fruit.id, fruit);
+  if (old.length) await browser.storage.local.remove(old.map((f) => PREFIX.fruit + f.id));
+  return fruit;
 }
 
 // ---------- settings ----------

@@ -1,6 +1,8 @@
 // The background service worker. It sleeps after about 30 seconds idle, so keep it stateless.
 import { browser } from 'wxt/browser';
-import { getToolbarState, updateToolbarState } from '@/lib/storage';
+import type { AiReply, AiRequest } from '@/lib/ai';
+import { quizQuestions, testGemini } from '@/lib/ai/gemini';
+import { getSettings, getToolbarState, updateToolbarState } from '@/lib/storage';
 
 export default defineBackground(() => {
   // Clicking the extension's icon in Chrome's toolbar opens or closes the on-page toolbar.
@@ -10,12 +12,34 @@ export default defineBackground(() => {
     await updateToolbarState({ open: !open });
   });
 
-  // Content scripts cannot open extension pages themselves, so they ask us to.
-  browser.runtime.onMessage.addListener((message: unknown) => {
+  browser.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
     const { type, forestId } = (message ?? {}) as { type?: string; forestId?: string };
+
+    // Content scripts cannot open extension pages themselves, so they ask us to.
     if (type === 'forest:open-viewer') {
       const hash = forestId ? `#/forest/${forestId}` : '';
       void browser.tabs.create({ url: browser.runtime.getURL('/viewer.html' as never) + hash });
+      return false;
     }
+
+    // Gemini is only called from here, and only when the user asked for it.
+    if (type === 'forest:ai-test' || type === 'forest:ai-quiz') {
+      void answerAi(message as AiRequest).then(sendResponse);
+      return true; // keeps the channel open until sendResponse is called
+    }
+    return false;
   });
 });
+
+async function answerAi(request: AiRequest): Promise<AiReply<unknown>> {
+  try {
+    const { geminiKey } = await getSettings();
+    if (request.type === 'forest:ai-test') {
+      await testGemini(geminiKey);
+      return { ok: true, value: true };
+    }
+    return { ok: true, value: await quizQuestions(geminiKey, request.sources) };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
