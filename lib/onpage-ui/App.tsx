@@ -6,6 +6,7 @@ import { CursorSprite } from './CursorSprite';
 import { FOREST_ICONS, TEXT_ONLY_SPRITES, spriteLabel, spriteTakesNote, useThemeId } from '@/lib/theme';
 import { ReviewPopup } from './ReviewPopup';
 import { MarkerLayer } from './MarkerLayer';
+import { PondFrog } from './PondFrog';
 import { ScrollRail } from './ScrollRail';
 import { NoteEditor, NoteTooltip } from './SeedNote';
 import { Toolbar } from './Toolbar';
@@ -120,10 +121,12 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
         onMove={async (id, x, y, target) => {
           const previous = seeds.find((seed) => seed.id === id);
           if (!previous) return;
-          const next = await updateSeed(id, { anchor: buildMarkerAnchor(x, y, target), ...(previous.linkTarget ? {} : { text: nearbyText(target) }) });
+          const next = await updateSeed(id, { anchor: buildMarkerAnchor(x, y, target), ...(previous.linkTarget || previous.kind === 'media' ? {} : { text: nearbyText(target) }) }); // a link or screenshot keeps its own text
           record({ undo: () => restoreSeed(previous), redo: () => restoreSeed(next) });
         }}
       />
+      {/* Now and then a frog jumps onto a lily pad. Drawn after the markers so it sits on top of the pad. */}
+      <PondFrog seeds={seeds} />
       {noteSeed && <NoteEditor key={noteSeed.id} seed={noteSeed} onSave={(note) => void saveNote(noteSeed.id, note)} onClose={() => setNoteSeedId((id) => (id === noteSeed.id ? null : id))} />}
       {hoverSeed?.note && hoverSeed.id !== noteSeed?.id && <NoteTooltip key={hoverSeed.id} seed={hoverSeed} />}
       <CursorSprite type={visible ? spriteOnMouse : null} showOverUi={dragging !== null} scale={plantScale} isInsideUi={isInsideUi} />

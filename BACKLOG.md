@@ -17,7 +17,7 @@ Blocks: write-up and extension name in Wrap-up.
 
 ### D8. Data model additions for the new sprites and active recall (team to confirm)
 
-Asked for by the user (2026-10-11): `SpriteType` has four new values (`cat`, `grass`, `owl`, `rock`), and `Settings` has `reviewMinutes` (the active recall time, default 5). `Seed.color` is no longer chosen by the user; it is set to the sprite's color key and nothing reads it. Also (2026-10-11, user's request): `SpriteType` has `house`, and `Seed` has an optional `scale` (the size its sprite was planted at, 0.5 to 2). And `Seed` has an optional `note` (the user's own words typed after planting; not for the lily pad or the apple). Tell the team; nothing existing was removed.
+Also (2026-10-11, user's request): screenshots are saved as separate `shot:<seedId>` records (a JPEG data URL) with the `unlimitedStorage` permission, and the extension has the `webRequest` permission (to spot PDFs by their Content-Type). Asked for by the user (2026-10-11): `SpriteType` has four new values (`cat`, `grass`, `owl`, `rock`), and `Settings` has `reviewMinutes` (the active recall time, default 5). `Seed.color` is no longer chosen by the user; it is set to the sprite's color key and nothing reads it. Also (2026-10-11, user's request): `SpriteType` has `house`, and `Seed` has an optional `scale` (the size its sprite was planted at, 0.5 to 2). And `Seed` has an optional `note` (the user's own words typed after planting; not for the lily pad or the apple). Tell the team; nothing existing was removed.
 
 ## Needs fixing
 
@@ -30,6 +30,24 @@ Format:
 - Page where it happens:
 - Demo-blocking: yes / no
 ```
+
+### F9. A marker's "Near:" text can include the page's CSS  [Engine] (agent)
+- What happens: `nearbyText` (lib/engine/anchor.ts) read `<style>` contents on a test page, so a marker's text was "Near: Shot testbody{font:18px…".
+- What should happen: skip `<style>`, `<script>` and hidden elements when collecting nearby text.
+- Page where it happens: any page with inline styles near the marker.
+- Demo-blocking: no
+
+### F10. Many screenshots slow down every seed read  [Data] (agent)
+- What happens: `listRecords` reads all of storage, so every `shot:` image (50–150 KB each) is read whenever seeds are listed.
+- What should happen: keep a key index (or read only `seed:` keys) in the storage module.
+- Page where it happens: any, once there are dozens of screenshots.
+- Demo-blocking: no
+
+### F11. Our UI can't be clicked while a site's modal dialog is open  [UI] (agent)
+- What happens: a modal `<dialog>` makes the rest of the page inert, including our toolbar (it is drawn above but not clickable). Also, WXT's `:host{all:initial !important}` overrides our `:host` rule (z-index, pointer-events, font never applied).
+- What should happen: probably fine for the hackathon; note only.
+- Page where it happens: sites with modal dialogs.
+- Demo-blocking: no
 
 ### F1. Viewer shows "This forest no longer exists" for a forest id typed in by hand  [Viewer] (agent)
 - What happens: on a brand new install, opening `viewer.html#/forest/forest-default` before anything has asked for the forest list shows that message, because the default forest is only created the first time the forest list is read.
@@ -59,6 +77,11 @@ Format:
 - Why:
 - Stage it would belong to:
 ```
+
+### A9. Read the text of scanned PDFs (OCR)  [Engine] (agent)
+- What: scanned PDFs (pictures of pages, like Principia Mathematica) have no text, so they can be read, marked with sprites and screenshotted, but not highlighted. OCR (e.g. Tesseract.js, run in the PDF page) could add an invisible text layer.
+- Why: lets users highlight and quiz on old scanned books.
+- Stage it would belong to: Future.
 
 ### A3. Art still missing  [UI] (agent)
 - Delivered in `images/` and now in use: sprout, tree (the grown sprout), lily pad, mushroom, flower, apple (stands in for the fruit sprout), shovel, frog sitting and jumping, and the extension icon (also resized to 16, 32 and 96 px for `public/icon/`).
@@ -96,7 +119,7 @@ These are expected problems from SPEC section 6. Turn one into a "Needs fixing" 
 - The five-minute timer being lost because the background worker went to sleep.
 - Gemini returning an error because the free tier's per-minute limit was reached.
 - The toolbar not being clickable while a site's own modal dialog is open (the browser makes everything outside the dialog unclickable, though the toolbar stays visible above it).
-- The extension not running on Chrome's own pages, the Chrome Web Store or the built-in PDF viewer.
+- The extension not running on Chrome's own pages or the Chrome Web Store. PDFs now open in our own PDF page; test that a PDF link is redirected in real Chrome (in tests a PDF opened within a second of the extension starting was sometimes not redirected), and that sign-in-protected PDFs fall back to Chrome's viewer.
 
 ## Closed
 

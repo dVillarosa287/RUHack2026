@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { pageUrl } from '@/lib/engine/pageUrl';
 import { getForests, getSeedsForUrl, getSettings, getToolbarState, onDataChanged, type Forest, type Seed, type SpriteType, type ToolbarState } from '@/lib/storage';
 
 /**
@@ -15,7 +16,7 @@ export function usePageData(): { toolbar: ToolbarState | null; forests: Forest[]
 
   useEffect(() => {
     const refresh = async () => {
-      const [allForests, settings, pageSeeds, toolbarState] = await Promise.all([getForests(), getSettings(), getSeedsForUrl(window.location.href), getToolbarState()]);
+      const [allForests, settings, pageSeeds, toolbarState] = await Promise.all([getForests(), getSettings(), getSeedsForUrl(pageUrl()), getToolbarState()]);
       setToolbar(toolbarState);
       setForests(allForests);
       setCurrentForestId(settings.currentForestId);

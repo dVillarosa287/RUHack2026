@@ -29,10 +29,14 @@ function useFollowMarker(card: RefObject<HTMLDivElement | null>, seedId: string,
         let y = onText ? above : below;
         if (onText && y < EDGE_PX) y = below;
         else if (!onText && y + height > window.innerHeight - EDGE_PX) y = above;
-        el.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+        // x and y are window coordinates; the card is placed in page coordinates (like the markers, see .fo-note in
+        // toolbar.css), so it scrolls with its sprite without waiting for the next frame. Only write what changed.
+        const transform = `translate(${Math.round(x + window.scrollX)}px, ${Math.round(y + window.scrollY)}px)`;
+        if (el.style.transform !== transform) el.style.transform = transform;
         // The sprite is hidden while its text is not on the page; the card hides with it.
         const visible = marker.style.visibility !== 'hidden';
-        el.style.visibility = visible ? 'visible' : 'hidden';
+        const visibility = visible ? 'visible' : 'hidden';
+        if (el.style.visibility !== visibility) el.style.visibility = visibility;
         if (visible && !shownOnce.current) {
           shownOnce.current = true;
           onShown?.();

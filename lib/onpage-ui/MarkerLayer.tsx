@@ -43,11 +43,12 @@ function titleFor(seed: Seed, digging: boolean): string {
 /**
  * Draws the markers. Each one is attached to text or an element on the page, never to a fixed screen spot:
  * on every frame it asks where that text or element is now and moves there. That keeps markers in the
- * right place when the page scrolls, resizes, reflows, or a section opens or closes.
+ * right place when the page resizes, reflows, or a section opens or closes. Scrolling the page needs no work at all:
+ * markers sit in page coordinates, so the browser scrolls them with the text.
  */
 export function MarkerLayer({ seeds, digging, flashId, onDig, onMove, onHover, onEditNote }: MarkerLayerProps) {
   // Highlights get their sprite too, centered above the highlighted text.
-  const markers = useMemo(() => seeds.filter((s) => (s.kind === 'sprite' || s.kind === 'link' || s.kind === 'highlight') && s.anchor), [seeds]);
+  const markers = useMemo(() => seeds.filter((s) => (s.kind === 'sprite' || s.kind === 'link' || s.kind === 'highlight' || s.kind === 'media') && s.anchor), [seeds]);
   const elements = useRef(new Map<string, HTMLDivElement>());
   const trackers = useRef(new Map<string, { anchor: Anchor; tracker: MarkerTracker }>());
   // A marker being dragged, or just dropped and waiting for its new anchor to arrive from storage.
@@ -59,17 +60,21 @@ export function MarkerLayer({ seeds, digging, flashId, onDig, onMove, onHover, o
     if (markers.length === 0) return;
     let frame = 0;
     const tick = () => {
+      // Markers are placed in page coordinates (see .fo-marker in toolbar.css): the window position plus how far the
+      // page is scrolled. The browser then scrolls them together with the text by itself, in the same frame. Placing
+      // them in window coordinates made them trail behind: the browser scrolls the page at once, but a script can only
+      // move a marker afterwards. So while the page just scrolls, these numbers stay the same and nothing is written;
+      // they change only when the page's layout does (resize, reflow, a section opening) or text inside a scrolling box moves.
+      const scrollX = window.scrollX;
+      const scrollY = window.scrollY;
+      // First read every position, then write them all. Reading after a write makes the browser redo the page's
+      // layout each time, which on a long page is slow.
+      const moves: Array<{ el: HTMLDivElement; spot: { x: number; y: number } | null }> = [];
       for (const seed of markers) {
         const el = elements.current.get(seed.id);
         if (!el || !seed.anchor) continue;
         if (seed.kind === 'highlight') {
-          const spot = aboveHighlight(seed.id);
-          if (!spot) {
-            el.style.visibility = 'hidden'; // its text is not on the page (yet)
-            continue;
-          }
-          el.style.transform = `translate(${Math.round(spot.x)}px, ${Math.round(spot.y)}px)`;
-          el.style.visibility = 'visible';
+          moves.push({ el, spot: aboveHighlight(seed.id) }); // null: its text is not on the page (yet)
           continue;
         }
         if (held.current?.id === seed.id) {
@@ -82,9 +87,15 @@ export function MarkerLayer({ seeds, digging, flashId, onDig, onMove, onHover, o
           entry = { anchor: seed.anchor, tracker: new MarkerTracker(seed.anchor) };
           trackers.current.set(seed.id, entry);
         }
-        const { x, y } = entry.tracker.position();
-        el.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
-        el.style.visibility = 'visible';
+        moves.push({ el, spot: entry.tracker.position() });
+      }
+      for (const { el, spot } of moves) {
+        const visibility = spot ? 'visible' : 'hidden';
+        // Only write what changed: an unchanged style costs nothing, so a page that is only scrolling stays cheap.
+        if (el.style.visibility !== visibility) el.style.visibility = visibility;
+        if (!spot) continue;
+        const transform = `translate(${Math.round(spot.x + scrollX)}px, ${Math.round(spot.y + scrollY)}px)`;
+        if (el.style.transform !== transform) el.style.transform = transform;
       }
       frame = requestAnimationFrame(tick);
     };
@@ -116,7 +127,8 @@ export function MarkerLayer({ seeds, digging, flashId, onDig, onMove, onHover, o
         held.current = { id: seed.id, anchor: null, until: Infinity };
         el.classList.add('fo-marker-dragging');
       }
-      el.style.transform = `translate(${ev.clientX}px, ${ev.clientY}px)`;
+      // Under the mouse, in page coordinates like every marker.
+      el.style.transform = `translate(${ev.clientX + window.scrollX}px, ${ev.clientY + window.scrollY}px)`;
     };
 
     const stop = (ev: PointerEvent) => {

@@ -1,0 +1,147 @@
+/* Our PDF page. Colors only from theme tokens (docs/THEME.md). The page itself is drawn by PDF.js on a canvas;
+   the see-through text layer above it is what gets selected and highlighted. */
+body {
+  margin: 0;
+  background: var(--fo-page);
+  color: var(--fo-ink);
+  font: 14px/1.4 system-ui, sans-serif;
+}
+
+.pdf-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  /* Room on the left for the scroll rail; the toolbar sits on the right. */
+  padding: 8px 16px 8px 48px;
+  background: var(--fo-surface);
+  border-bottom: 2px solid var(--fo-edge);
+}
+#pdf-name {
+  min-width: 0;
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+#pdf-original {
+  border: 1px solid var(--fo-edge);
+  border-radius: 8px;
+  background: var(--fo-surface);
+  color: var(--fo-ink);
+  padding: 4px 10px;
+  cursor: pointer;
+}
+#pdf-original:hover {
+  filter: brightness(1.3);
+}
+#pdf-status {
+  margin: 16px;
+  text-align: center;
+}
+#pdf-status:empty {
+  display: none;
+}
+
+/* One box per PDF page, at the size PDF.js says. --total-scale-factor is what PDF.js's text layer sizes its text by. */
+#pdf-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0 48px;
+}
+.pdf-page {
+  --scale-round-x: 1px;
+  --scale-round-y: 1px;
+  position: relative;
+  flex: none;
+  background: var(--fo-surface);
+  box-shadow: 0 2px 8px var(--fo-shadow);
+}
+.pdf-page canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* A page PDF.js could not draw (main.ts adds the class): say so instead of leaving it blank. */
+.pdf-page-failed::after {
+  content: "This page could not be drawn here. Use \"Open in Chrome's viewer\" above.";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  color: var(--fo-ink-muted);
+  background: var(--fo-surface);
+}
+
+/* The text layer, copied from the few rules of PDF.js's pdf_viewer.css that it needs: each piece of text is an
+   invisible, absolutely placed span stretched to cover the same spot as the text drawn on the canvas. */
+.textLayer {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  line-height: 1;
+  text-align: initial;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  z-index: 0;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+.textLayer :is(span, br) {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+  user-select: text;
+}
+.textLayer > :not(.markedContent),
+.textLayer .markedContent span:not(.markedContent) {
+  z-index: 1;
+  --font-height: 0;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  --scale-x: 1;
+  --rotate: 0deg;
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+.textLayer .markedContent {
+  display: contents;
+}
+.textLayer span[role='img'] {
+  user-select: none;
+  cursor: default;
+}
+.textLayer br::selection {
+  background: transparent;
+}
+/* Keeps a drag that leaves the text from selecting the whole page. */
+.textLayer .endOfContent {
+  display: block;
+  position: absolute;
+  inset: 100% 0 0;
+  z-index: 0;
+  cursor: default;
+  user-select: none;
+}
+.textLayer.selecting .endOfContent {
+  top: 0;
+}
+.textLayer[data-main-rotation='90'] {
+  transform: rotate(90deg) translateY(-100%);
+}
+.textLayer[data-main-rotation='180'] {
+  transform: rotate(180deg) translate(-100%, -100%);
+}
+.textLayer[data-main-rotation='270'] {
+  transform: rotate(270deg) translateX(-100%);
+}

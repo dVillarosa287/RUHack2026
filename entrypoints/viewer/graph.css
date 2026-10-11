@@ -58,6 +58,13 @@
   filter: brightness(1.15) drop-shadow(0 0 4px var(--fo-glow)) drop-shadow(0 0 10px var(--fo-glow));
 }
 
+/* Line boil: the sprite's lines wobble. GraphView.tsx animates --fo-boil (lib/engine/lineBoil.ts). It sits on an inner
+   wrapper, not on .fo-seed-sprite, so it does not replace the selected glow's filter. */
+.fo-graph .fo-boil {
+  display: flex;
+  filter: var(--fo-boil, none);
+}
+
 .fo-seed-label,
 .fo-tree-label {
   margin-top: 2px;
@@ -101,33 +108,25 @@
   transform: translate(-50%, -50%);
 }
 
-/* The dot to drag from to grow a root. */
-.fo-graph .fo-root-handle {
-  top: 6px;
-  right: 2px;
-  width: 14px;
-  height: 14px;
-  background: var(--fo-primary);
-  border: 2px solid var(--fo-primary-ink);
-  opacity: 0.55;
-  cursor: crosshair;
-}
-.fo-seed-node:hover .fo-root-handle,
-.fo-seed-node.is-selected .fo-root-handle {
-  opacity: 1;
+/* The link start (Shift+click a seed): the same soft glow as a selected sprite, a little stronger. */
+.fo-graph .react-flow__node.fo-link-start .fo-seed-sprite {
+  filter: brightness(1.2) drop-shadow(0 0 4px var(--fo-glow)) drop-shadow(0 0 12px var(--fo-glow));
 }
 
-/* While a root is being drawn, each other seed is one big drop area. */
-.fo-graph .fo-drop-handle {
+/* The light line from the link start to the mouse. It sits over the graph and never catches clicks. */
+.fo-graph .fo-link-preview {
+  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  border: 0;
-  border-radius: 12px;
-  transform: none;
-  background: transparent;
-  outline: 2px dashed var(--fo-primary);
-  opacity: 0.6;
+  pointer-events: none;
+  z-index: 5;
+}
+.fo-graph .fo-link-preview line {
+  stroke: var(--fo-primary);
+  stroke-width: 3;
+  stroke-dasharray: 6 6;
+  stroke-linecap: round;
 }
 
 /* Hover focus, like Obsidian's graph: hover a node and it plus its direct neighbors stay bright, the lines

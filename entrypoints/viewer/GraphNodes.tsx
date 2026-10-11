@@ -1,6 +1,6 @@
-import { Handle, Position, useConnection, type Node, type NodeProps } from '@xyflow/react';
+import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
 import type { Seed } from '@/lib/storage';
-import { getWords, spriteLabel, useThemeId } from '@/lib/theme';
+import { spriteLabel, useThemeId } from '@/lib/theme';
 import { SpriteIcon } from '@/lib/theme/SpriteIcon';
 
 export type SeedNodeType = Node<{ seed: Seed }, 'seed'>;
@@ -32,25 +32,20 @@ function MiddleHandles() {
   );
 }
 
-/**
- * One seed in the graph, drawn as its sprite. To grow a root, the user drags from the small dot on the sprite.
- * While they drag, every other seed is covered by an invisible drop area ("drop"), so letting go anywhere on a
- * node connects to it, not only on a tiny dot.
- */
+/** One seed in the graph, drawn as its sprite. Roots are made with Shift+click (see GraphView.tsx), so there is no dot. */
 export function SeedNode({ data, selected }: NodeProps<SeedNodeType>) {
   const { seed } = data;
-  const dropHere = useConnection((c) => c.inProgress && c.fromNode.id !== seed.id);
   const themeId = useThemeId();
 
   return (
     <div className={`fo-seed-node${selected ? ' is-selected' : ''}`} title={seed.pageTitle || 'Your note'}>
       <div className="fo-seed-sprite">
-        <SpriteIcon type={seed.spriteType} size={SEED_SPRITE_SIZE} grown={seed.growth === 'tree'} />
+        <div className="fo-boil">
+          <SpriteIcon type={seed.spriteType} size={SEED_SPRITE_SIZE} grown={seed.growth === 'tree'} />
+        </div>
         <MiddleHandles />
-        <Handle id="root" type="source" position={Position.Right} className="fo-root-handle" title={`Drag to another node to ${getWords(themeId).growRoot}`} />
       </div>
       <span className="fo-seed-label">{seedLabel(seed, themeId)}</span>
-      {dropHere && <Handle id="drop" type="target" position={Position.Top} className="fo-drop-handle" />}
     </div>
   );
 }
@@ -63,7 +58,9 @@ export function LargeTreeNode({ data }: NodeProps<LargeTreeNodeType>) {
   return (
     <div className="fo-tree-node" title={data.title}>
       <div className="fo-seed-sprite">
-        <SpriteIcon type="sprout" grown size={LARGE_TREE_SIZE} />
+        <div className="fo-boil">
+          <SpriteIcon type="sprout" grown size={LARGE_TREE_SIZE} />
+        </div>
         <MiddleHandles />
       </div>
       <span className="fo-tree-label">{data.title}</span>

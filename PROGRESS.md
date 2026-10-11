@@ -32,6 +32,21 @@ Entry format:
 
 ### Page engine notes
 
+- [Oct 11] (Teobobeo99)
+  - Did: scanned PDFs (e.g. Principia Mathematica) showed only the first pages, then white. Two causes, both fixed in `entrypoints/pdf/main.ts`: (1) PDF.js had no `wasmUrl`/`cMapUrl`/`standardFontDataUrl`/`iccUrl`, so JBIG2 and JPEG 2000 page pictures (common in scans) stayed blank; `wxt.config.ts` now copies `node_modules/pdfjs-dist/{wasm,cmaps,standard_fonts,iccs}` to `pdfjs/` and the manifest CSP allows `'wasm-unsafe-eval'` for extension pages. (2) Every drawn page canvas was kept forever (1,035 MB after scrolling a 200-page scan); now pages are drawn one at a time when near the screen and cleared when far (21 MB), capped at 4 million pixels each.
+  - Others can use / need to know: a page PDF.js can't draw now says so instead of staying blank. Scanned pages have no text, so they can't be highlighted (sprites by click and screenshots work); OCR is in `BACKLOG.md`. Tested in Chromium with pdf.js's JBIG2/JPX test files and a 200-page picture-only book; text PDFs 16/16.
+  - Need from someone else: a person to open the real Principia PDF in Chrome.
+
+- [Oct 11] (Teobobeo99)
+  - Did: fixed PDFs opening by themselves from Google search. Search preloads top results ("prerendering") in a hidden tab, and `entrypoints/pdf/redirect.ts` redirected on that background load. Now it only redirects when `tabs.get` shows a real tab whose `url`/`pendingUrl` is that PDF; otherwise it remembers the PDF and redirects on `tabs.onUpdated` once the user clicks through.
+  - Others can use / need to know: Chrome reports the preload as `documentLifecycle: "active"` with its own tab id, so lifecycle alone is not enough. Tested in Chromium with a speculation-rules page (stays put; click opens our PDF page) and the PDF suite (16/16).
+  - Need from someone else: a person to try a Google search for a PDF in real Chrome.
+
+- [Oct 11] (Teobobeo99)
+  - Did: (1) PDFs: `entrypoints/pdf/` (PDF.js page with a text layer that mounts the same `App`), `entrypoints/pdf/redirect.ts` (background sends `application/pdf` tabs there via `webRequest`), `lib/engine/pageUrl.ts` (`pageUrl()`, `openableUrl()`). (2) Screenshots: dragging a box over no text captures it (`lib/engine/screenshot.ts`, `capture.ts` `onArea`, background `forest:capture-tab`, storage `saveScreenshot`/`getScreenshot`, viewer `Screenshot.tsx`). (3) Scroll lag: markers and note cards are `position: absolute` in page coordinates (`MarkerLayer.tsx`, `SeedNote.tsx`, `toolbar.css`), so they scroll with the text in the same frame; the rAF loop only handles layout changes.
+  - Others can use / need to know: use `pageUrl()` instead of `window.location.href`. New permissions `webRequest`, `unlimitedStorage`; new record `shot:<id>` (`BACKLOG.md` D8). Moving a screenshot's sprite keeps its text. Tested in Chromium: PDF 16/16, screenshots 19/19, scroll 28/28 (lag measured 0 px spread, was 18 px every other frame).
+  - Need from someone else: a person to try PDFs and screenshots in real Chrome.
+
 - [Oct 11, 6:00 AM] (Teobobeo99)
   - Did: removed the lily pad screenshot feature (user's request): `lib/engine/screenshot.ts`, `Screenshot.tsx`, `saveScreenshot`/`getScreenshot`, the `forest:capture-tab` message and `unlimitedStorage` are gone, and Gemini is text-only again. The lily pad now only highlights text: `usePlanting` ignores clicks with it and says "Lily pads go on text". The toolbar order and the "Quiz generation" tip stay.
   - Others can use / need to know: the note below (5:30 AM) is out of date. Any `media` lily pads made while testing screenshots are no longer drawn on pages. Tested in Chromium on Wikipedia.
@@ -83,6 +98,16 @@ Entry format:
   - Need from someone else: nothing
 
 ### On-page UI and art notes
+
+- [Oct 11] (Teobobeo99)
+  - Did: frogs on the page (`lib/onpage-ui/PondFrog.tsx`, `.fo-pond-frog` in `toolbar.css`, one line in `App.tsx`). With a lily pad on screen, a frog sometimes jumps in from off screen and sits on it, and may hop to another lily pad within 450px. It reads each pad's spot from its `.fo-marker[data-seed-id]` every frame, so it works with markers `fixed` or `absolute`. The frog has the same line boil as the markers (`createLineBoil`).
+  - Others can use / need to know: the chances and timings are constants at the top of `PondFrog.tsx` (raise `ARRIVE_CHANCE` for a demo). Off in Minimal and with reduced motion. Tested in Chromium with the chances at 100% (arrive, sit, hop both ways, never to a far pad, follows scroll, boil frames change). `npm run compile`, `build` and `check:theme` pass.
+  - Need from someone else: a person to check it in Chrome.
+
+- [Oct 11] (Teobobeo99)
+  - Did: the toolbar's forest drop-down is now our own themed list (`lib/onpage-ui/ForestPicker.tsx`, styles `.fo-picker-*` in `toolbar.css`) instead of a native `<select>`, whose open list the browser drew in its own colors. Each row shows the forest's icon, the current one has a check, "+ Create new forest" is last. Click outside or Esc closes it; arrow keys, Home, End and Enter work; it opens upward near the bottom of the window.
+  - Others can use / need to know: `ForestPicker` takes `forests`, `currentForestId`, `onSwitchForest`, `onCreateNew`; it could be reused for the theme picker (A5). Tested in Chromium on Wikipedia in all four themes. `npm run compile` fails only in the new, untracked `entrypoints/pdf/redirect.ts` (not this change).
+  - Need from someone else: a person to check it in Chrome.
 
 - [Oct 11] (Teobobeo99)
   - Did: (1) sprites planted at a non-1 size were off by (19·(s−1), 38·(s−1)) px because `.fo-marker` and `.fo-cursor-sprite` in `toolbar.css` had a fixed 38px box and fixed margins; they now size to the sprite and use `translate: -50% -100%` / `0 -100%`, so planted, dragged and highlight sprites sit exactly right at every size. (2) The sapling was off-center in its toolbar button: `images/sprout.png` has a stray pixel in a corner that stretched the build's crop; `scripts/trim-art.ts` now ignores tiny specks, and `SpriteIcon` uses `object-fit: contain`.
@@ -250,6 +275,16 @@ Entry format:
   - Did: added a centered, wider "Summarize & export" panel in `entrypoints/viewer/ForestExport.tsx`, placed below the React Flow graph; its trigger now matches the graph's primary "Text note" button styling and smoothly scrolls into view when opened or when export options appear. Gemini creates a study-guide summary, and the user can download it as PDF or DOCX. Raw HTML-looking seed text is excluded from Gemini and both exports. Added `forest:ai-summary` through the background worker and `docx`/`jspdf` dependencies.
   - Others can use / need to know: open a forest's Graph view, scroll below the graph, press "Summarize & export", then "Summarize with Gemini" after saving a key in Settings. The page only shows "Summary ready" plus PDF/DOCX options after generation; the full text stays inside the export handlers. The background listener must include `forest:ai-summary` so the message channel stays open, and the extension must be reloaded after rebuilding. `npm run compile`, `npm run check:theme`, and `npm run build` pass; build reports only a bundle-size warning. Not tested with a real Gemini key in Chrome yet.
   - Need from someone else: check the panel and downloaded files in Chrome with a real key.
+
+- [Oct 11] (Teobobeo99)
+  - Did: links in the graph are made with Shift+click (first node, then second; again removes; Esc or a background click cancels); the connection dots are gone, a dashed preview line follows the mouse (`GraphView.tsx` `toggleRoot`, `GraphNodes.tsx`, `graph.css`). Fixed right-drag saving one step short when the last move and the release arrive together.
+  - Others can use / need to know: React Flow's Shift box-select is off (`selectionKeyCode={null}`). Tested in Chromium 16/16.
+  - Need from someone else: nothing.
+
+- [Oct 11] (Teobobeo99)
+  - Did: line boil on the graph's sprites (seed nodes and large trees), the same wobble as on web pages. `lib/engine/lineBoil.ts` is split into shared pieces with a new `createLineBoilVariable(host)` that animates `--fo-boil` on the graph box; `.fo-boil` in `graph.css` wraps each sprite in `GraphNodes.tsx` and reads it. `createLineBoil` (on-page markers) behaves exactly as before.
+  - Others can use / need to know: the boil is on an inner wrapper, so the selected glow and hover dimming still work. Reduced motion in the system keeps the lines still. Tested in Chromium (filter steps through its 8 frames, glow intact).
+  - Need from someone else: David (line boil) to know `lineBoil.ts` was split up; a person to check it in Chrome.
 
 - [Oct 11] (Teobobeo99)
   - Did: the Minimal theme (renamed from "Minimal Biome") now uses plain words everywhere: new `lib/theme/words.ts` (`getWords(themeId)`, `useWords()`, `cap`, `countOf`), used across the viewer, the toolbar, the review pop-up and the planting messages. App name "Notes", forest→folder, folder→section, seed→item, root→link, "Lily pad quiz"→"Quiz". The other themes' text is unchanged.
@@ -593,6 +628,9 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 
 - [ ] [Viewer] Image nodes
 - [ ] [UI] Visual polish
+- [ ] [UI] Frogs on the page: now and then a frog jumps in from off screen onto a lily pad, sits there, and may hop to a lily pad close by (`PondFrog.tsx`) (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [Viewer] Line boil on the graph's sprites, the same as on pages (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [UI] Themed forest drop-down on the toolbar (`ForestPicker.tsx`), replacing the browser's `<select>` list (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 
 **Done when:** the full demo script runs twice in a row without a failure.
 

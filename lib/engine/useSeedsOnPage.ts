@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { takePendingJump, type Seed } from '@/lib/storage';
 import { MarkerTracker } from './markers';
+import { pageUrl } from './pageUrl';
 import { flashHighlight, getHighlightRange, JUMP_HIGHLIGHT_MS, paintHighlights } from './highlights';
 import { scrollToHighlight, scrollToPageY } from './scroll';
 
@@ -40,7 +41,7 @@ export function useSeedsOnPage(seeds: Seed[]): { flashId: string | null; jumpToS
   }, []);
 
   useEffect(() => {
-    void takePendingJump(window.location.href).then((id) => {
+    void takePendingJump(pageUrl()).then((id) => {
       jumpRef.current = id;
       attemptJump();
     });

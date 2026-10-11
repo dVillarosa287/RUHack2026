@@ -12,13 +12,14 @@ import { ShovelIcon } from "@/lib/theme/ShovelIcon";
 import { SpriteIcon } from "@/lib/theme/SpriteIcon";
 import { openOnPage } from "./ForestList";
 import { seedLabel } from "./GraphNodes";
+import { Screenshot } from "./Screenshot";
 
 const KIND_LABEL: Record<Seed["kind"], string> = {
   highlight: "Highlight",
   sprite: "Marker",
   link: "Link",
   note: "Your note",
-  media: "Media",
+  media: "Screenshot",
 };
 
 /** Removes a seed and the roots that touch it, so no root is left pointing at nothing. Asks first, in the theme's `words`. */
@@ -119,6 +120,8 @@ export function NodeDetail({
             draft !== seed.text && void updateSeed(seed.id, { text: draft })
           }
         />
+      ) : seed.kind === "media" ? (
+        <Screenshot seedId={seed.id} className="w-full" />
       ) : (
         <p className="break-words rounded-lg bg-surface-alt p-3 text-sm">
           {seed.kind === "highlight"

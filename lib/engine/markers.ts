@@ -23,7 +23,10 @@ export class MarkerTracker {
 
   constructor(private readonly anchor: Anchor) {}
 
-  /** Window coordinates (like a mouse position), tried in order: the text, the element, the scroll position. */
+  /**
+   * Window coordinates (like a mouse position), tried in order: the text, the element, the scroll position.
+   * MarkerLayer adds the page's scroll to these to place markers in page coordinates, which scroll with the page.
+   */
   position(): { x: number; y: number } {
     const { quote, element, scrollPercent } = this.anchor;
 

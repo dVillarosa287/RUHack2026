@@ -1,9 +1,8 @@
 import '@xyflow/react/dist/style.css';
 import './graph.css';
-import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import {
   Background,
-  ConnectionLineType,
   Controls,
   Panel,
   ReactFlow,
@@ -11,12 +10,12 @@ import {
   applyEdgeChanges,
   applyNodeChanges,
   useReactFlow,
-  type Connection,
   type Edge,
   type EdgeChange,
   type NodeChange,
   type OnSelectionChangeParams,
 } from '@xyflow/react';
+import { createLineBoilVariable } from '@/lib/engine/lineBoil';
 import { addRoot, deleteRoot, getFolders, getForest, getRoots, getSeedsForForest, saveSeed, updateSeed, type Folder, type Root, type Seed, type SpriteType } from '@/lib/storage';
 import { countOf, useWords } from '@/lib/theme';
 import { ForestHeader } from './ForestHeader';
@@ -98,8 +97,16 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
   const [edges, setEdges] = useState<Edge[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [writingNote, setWritingNote] = useState(false);
+
+  // Line boil on every sprite in the graph, the same wobble as the sprites on web pages (lib/engine/lineBoil.ts).
+  // It animates one CSS variable on the graph's box, so nodes added or redrawn later boil too (graph.css, .fo-boil).
+  useEffect(() => (box.current ? createLineBoilVariable(box.current) : undefined), []);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const words = useWords(); // the hints below use the theme's words ("grow a root" or "draw a link")
+  // Linking: Shift+click a seed to start a link, Shift+click another to toggle a root between them.
+  const [linkStartId, setLinkStartId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null); // light line to the mouse
+  const shiftHeld = useRef(false); // so a Shift+click does not also open the detail panel
   const rightDrag = useRef<{ pointerId: number; origin: Point; positions: Map<string, Point>; currentPositions: Map<string, Point> } | null>(null);
 
   // Where every seed goes: its saved spot, or for a seed that has none, a spot from the force layout.
@@ -196,41 +203,103 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
     event.preventDefault();
   }, [edges, nodes, screenToFlowPosition]);
 
+  // Moves the dragged group so it follows the mouse. The new spots are worked out right away (not inside React's
+  // update), so the drop below always saves where the nodes really are, even if the last move and the release arrive together.
+  const moveRightDrag = useCallback((drag: NonNullable<typeof rightDrag.current>, clientX: number, clientY: number) => {
+    const current = screenToFlowPosition({ x: clientX, y: clientY });
+    const delta = { x: current.x - drag.origin.x, y: current.y - drag.origin.y };
+    for (const [nodeId, start] of drag.positions) drag.currentPositions.set(nodeId, { x: start.x + delta.x, y: start.y + delta.y });
+    setNodes((currentNodes) => currentNodes.map((node) => {
+      const position = drag.currentPositions.get(node.id);
+      return position ? { ...node, position } : node;
+    }));
+  }, [screenToFlowPosition]);
+
   const onRightDragMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
     const drag = rightDrag.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
-    const current = screenToFlowPosition({ x: event.clientX, y: event.clientY });
-    const delta = { x: current.x - drag.origin.x, y: current.y - drag.origin.y };
-    setNodes((currentNodes) => currentNodes.map((node) => {
-      const start = drag.positions.get(node.id);
-      if (!start) return node;
-      const position = { x: start.x + delta.x, y: start.y + delta.y };
-      drag.currentPositions.set(node.id, position);
-      return { ...node, position };
-    }));
+    moveRightDrag(drag, event.clientX, event.clientY);
     event.preventDefault();
-  }, [screenToFlowPosition]);
+  }, [moveRightDrag]);
 
   const finishRightDrag = useCallback((event: PointerEvent<HTMLDivElement>) => {
     const drag = rightDrag.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     rightDrag.current = null;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    moveRightDrag(drag, event.clientX, event.clientY); // the release point counts too
     for (const [nodeId, position] of drag.currentPositions) {
       if (!nodeId.startsWith('tree:')) void updateSeed(nodeId, { graphX: Math.round(position.x), graphY: Math.round(position.y) }).catch(() => {});
     }
-  }, []);
+  }, [moveRightDrag]);
 
-  // A root is drawn by dragging from one seed's dot to another seed. One root per pair, whichever way it was drawn.
-  // Drawing a root that already exists removes it instead, so the same gesture toggles a connection on and off.
-  const onConnect = useCallback(
-    (c: Connection) => {
-      if (c.source === c.target) return;
-      const existing = roots.find((r) => (r.fromSeedId === c.source && r.toSeedId === c.target) || (r.fromSeedId === c.target && r.toSeedId === c.source));
+  // Add a root between two seeds, or remove it if one exists already (one root per pair, whichever way it was drawn).
+  const toggleRoot = useCallback(
+    (a: string, b: string) => {
+      const existing = roots.find((r) => (r.fromSeedId === a && r.toSeedId === b) || (r.fromSeedId === b && r.toSeedId === a));
       if (existing) void deleteRoot(existing.id);
-      else void addRoot({ forestId, fromSeedId: c.source, toSeedId: c.target, source: 'manual', reason: '' });
+      else void addRoot({ forestId, fromSeedId: a, toSeedId: b, source: 'manual', reason: '' });
     },
     [roots, forestId],
+  );
+
+  // Shift+click a seed: the first one is the link start, the second one toggles a root between them.
+  // Shift+click the start again to cancel. Large trees (ids start with "tree:") cannot be linked.
+  const onNodeClick = useCallback(
+    (event: MouseEvent, node: GraphNode) => {
+      if (!event.shiftKey || node.type !== 'seed') return;
+      // The click also selected the node; undo that so the detail panel stays shut while linking.
+      setFlowNodes((nds) => nds.map((n) => (n.selected ? { ...n, selected: false } : n)));
+      setSelectedId(null);
+      if (!linkStartId) setLinkStartId(node.id);
+      else {
+        if (node.id !== linkStartId) toggleRoot(linkStartId, node.id);
+        setLinkStartId(null);
+        setPreview(null);
+      }
+    },
+    [linkStartId, toggleRoot, setFlowNodes],
+  );
+
+  // Esc cancels a link. Also remember whether Shift is down (see shiftHeld).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      shiftHeld.current = e.shiftKey;
+      if (e.type === 'keydown' && e.key === 'Escape') {
+        setLinkStartId(null);
+        setPreview(null);
+      }
+    };
+    const onBlur = () => (shiftHeld.current = false);
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('keyup', onKey);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keyup', onKey);
+      window.removeEventListener('blur', onBlur);
+    };
+  }, []);
+
+  // The link start was deleted (for example in another tab): forget it.
+  useEffect(() => {
+    if (linkStartId && !seeds.some((s) => s.id === linkStartId)) setLinkStartId(null);
+  }, [seeds, linkStartId]);
+
+  // While linking, draw a light line from the link start's middle to the mouse (screen positions, inside the graph box).
+  const onBoxPointerMove = useCallback(
+    (event: PointerEvent<HTMLDivElement>) => {
+      onRightDragMove(event);
+      if (!linkStartId || !box.current) return;
+      const boxRect = box.current.getBoundingClientRect();
+      const left = boxRect.left + box.current.clientLeft; // the svg starts inside the box's border
+      const top = boxRect.top + box.current.clientTop;
+      const sprite = box.current.querySelector(`.react-flow__node[data-id="${CSS.escape(linkStartId)}"] .fo-seed-sprite`);
+      if (!sprite) return;
+      const r = sprite.getBoundingClientRect();
+      setPreview({ x1: r.left + r.width / 2 - left, y1: r.top + r.height / 2 - top, x2: event.clientX - left, y2: event.clientY - top });
+    },
+    [linkStartId, onRightDragMove],
   );
 
   // Select a root and press Delete or Backspace to remove it.
@@ -239,6 +308,7 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
   }, []);
 
   const onSelectionChange = useCallback(({ nodes: picked }: OnSelectionChangeParams) => {
+    if (shiftHeld.current) return; // Shift+click is for linking, not for opening the detail panel
     setSelectedId(picked.length === 1 && picked[0]?.type === 'seed' ? picked[0].id : null);
   }, []);
 
@@ -275,8 +345,13 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
   // (graph.css). Only classes are added here; the real nodes and edges in state are left untouched.
   const lit = useMemo(() => (hoveredId ? hoverNeighborhood(hoveredId, edges) : null), [hoveredId, edges]);
   const shownNodes = useMemo(
-    () => (lit ? nodes.map((n) => ({ ...n, className: n.id === hoveredId ? 'fo-hovered' : lit.has(n.id) ? 'fo-lit' : 'fo-dim' })) : nodes),
-    [nodes, lit, hoveredId],
+    () =>
+      nodes.map((n) => {
+        const hoverClass = !lit ? '' : n.id === hoveredId ? 'fo-hovered' : lit.has(n.id) ? 'fo-lit' : 'fo-dim';
+        const className = `${hoverClass} ${n.id === linkStartId ? 'fo-link-start' : ''}`.trim();
+        return className ? { ...n, className } : n;
+      }),
+    [nodes, lit, hoveredId, linkStartId],
   );
   const shownEdges = useMemo(
     () => (lit ? edges.map((e) => ({ ...e, className: `${e.className ?? ''} ${e.source === hoveredId || e.target === hoveredId ? 'fo-lit' : 'fo-dim'}` })) : edges),
@@ -293,7 +368,7 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
           className="relative min-w-0 flex-1 overflow-hidden rounded-xl border-2 border-edge/30 bg-surface-alt"
           onContextMenu={(event) => event.preventDefault()}
           onPointerDown={onRightDragStart}
-          onPointerMove={onRightDragMove}
+          onPointerMove={onBoxPointerMove}
           onPointerUp={finishRightDrag}
           onPointerCancel={finishRightDrag}
         >
@@ -307,11 +382,12 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
           onNodeDragStop={onNodeDragStop}
           onNodeMouseEnter={(_event, node) => setHoveredId(node.id)}
           onNodeMouseLeave={() => setHoveredId(null)}
-          onConnect={onConnect}
+          onNodeClick={onNodeClick}
+          onPaneClick={() => { setLinkStartId(null); setPreview(null); }}
           onEdgesDelete={onEdgesDelete}
           onSelectionChange={onSelectionChange}
-          isValidConnection={(c) => c.source !== c.target}
-          connectionLineType={ConnectionLineType.Straight}
+          nodesConnectable={false} // links are made with Shift+click, not by dragging
+          selectionKeyCode={null} // Shift is ours: no Shift-drag selection box
           deleteKeyCode={['Backspace', 'Delete']}
           fitView
           fitViewOptions={{ padding: 0.2, maxZoom: 1.2 }}
@@ -340,9 +416,19 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
           {seeds.length === 0 ? (
             <Panel position="top-center" className="rounded-lg bg-surface px-3 py-2 text-sm text-ink-muted">{words.emptyGraph}</Panel>
           ) : (
-            <Panel position="bottom-center" className="rounded-lg bg-surface px-3 py-1 text-xs text-ink-muted">Drag from a sprite's dot to another sprite to {words.growRoot}. Drag it again, or click it and press Delete, to remove it.</Panel>
+            <Panel position="bottom-center" className="rounded-lg bg-surface px-3 py-1 text-xs text-ink-muted">Shift+click one {words.seed}, then another, to {words.growRoot}. Do it again, or click the line and press Delete, to remove it.</Panel>
+          )}
+          {linkStartId && seedsById.get(linkStartId) && (
+            <Panel position="top-center" className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink shadow-md shadow-drop">
+              Shift+click another to link (Esc cancels)
+            </Panel>
           )}
         </ReactFlow>
+        {linkStartId && preview && (
+          <svg className="fo-link-preview" aria-hidden="true">
+            <line x1={preview.x1} y1={preview.y1} x2={preview.x2} y2={preview.y2} />
+          </svg>
+        )}
       </div>
       {selected && <NodeDetail seed={selected} roots={roots} seedsById={seedsById} folders={folders} onClose={closeDetail} />}
     </div>

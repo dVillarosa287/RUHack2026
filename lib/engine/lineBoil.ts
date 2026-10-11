@@ -21,17 +21,9 @@ function createSvgElement<K extends keyof SVGElementTagNameMap>(tag: K): SVGElem
   return document.createElementNS(SVG_NAMESPACE, tag);
 }
 
-/**
- * Applies the SVG turbulence/displacement approach from tomcreighton's boil library
- * (https://github.com/tomcreighton/boil) to elements inside this document or shadow root.
- */
-export function createLineBoil(elements: Iterable<HTMLElement>, root: Document | ShadowRoot, options: LineBoilOptions = {}): () => void {
-  const targetElements = Array.from(elements);
-  const scale = options.scale ?? DEFAULT_SCALE;
-  const speed = options.speed ?? DEFAULT_SPEED_MS;
-  const frames = Math.min(12, Math.max(2, options.frames ?? DEFAULT_FRAMES));
-  const id = controllerId++;
-  const key = setKey(scale, frames, id);
+/** Builds the boil's SVG filters (one per frame) inside `root` and returns the id prefix and the <svg> holding them. */
+function buildFilters(root: Document | ShadowRoot | HTMLElement, scale: number, frames: number): { key: string; svg: SVGSVGElement } {
+  const key = setKey(scale, frames, controllerId++);
   const svg = createSvgElement('svg');
   svg.setAttribute('width', '0');
   svg.setAttribute('height', '0');
@@ -67,27 +59,70 @@ export function createLineBoil(elements: Iterable<HTMLElement>, root: Document |
     filter.append(turbulence, displacement);
     defs.appendChild(filter);
   }
+  return { key, svg };
+}
 
+/** Calls `apply` with the next frame's filter every `speed` ms until the returned function is called. */
+function animate(key: string, frames: number, speed: number, apply: (filterUrl: string) => void): () => void {
   let frame = 0;
   // The first frame goes on right away. Without it, each restart (every time a sprite is placed) left the markers
   // with no filter for up to one tick, and they flickered.
-  for (const element of targetElements) element.style.filter = `url(#${key}-0)`;
+  apply(`url(#${key}-0)`);
   let lastTick = performance.now();
   let animationFrame = 0;
   const tick = (now: number) => {
     if (now - lastTick >= speed) {
       frame = (frame + 1) % frames;
-      const filterUrl = `url(#${key}-${frame})`;
-      for (const element of targetElements) element.style.filter = filterUrl;
+      apply(`url(#${key}-${frame})`);
       lastTick = now;
     }
     animationFrame = requestAnimationFrame(tick);
   };
   animationFrame = requestAnimationFrame(tick);
+  return () => cancelAnimationFrame(animationFrame);
+}
+
+function readOptions(options: LineBoilOptions) {
+  return {
+    scale: options.scale ?? DEFAULT_SCALE,
+    speed: options.speed ?? DEFAULT_SPEED_MS,
+    frames: Math.min(12, Math.max(2, options.frames ?? DEFAULT_FRAMES)),
+  };
+}
+
+/**
+ * Applies the SVG turbulence/displacement approach from tomcreighton's boil library
+ * (https://github.com/tomcreighton/boil) to elements inside this document or shadow root.
+ */
+export function createLineBoil(elements: Iterable<HTMLElement>, root: Document | ShadowRoot, options: LineBoilOptions = {}): () => void {
+  const targetElements = Array.from(elements);
+  const { scale, speed, frames } = readOptions(options);
+  const { key, svg } = buildFilters(root, scale, frames);
+  const stop = animate(key, frames, speed, (filterUrl) => {
+    for (const element of targetElements) element.style.filter = filterUrl;
+  });
 
   return () => {
-    cancelAnimationFrame(animationFrame);
+    stop();
     for (const element of targetElements) element.style.removeProperty('filter');
+    svg.remove();
+  };
+}
+
+/**
+ * The same boil, for a list of elements that keeps changing (the viewer's graph, where nodes come and go). Instead of
+ * setting each element's filter, it animates the CSS variable `--fo-boil` on `host`, and the CSS gives any element
+ * inside it `filter: var(--fo-boil)`. With reduced motion turned on in the system, the lines stay still.
+ */
+export function createLineBoilVariable(host: HTMLElement, options: LineBoilOptions = {}): () => void {
+  const { scale, speed, frames } = readOptions(options);
+  const { key, svg } = buildFilters(host, scale, frames);
+  const setFilter = (filterUrl: string) => host.style.setProperty('--fo-boil', filterUrl);
+  const stop = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? (setFilter(`url(#${key}-0)`), () => {}) : animate(key, frames, speed, setFilter);
+
+  return () => {
+    stop();
+    host.style.removeProperty('--fo-boil');
     svg.remove();
   };
 }

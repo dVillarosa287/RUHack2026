@@ -4,6 +4,7 @@ import type { Forest, SpriteType } from '@/lib/storage';
 import { SPRITES, cap, getWords, spriteLabel, useThemeId } from '@/lib/theme';
 import { ShovelIcon } from '@/lib/theme/ShovelIcon';
 import { ForestIcon, SpriteIcon } from '@/lib/theme/SpriteIcon';
+import { ForestPicker } from './ForestPicker';
 import { HOTBAR, TOOLBAR_LAYOUT, hotbarKey } from './hotbar';
 
 interface ToolbarProps {
@@ -29,9 +30,8 @@ interface ToolbarProps {
   onOpenCurrentForest(): void;
 }
 
-const INTERACTIVE = 'button, select, input, option';
-/** The value of the last option in the forest drop-down, which creates a forest instead of switching to one. */
-const NEW_FOREST = '__new__';
+/** Pressing on these does not drag the toolbar. The forest list counts too, so its edges between rows do not start a drag. */
+const INTERACTIVE = 'button, input, [role="listbox"]';
 const MIN_SCALE = 0.7;
 const MAX_SCALE = 1.8;
 /** What a saved scale of 1 looks like. The toolbar's default size is a little smaller than the art's natural size. */
@@ -146,19 +146,7 @@ export function Toolbar(props: ToolbarProps) {
               <button className="fo-small-button" onClick={submitName}>Create</button>
             </>
           ) : (
-            <>
-              <ForestIcon icon={props.forests.find((f) => f.id === props.currentForestId)?.icon ?? ''} size={24} />
-              <select
-                aria-label="Current forest"
-                value={props.currentForestId ?? ''}
-                onChange={(e) => (e.target.value === NEW_FOREST ? setNaming(true) : props.onSwitchForest(e.target.value))}
-              >
-                {props.forests.map((f) => (
-                  <option key={f.id} value={f.id}>{f.name}</option>
-                ))}
-                <option value={NEW_FOREST}>{`+ Create new ${words.forest}`}</option>
-              </select>
-            </>
+            <ForestPicker forests={props.forests} currentForestId={props.currentForestId} onSwitchForest={props.onSwitchForest} onCreateNew={() => setNaming(true)} />
           )}
           <button className="fo-close" title="Close the toolbar" aria-label="Close the toolbar" onClick={props.onClose}>✕</button>
         </div>

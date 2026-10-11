@@ -34,7 +34,7 @@ HackRU project. A Chrome extension (Manifest V3) for annotating web pages for la
 - **Forest:** a collection of seeds for one project. A forest is a folder. Forests can contain folders.
 - **Root:** a connection the user draws by hand between two nodes. **Path:** an automatic same-page or same-site connection, drawn dashed.
 - **Fruit:** a quiz the forest produces from lily pads of one color. The apple tree's single-question review is a separate thing.
-- **Frog:** the teacher. Hops between lily pads in a quiz and speaks AI summaries.
+- **Frog:** the teacher. Hops between lily pads in a quiz and speaks AI summaries. On web pages a frog now and then jumps onto a lily pad and sits there (`lib/onpage-ui/PondFrog.tsx`).
 - **Animal:** the marker on the scroll rail for where you were before you jumped.
 - **Large tree:** in the graph view, a bigger tree node for each web page that has 2 or more seeds in the forest. It sits near those seeds and is joined to them by very subtle lines. It is worked out from the seeds, never saved, and is not a seed.
 
@@ -84,10 +84,11 @@ Changing these shapes affects everyone. Do not change them without the user conf
 These are not owned by particular people. They show which folders a job touches, so two jobs at the same time stay out of each other's way.
 
 - Page engine: `lib/engine/`, including its hooks `useSeedsOnPage` (draws highlights, jumps to a seed) and `usePlanting` (turns mouse activity into seeds)
-- On-page UI and art: `lib/onpage-ui/` (`App.tsx` only puts the pieces together; `usePageData`, `Toolbar` and `MarkerLayer` are separate files), `images/` (all sprite and frog art), `minimal-images/` (the Minimal theme's shapes). The toolbar layout and hotbar are in `hotbar.ts`, the keyboard shortcuts in `useKeybinds.ts`
+- On-page UI and art: `lib/onpage-ui/` (`App.tsx` only puts the pieces together; `usePageData`, `Toolbar`, `ForestPicker` (the toolbar's themed forest drop-down) and `MarkerLayer` are separate files), `images/` (all sprite and frog art), `minimal-images/` (the Minimal theme's shapes). The toolbar layout and hotbar are in `hotbar.ts`, the keyboard shortcuts in `useKeybinds.ts`
 - Viewer: `entrypoints/viewer/` (`route.ts` lists the pages; `ForestView`, `ForestHeader`, `ForestList`, `GraphView`, `SettingsPage`, `ForestGrid` and the quiz (`QuizBar`, `QuizView`, `Pond`) are separate files)
 - Data, AI and integration: `lib/storage/`, `lib/ai/`, `lib/theme/`, `entrypoints/background.ts`, project config (`wxt.config.ts`, `package.json`, `tsconfig.json`, `.gitignore`), `scripts/`, `docs/THEME.md`
 - Shared glue, keep it tiny: `entrypoints/content/`
+- PDF page: `entrypoints/pdf/` (renders a PDF with a text layer and mounts the same on-page UI). Code that needs the page's address uses `pageUrl()` (`lib/engine/pageUrl.ts`), never `window.location.href`, so PDF seeds are saved under the PDF's own address.
 
 `lib/theme/` is used by everyone: it holds the colors, the sprite art lookup and the shared `SpriteIcon`, `ForestIcon` and `ShovelIcon` components. To add art: put the PNG in `images/` (colored art as `<name>.png`; white placeholder art as `uncolored-<name>.png`, which gets tinted), then name it in `lib/theme/index.ts`. The build crops the empty margin and copies it into the extension (`wxt.config.ts`, `scripts/trim-art.ts`); the originals in `images/` are never changed. Sprites are drawn through `SpriteIcon`, which tints only the `uncolored-*` placeholders, in the sprite's own color. Art for the Minimal theme goes in `minimal-images/` (colored, published as `sprites/minimal/`) and is named in `MINIMAL_ART`. Anything that shows a sprite's name uses `spriteLabel(type, useThemeId())`. Any text the user sees that names a forest, folder, seed, root or other nature word comes from `useWords()` (`lib/theme/words.ts`), because the Minimal theme uses plain words (folders, sections, items, links).
 
@@ -119,7 +120,7 @@ Update `PROGRESS.md` before your final message, every time you work, even if the
 5. In your final message, tell the user which boxes you ticked and what note you added.
 
 ### Testing and commands
-- Test on stable article pages such as Wikipedia or OpenStax. Extensions do not run on Chrome's own pages, the Chrome Web Store or the built-in PDF viewer.
+- Test on stable article pages such as Wikipedia or OpenStax. Extensions do not run on Chrome's own pages or the Chrome Web Store. PDFs are sent to the extension's own PDF page (`entrypoints/pdf/`, PDF.js), so they can be annotated; Chrome's built-in PDF viewer itself still can't be.
 - Commands (from `package.json`): `npm install` once, `npm run dev` opens Chrome with the extension loaded and reloads on every save, `npm run build` writes the extension to `.output/chrome-mv3/` (load that folder from `chrome://extensions` with Developer mode on and "Load unpacked"), `npm run compile` type-checks, `npm run check:theme` fails if any color breaks the theme rules.
 - After loading or reloading the extension, reload any web page you want to test on. Pages opened earlier have no content script, and clicking the icon on them shows a "!" badge.
 - The on-page UI is plain CSS in `lib/onpage-ui/toolbar.css`, in px, on purpose: it must look the same on every site. Tailwind is used in the viewer only, with the theme's colors.

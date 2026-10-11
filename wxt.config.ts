@@ -20,6 +20,12 @@ const ART_SOURCES: [string, string][] = [
 ];
 const ART_FILES = ART_SOURCES.map(([, name]) => name);
 
+// PDF.js helper files for our PDF page (entrypoints/pdf/main.ts), copied as they are to pdfjs/<folder>/:
+// wasm (decoders for scanned pages saved as JBIG2 or JPEG 2000 pictures), cmaps (Chinese, Japanese, Korean text),
+// standard_fonts (fonts a PDF names but does not include) and iccs (color profiles). Without them those pages draw blank.
+const PDFJS_DIR = resolve('node_modules', 'pdfjs-dist');
+const PDFJS_FOLDERS = ['wasm', 'cmaps', 'standard_fonts', 'iccs'];
+
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   modules: ['@wxt-dev/module-react'],
@@ -37,13 +43,23 @@ export default defineConfig({
         writeFileSync(trimmed, trimPng(readFileSync(resolve(folder, basename(name)))));
         files.push({ absoluteSrc: trimmed, relativeDest: `sprites/${name}` });
       }
+      for (const folder of PDFJS_FOLDERS) {
+        for (const file of readdirSync(resolve(PDFJS_DIR, folder))) {
+          files.push({ absoluteSrc: resolve(PDFJS_DIR, folder, file), relativeDest: `pdfjs/${folder}/${file}` });
+        }
+      }
     },
   },
   manifest: {
     name: 'Forest',
     description: 'Plant notes on any web page and watch them grow into a forest.',
-    permissions: ['storage', 'alarms'],
+    // unlimitedStorage: screenshots (media seeds) would soon fill the normal 10 MB.
+    // webRequest: only to read a page's Content-Type and send PDFs to our PDF page (entrypoints/pdf/redirect.ts).
+    permissions: ['storage', 'alarms', 'unlimitedStorage', 'webRequest'],
     host_permissions: ['<all_urls>'],
+    // 'wasm-unsafe-eval' lets our PDF page run PDF.js's fast decoders for scanned pages (JBIG2, JPEG 2000). It only
+    // allows WebAssembly, not eval of JavaScript. Without it PDF.js falls back to slower plain-JavaScript decoders.
+    content_security_policy: { extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';" },
     // An action with no popup lets background.ts react when the icon is clicked.
     action: { default_title: 'Forest: show or hide the toolbar' },
     // The art is drawn inside web pages, so web pages must be allowed to load it.

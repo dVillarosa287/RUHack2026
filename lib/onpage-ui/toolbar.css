@@ -15,10 +15,16 @@
 
    The toolbar is one rounded card: a header with the forest, then the sprites (with the shovel), the colors
    and the tree button that opens the forest. */
+/* The host is a popover in the browser's top layer (topLayer.ts). Note: WXT adds its own `:host { all: initial
+   !important }`, which wins over this rule, so in Chrome the browser itself lays the host out as `absolute` (what the
+   top layer does with an element that has no position). `absolute` is also what we want, so it is written here too:
+   the host then sits at the top left corner of the whole page and scrolls with it. Markers and note cards inside it
+   are placed in page coordinates, so the browser scrolls them together with the text, in the same frame, with no
+   script in the loop. The toolbar, scroll rail and other `position: fixed` parts still stay put on the screen. */
 :host {
     all: initial;
     display: block;
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 0;
@@ -102,7 +108,6 @@
     color: var(--fo-ink-muted);
 }
 
-.fo-forest-row select,
 .fo-forest-row input {
     flex: 1;
     min-width: 0;
@@ -113,22 +118,150 @@
     background: var(--fo-surface);
     color: var(--fo-ink);
     font-size: 14px;
-    cursor: pointer;
-}
-
-.fo-forest-row select option {
-    background: var(--fo-surface-alt);
-    color: var(--fo-ink);
-}
-
-.fo-forest-row input {
     cursor: text;
 }
 
-.fo-forest-row select:focus,
-.fo-forest-row input:focus {
+.fo-forest-row input:focus,
+.fo-picker-button:focus-visible,
+.fo-picker-option:focus-visible {
     outline: 2px solid var(--fo-primary);
     outline-offset: 0;
+}
+
+/* The forest drop-down (ForestPicker.tsx). Our own list instead of a <select>, whose open list the browser draws
+   in its own colors. The button looks like the old field; the list is a small card under it, like the toolbar. */
+.fo-picker {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.fo-picker-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--fo-edge);
+    border-radius: 10px;
+    background: var(--fo-surface);
+    color: var(--fo-ink);
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.fo-picker-button:hover {
+    filter: brightness(1.15);
+}
+
+.fo-picker-button[aria-expanded='true'] {
+    border-color: var(--fo-primary);
+}
+
+.fo-picker-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fo-picker-caret {
+    flex: none;
+    font-size: 12px;
+    color: var(--fo-ink-muted);
+    transition: transform 0.12s ease-out;
+}
+
+.fo-picker-button[aria-expanded='true'] .fo-picker-caret {
+    transform: rotate(180deg);
+}
+
+/* Above the sprite tiles (a hovered tile is lifted to z-index 2). Max height matches LIST_MAX_HEIGHT in ForestPicker.tsx. */
+.fo-picker-list {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 4px;
+    border: 1px solid var(--fo-edge);
+    border-radius: 12px;
+    background: var(--fo-surface-alt);
+    box-shadow: 0 10px 24px var(--fo-shadow), 0 2px 6px var(--fo-shadow);
+    cursor: default;
+    animation: fo-picker-in 0.12s ease-out;
+}
+
+/* Near the bottom of the window the list opens above the button instead. */
+.fo-picker-list.fo-picker-up {
+    top: auto;
+    bottom: calc(100% + 6px);
+}
+
+@keyframes fo-picker-in {
+    from {
+        opacity: 0;
+        translate: 0 -4px;
+    }
+}
+
+.fo-picker-option {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 32px;
+    padding: 4px 8px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--fo-ink);
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+}
+
+/* Hover and keyboard focus: the soft background, made a little brighter with a filter (docs/THEME.md rule 4). */
+.fo-picker-option:hover,
+.fo-picker-option:focus-visible {
+    background: var(--fo-primary-soft);
+    filter: brightness(1.15);
+}
+
+.fo-picker-option[aria-selected='true'] {
+    background: var(--fo-surface);
+}
+
+.fo-picker-check {
+    flex: none;
+    font-weight: 700;
+    color: var(--fo-primary);
+}
+
+/* "+ Create new forest", set apart from the forests by a thin line. */
+.fo-picker-new {
+    position: relative;
+    margin-top: 5px;
+    color: var(--fo-ink-muted);
+}
+
+.fo-picker-new::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 6px;
+    right: 6px;
+    height: 1px;
+    background: var(--fo-edge);
 }
 
 .fo-close {
@@ -269,12 +402,13 @@
     display: none;
 }
 
-/* Markers are positioned on every frame by MarkerLayer, from the text or element they are attached to.
+/* Markers are positioned on every frame by MarkerLayer, from the text or element they are attached to, in page
+   coordinates (`absolute` inside the host), so they scroll with the page by themselves and never trail behind it.
    The bottom middle of the sprite sits on the spot (the click, or the top of a highlight). The box takes the
    sprite's own size, and `translate` moves it up by its full height and left by half its width, in % so it is
    right at every sprite size (- and +). `translate` adds to the `transform` MarkerLayer sets. */
 .fo-marker {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     display: flex;
@@ -303,6 +437,23 @@
 /* A highlight's sprite stays on its text: it cannot be dragged. */
 .fo-marker.fo-on-text:not(.fo-dig) {
     cursor: default;
+}
+
+/* The frog that jumps onto lily pads now and then (PondFrog.tsx). Like a marker it is placed inside the host (`absolute`), and its bottom middle sits on the spot
+   PondFrog sets with `transform` on every frame. It ignores the mouse, so the lily pad under it still works. */
+.fo-pond-frog {
+  position: absolute;
+  top: 0;
+  left: 0;
+  translate: -50% -100%;
+  filter: drop-shadow(0 2px 3px var(--fo-shadow));
+  pointer-events: none;
+  will-change: transform;
+}
+.fo-pond-frog img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 /* A copy of the chosen sprite that follows the mouse, a little to the top right of it and see-through, so the
@@ -547,9 +698,10 @@
 }
 
 /* The user's own note on a seed (SeedNote.tsx): a small card under the sprite, moved there on every frame from the
-   sprite's position. The editing card takes the mouse; the hover card ignores it. */
+   sprite's position. Like the markers it is in page coordinates (`absolute`), so it scrolls with its sprite.
+   The editing card takes the mouse; the hover card ignores it. */
 .fo-note {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   width: 240px;
@@ -611,4 +763,13 @@
   margin-top: 4px;
   font-size: 11px;
   color: var(--fo-ink-muted);
+}
+
+/* The dashed box dragged over a part of the page that has no text, to screenshot it (lib/engine/screenshot.ts). */
+.fo-area {
+  position: fixed;
+  box-sizing: border-box;
+  border: 2px dashed var(--fo-primary);
+  border-radius: 4px;
+  pointer-events: none;
 }

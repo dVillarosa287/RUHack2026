@@ -1,6 +1,7 @@
 import { saveSeed, type Seed, type SpriteType } from '@/lib/storage';
 import { spriteColorKey } from '@/lib/theme';
 import { buildMarkerAnchor, nearbyText } from './anchor';
+import { pageUrl } from './pageUrl';
 
 interface Placement {
   forestId: string;
@@ -30,7 +31,7 @@ export async function placeMarker({ forestId, spriteType, clientX, clientY, targ
     kind: link ? 'link' : 'sprite',
     spriteType,
     color: spriteColorKey(spriteType), // each sprite has its own color; there is no picker
-    url: window.location.href,
+    url: pageUrl(), // the PDF's address on our PDF page
     pageTitle: document.title,
     text: link ? ((link.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 80) || link.href) : nearbyText(target),
     linkTarget: link ? link.href : null,

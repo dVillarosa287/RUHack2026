@@ -3,11 +3,15 @@ import { browser } from 'wxt/browser';
 import type { AiReply, AiRequest } from '@/lib/ai';
 import { forestSummary, quizQuestions, testGemini } from '@/lib/ai/gemini';
 import { getSeed, getSettings, getToolbarState, updateSeed, updateToolbarState } from '@/lib/storage';
+import { watchForPdfs } from './pdf/redirect';
 
 /** Alarms named "review:<seed id>" are an apple's active recall timer. */
 const REVIEW_ALARM = 'review:';
 
 export default defineBackground(() => {
+  // PDFs open in our own PDF page (entrypoints/pdf/), because Chrome's PDF viewer runs no extensions.
+  watchForPdfs();
+
   // The apple's time is up: it grows into an apple tree. Open pages see the change and show its question
   // (lib/onpage-ui/ReviewPopup.tsx).
   browser.alarms.onAlarm.addListener((alarm) => {
@@ -42,6 +46,12 @@ export default defineBackground(() => {
       return false;
     }
 
+    // A screenshot drag: only the background worker may take a picture of the tab. The page crops it.
+    if (type === 'forest:capture-tab') {
+      void captureTab((_sender as { tab?: { windowId?: number } }).tab?.windowId).then(sendResponse);
+      return true;
+    }
+
     // Gemini is only called from here, and only when the user asked for it.
     if (type === 'forest:ai-test' || type === 'forest:ai-quiz' || type === 'forest:ai-summary') {
       void answerAi(message as AiRequest).then(sendResponse);
@@ -50,6 +60,24 @@ export default defineBackground(() => {
     return false;
   });
 });
+
+/**
+ * A picture of the visible part of the tab, as a PNG data URL. Chrome allows only about two a second, so a
+ * refused one is tried once more a moment later.
+ */
+async function captureTab(windowId: number | undefined): Promise<{ ok: boolean; value?: string; error?: string }> {
+  const take = () => browser.tabs.captureVisibleTab(windowId ?? browser.windows.WINDOW_ID_CURRENT, { format: 'png' });
+  try {
+    return { ok: true, value: await take() };
+  } catch {
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    try {
+      return { ok: true, value: await take() };
+    } catch (error) {
+      return { ok: false, error: `Could not take the screenshot: ${error instanceof Error ? error.message : String(error)}` };
+    }
+  }
+}
 
 async function answerAi(request: AiRequest): Promise<AiReply<unknown>> {
   try {

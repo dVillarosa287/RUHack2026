@@ -17,7 +17,8 @@ const SIZE = 38;
 /**
  * A copy of the chosen sprite that follows the mouse, a little to its top right and see-through (see
  * `.fo-cursor-sprite` in toolbar.css), so it looks like the user is carrying it onto the page without hiding the spot. It ignores the mouse, so clicks go straight through to the page. It follows with a direct style change
- * instead of React state, so it does not redraw on every mouse move.
+ * instead of React state, so it does not redraw on every mouse move. Unlike the markers it stays in window
+ * coordinates (`position: fixed`): it belongs to the mouse, which stays still on the screen while the page scrolls.
  */
 export function CursorSprite({ type, showOverUi, scale, isInsideUi }: CursorSpriteProps) {
   const ref = useRef<HTMLDivElement>(null);

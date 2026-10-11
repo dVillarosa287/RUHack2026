@@ -6,9 +6,11 @@ import {
   type Seed,
 } from "@/lib/storage";
 import { getWords, spriteLabel, useThemeId, type Words } from "@/lib/theme";
+import { openableUrl } from "@/lib/engine/pageUrl";
 import { ShovelIcon } from "@/lib/theme/ShovelIcon";
 import { SpriteIcon } from "@/lib/theme/SpriteIcon";
 import { SEED_DRAG_TYPE } from "./FolderSidebar";
+import { Screenshot } from "./Screenshot";
 
 /**
  * Opens the seed's page in another window. That page scrolls to the seed once it has loaded.
@@ -17,7 +19,7 @@ import { SEED_DRAG_TYPE } from "./FolderSidebar";
 export async function openOnPage(seed: Seed) {
   await updateSettings({ currentForestId: seed.forestId });
   await setPendingJump(seed);
-  await browser.windows.create({ url: seed.url });
+  await browser.windows.create({ url: openableUrl(seed.url) }); // PDFs open in our PDF page
 }
 
 /** Asks first, in the theme's words (`words`), then removes the seed. */
@@ -43,6 +45,7 @@ export function groupByPage(
 function describe(seed: Seed): { kind: string; text: string } {
   if (seed.kind === 'note') return { kind: 'Note', text: seed.text };
   if (seed.kind === 'highlight') return { kind: 'Highlight', text: `“${seed.text}”` };
+  if (seed.kind === 'media') return { kind: 'Screenshot', text: '' };
   return { kind: 'Marker', text: seed.text ? `Near: ${seed.text}` : 'Placed on the page' };
 }
 
@@ -108,6 +111,7 @@ export function ForestList({
                 <div className="min-w-0 flex-1">
                   <p className="text-xs uppercase tracking-wide text-ink-muted">{describe(seed).kind} · {new Date(seed.createdAt).toLocaleString()}</p>
                   {describe(seed).text && <p className="break-words">{describe(seed).text}</p>}
+                  {seed.kind === "media" && <Screenshot seedId={seed.id} className="mt-1 max-h-40 max-w-full" />}
                   {seed.note && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-ink-muted">Note: {seed.note}</p>}
                 </div>
                 {seed.url && (

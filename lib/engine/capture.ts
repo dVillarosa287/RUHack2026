@@ -1,9 +1,21 @@
-// Watches the mouse while a tool is active. Dragging over text highlights it; a plain click places a marker.
+// Watches the mouse while a tool is active. Dragging over text highlights it; a plain click places a marker;
+// dragging a box where no text gets selected (a picture, a chart, blank space) is a screenshot of that box.
+import { areaBetween, isBigEnough, showAreaBox, type Area } from './screenshot';
 
 export interface PlantHandlers {
   isInsideUi(target: EventTarget | null): boolean;
   onHighlight(range: Range, text: string): void;
   onPlace(spot: { clientX: number; clientY: number; target: Element }): void;
+  /** A box was dragged with no text selected, in window coordinates at the moment the mouse was let go. */
+  onArea(area: Area): void;
+  /** Draw the dashed box while dragging. False for sprites that only go on text (they cannot take screenshots). */
+  drawAreaBox: boolean;
+}
+
+/** True if the page has some text selected right now. */
+function hasSelectedText(): boolean {
+  const selection = window.getSelection();
+  return !!selection && !selection.isCollapsed && selection.toString().trim() !== '';
 }
 
 const DRAG_DISTANCE_PX = 4;
@@ -12,21 +24,46 @@ const DOUBLE_CLICK_WAIT_MS = 250;
 
 /** Starts listening. Returns a function that stops. */
 export function startPlanting(handlers: PlantHandlers): () => void {
+  // Where the mouse was pressed, in page coordinates (window + scroll), so a scroll during the drag is allowed for.
   let down: { x: number; y: number } | null = null;
+  let frame = 0;
+  /** The box from the press to (x, y), both in window coordinates now. */
+  const boxTo = (from: { x: number; y: number }, x: number, y: number) => areaBetween({ x: from.x - window.scrollX, y: from.y - window.scrollY }, { x, y });
   let pendingMarker: number | undefined;
   // Counts mouse presses. A marker is only placed if no other press came after its click.
   let presses = 0;
 
   const onMouseDown = (e: MouseEvent) => {
     presses++;
-    down = e.button === 0 && !handlers.isInsideUi(e.target) ? { x: e.clientX, y: e.clientY } : null;
+    down = e.button === 0 && !handlers.isInsideUi(e.target) ? { x: e.clientX + window.scrollX, y: e.clientY + window.scrollY } : null;
+  };
+
+  // While dragging, the dashed box shows, unless text is being selected (then it is a highlight).
+  const onMouseMove = (e: MouseEvent) => {
+    if (!down || !handlers.drawAreaBox || !(e.buttons & 1)) return;
+    const from = down;
+    const { clientX, clientY } = e;
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(() => {
+      const area = boxTo(from, clientX, clientY);
+      showAreaBox(isBigEnough(area) && !hasSelectedText() ? area : null);
+    });
+  };
+
+  // Pictures and links can be dragged out of the page. While planting, a drag is ours.
+  const onDragStart = (e: DragEvent) => {
+    if (!handlers.isInsideUi(e.target)) e.preventDefault();
   };
 
   const onMouseUp = (e: MouseEvent) => {
     if (!down || e.button !== 0) return;
-    const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y) > DRAG_DISTANCE_PX;
+    const from = down;
     down = null;
+    cancelAnimationFrame(frame);
+    showAreaBox(null);
     const { clientX, clientY } = e;
+    const area = boxTo(from, clientX, clientY);
+    const moved = Math.hypot(clientX + window.scrollX - from.x, clientY + window.scrollY - from.y) > DRAG_DISTANCE_PX;
     const pressesAtClick = presses;
     const clicks = e.detail;
     // The browser finishes updating the selection just after mouseup.
@@ -40,8 +77,13 @@ export function startPlanting(handlers: PlantHandlers): () => void {
         handlers.onHighlight(range, text);
         return;
       }
+      // A drag that selected no text: a screenshot of the box, if it is big enough.
+      if (moved) {
+        if (isBigEnough(area)) handlers.onArea(area);
+        return;
+      }
       // Only a single click places a marker. A double or triple click is for selecting words.
-      if (moved || clicks > 1) return;
+      if (clicks > 1) return;
       window.clearTimeout(pendingMarker);
       pendingMarker = window.setTimeout(() => {
         if (presses !== pressesAtClick) return;
@@ -60,11 +102,17 @@ export function startPlanting(handlers: PlantHandlers): () => void {
 
   document.addEventListener('mousedown', onMouseDown, true);
   document.addEventListener('mouseup', onMouseUp, true);
+  document.addEventListener('mousemove', onMouseMove, true);
+  document.addEventListener('dragstart', onDragStart, true);
   document.addEventListener('click', onClick, true);
   return () => {
     window.clearTimeout(pendingMarker);
+    cancelAnimationFrame(frame);
+    showAreaBox(null);
     document.removeEventListener('mousedown', onMouseDown, true);
     document.removeEventListener('mouseup', onMouseUp, true);
+    document.removeEventListener('mousemove', onMouseMove, true);
+    document.removeEventListener('dragstart', onDragStart, true);
     document.removeEventListener('click', onClick, true);
   };
 }
