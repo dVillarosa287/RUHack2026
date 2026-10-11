@@ -6,7 +6,7 @@ import { useThemeId } from './themeId';
 import { MINIMAL_THEME } from './themes';
 
 export interface Words {
-  /** The app's name in the viewer's header and browser tab. The extension's own name in Chrome stays "Forest". */
+  /** The app's name in the viewer's header and browser tab. */
   appName: string;
   /** A project (Forest in the code). */
   forest: string;
@@ -54,7 +54,7 @@ export interface Words {
 
 /** The nature words. These are exactly the words the app used before themes had their own words. */
 const NATURE_WORDS: Words = {
-  appName: 'Forest',
+  appName: 'Wildernotes',
   forest: 'forest',
   forests: 'forests',
   folder: 'folder',
@@ -83,7 +83,7 @@ const NATURE_WORDS: Words = {
 
 /** The Minimal theme's plain words: folders, items and links instead of forests, seeds and roots. */
 const MINIMAL_WORDS: Words = {
-  appName: 'Notes',
+  appName: 'Wildernotes',
   forest: 'folder',
   forests: 'folders',
   folder: 'section',

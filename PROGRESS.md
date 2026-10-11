@@ -276,6 +276,11 @@ Entry format:
 
 ### Viewer notes
 
+- [Oct 11] (GitHub Copilot)
+  - Did: renamed the application branding to Wildernotes in the extension manifest/action, viewer and PDF document titles, and theme app-name labels.
+  - Others can use / need to know: forest remains the domain term for annotation collections; build and theme checks pass.
+  - Need from someone else: nothing.
+
 - [Oct 11] (Teobobeo99)
   - Did: a question-mark Help button in the viewer's top right corner (`entrypoints/viewer/HelpButton.tsx`, mounted in `App.tsx`; art `minimal-images/question.png`). It opens a text-only panel listing every user action (toolbar, planting, shortcuts, notes, scroll rail, forests, list and graph view, quizzes, settings) and the things people get confused by. Esc or a click outside closes it.
   - Others can use / need to know: the text is in `helpSections()` in `HelpButton.tsx` and follows the theme's words and sprite names (Minimal says items and links). When you change a user-facing feature, change its line there. `npm run compile`, `npm run check:theme` and `npm run build` pass; not yet looked at in Chrome.

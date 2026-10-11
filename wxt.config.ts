@@ -56,8 +56,8 @@ export default defineConfig({
     },
   },
   manifest: {
-    name: 'Forest',
-    description: 'Plant notes on any web page and watch them grow into a forest.',
+    name: 'Wildernotes',
+    description: 'Plant notes on any web page and watch them grow into a wild notebook.',
     // unlimitedStorage: screenshots (media seeds) would soon fill the normal 10 MB.
     // webRequest: only to read a page's Content-Type and send PDFs to our PDF page (entrypoints/pdf/redirect.ts).
     permissions: ['storage', 'alarms', 'unlimitedStorage', 'webRequest'],
@@ -66,7 +66,7 @@ export default defineConfig({
     // allows WebAssembly, not eval of JavaScript. Without it PDF.js falls back to slower plain-JavaScript decoders.
     content_security_policy: { extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';" },
     // An action with no popup lets background.ts react when the icon is clicked.
-    action: { default_title: 'Forest: show or hide the toolbar' },
+    action: { default_title: 'Wildernotes: show or hide the toolbar' },
     // The art is drawn inside web pages, so web pages must be allowed to load it.
     web_accessible_resources: [{ resources: ['sprites/*', ...THEMED_ART_FOLDERS.map((theme) => `sprites/${theme}/*`)], matches: ['<all_urls>'] }],
   },

@@ -5,7 +5,7 @@ import type { SpriteType } from '@/lib/storage';
 import { DEFAULT_THEME_ID, FOREST_THEME, JUNGLE_THEME, MINIMAL_THEME, getTheme, type ThemeColor } from './themes';
 
 /** The app's name in the nature themes. The viewer shows the theme's own name instead: useWords().appName (./words.ts). */
-export const APP_NAME = 'Forest';
+export const APP_NAME = 'Wildernotes';
 
 export { applyTheme, watchTheme } from './apply';
 export { useThemeId, watchThemeId } from './themeId';
