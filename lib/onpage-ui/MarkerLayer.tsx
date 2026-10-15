@@ -188,7 +188,7 @@ export function MarkerLayer({ seeds, digging, flashId, onDig, onMove, onHover, o
           {/* Taken with the camera: hovering shows the screenshot (SeedNote.tsx). */}
           {seed.kind === 'media' && (
             <span className="fo-marker-camera" aria-hidden="true">
-              <CameraIcon size={10} />
+              <CameraIcon size={14} />
             </span>
           )}
         </div>
