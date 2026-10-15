@@ -11,6 +11,15 @@ const MAX_MIX_QUESTIONS = 20;
 
 export type QuizMaker = AiProvider | 'fill-blank';
 
+/** A lily pad taken with the camera: its question comes from its screenshot, which only Gemini can read. */
+const isScreenshot = (pad: Seed) => pad.kind === 'media';
+/** Splits off the screenshot lily pads a maker cannot read (every maker but Gemini). */
+function readable(pads: Seed[], maker: QuizMaker): { pads: Seed[]; skipped: number } {
+  if (maker === 'gemini') return { pads, skipped: 0 };
+  const kept = pads.filter((p) => !isScreenshot(p));
+  return { pads: kept, skipped: pads.length - kept.length };
+}
+
 /** What changed in a saved quiz's lily pads since it was made. */
 export interface QuizChanges {
   /** Lily pads planted after the quiz that belong in it and have no question yet. */
@@ -70,11 +79,12 @@ export function useQuiz(forestId: string, color: string) {
     if (!data) return null;
     // Read at click time so a lily pad planted after the page loaded is included in a remake.
     const chosen = padIds && new Set(padIds);
-    const pads = quizPads(await getSeedsForForest(forestId))
-      .filter((p) => !chosen || chosen.has(p.id))
-      .slice(0, mix ? MAX_MIX_QUESTIONS : MAX_QUESTIONS);
+    const { pads, skipped } = readable(quizPads(await getSeedsForForest(forestId)).filter((p) => !chosen || chosen.has(p.id)), maker);
+    pads.splice(mix ? MAX_MIX_QUESTIONS : MAX_QUESTIONS);
     setMaking(maker);
     setNotice(null);
+    // Said after the quiz is made too, so the user knows why a lily pad has no question.
+    const skipNote = skippedNote(skipped, pad, maker);
     let questions: Question[] = [];
     let generatedBy: AiProvider | undefined;
     if (maker === 'gemini' || maker === 'cerebras') {
@@ -83,6 +93,7 @@ export function useQuiz(forestId: string, color: string) {
         generatedBy = maker;
         const asked = mix ? mix.multipleChoice + mix.typeIn + mix.matching : 0;
         if (questions.length < asked) setNotice(`Got ${questions.length} of ${asked} questions.`);
+        if (skipNote) setNotice((n) => (n ? `${n} ${skipNote}` : skipNote));
       } catch (error) {
         console.error(`[${maker}] quiz generation failed`, error);
         // Keep the saved quiz. The quiz without AI copies the highlighted sentences, so it is made only when asked for.
@@ -91,9 +102,12 @@ export function useQuiz(forestId: string, color: string) {
         return null;
       }
     }
-    if (questions.length === 0) questions = fillBlankQuestions(pads);
+    if (questions.length === 0) {
+      questions = fillBlankQuestions(pads);
+      if (skipNote) setNotice(skipNote);
+    }
     let quiz: Quiz | null = null;
-    if (questions.length === 0) setNotice(`These ${pad}s have too little text to ask about. Highlight a full sentence with a ${pad}.`);
+    if (questions.length === 0) setNotice(`${skipNote ? `${skipNote} ` : ''}These ${pad}s have too little text to ask about. Highlight a full sentence with a ${pad}.`);
     else {
       quiz = await saveQuiz({ forestId, color, questions, provider: generatedBy });
       setReloadToken((token) => token + 1);
@@ -108,14 +122,15 @@ export function useQuiz(forestId: string, color: string) {
    */
   async function addNewPads(quiz: Quiz): Promise<void> {
     if (!data) return;
-    const { newPads } = data.changes[quiz.id] ?? { newPads: [] };
+    const changes = data.changes[quiz.id] ?? { newPads: [] };
     const ids = new Set(data.pads.map((p) => p.id));
     const kept = quiz.questions.filter((q) => ids.has(q.seedId));
     const isAi = !quiz.questions.some((q) => q.type === 'fill-blank');
     const provider = quiz.provider ?? 'gemini';
     const maker: QuizMaker = isAi && (provider === 'cerebras' ? data.hasCerebrasKey : data.hasGeminiKey) ? provider : 'fill-blank';
+    const { pads: newPads, skipped } = readable(changes.newPads, maker);
     setMaking(maker);
-    setNotice(null);
+    setNotice(skippedNote(skipped, pad, maker));
     let added: Question[] = [];
     if (newPads.length > 0) {
       try {
@@ -134,6 +149,15 @@ export function useQuiz(forestId: string, color: string) {
   return { data, quizzes, make, addNewPads, making, notice };
 }
 
+/** "Skipped 1 question: that lily pad is a screenshot, which only Gemini can read.", or null if none were skipped. */
+function skippedNote(skipped: number, pad: string, maker: QuizMaker): string | null {
+  if (skipped === 0) return null;
+  const how = maker === 'fill-blank' ? 'a quiz without AI cannot read' : 'only Gemini can read';
+  return skipped === 1
+    ? `Skipped 1 question: that ${pad} is a screenshot, which ${how}.`
+    : `Skipped ${skipped} questions: those ${pad}s are screenshots, which ${how}.`;
+}
+
 /**
  * What changed for a saved quiz. New lily pads are ones planted after it with no question in it. If every pad the
  * quiz asks about is in one group, only new pads in that group count, since it was a quiz on that group.
@@ -147,6 +171,8 @@ function quizChanges(quiz: Quiz, pads: Seed[], groups: PadGroup[]): QuizChanges 
   // It was a group quiz only if other lily pads, outside the group, already existed when it was made.
   const wasGroupQuiz = group && pads.some((p) => p.createdAt <= quiz.createdAt && !group.pads.includes(p));
   const pool = wasGroupQuiz ? group.pads : pads;
-  const newPads = pool.filter((p) => p.createdAt > quiz.createdAt && !asked.has(p.id));
+  // A quiz not written by Gemini cannot use screenshot lily pads, so those never count as new for it.
+  const byGemini = !quiz.questions.some((q) => q.type === 'fill-blank') && (quiz.provider ?? 'gemini') === 'gemini';
+  const newPads = pool.filter((p) => p.createdAt > quiz.createdAt && !asked.has(p.id) && (byGemini || !isScreenshot(p)));
   return { newPads, removed };
 }

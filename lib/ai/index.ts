@@ -1,7 +1,7 @@
 // What the viewer and the page use for AI features. Gemini itself is only ever called from the background worker
 // (entrypoints/background.ts), so these functions send it a message and wait for the answer.
 import { browser } from 'wxt/browser';
-import { addRoot, saveSeed, type Question, type Seed, type SpriteType } from '@/lib/storage';
+import { addRoot, getScreenshot, saveSeed, type Question, type Seed, type SpriteType } from '@/lib/storage';
 import { spriteColorKey } from '@/lib/theme';
 import type { AiProvider, LinkIdea, LinkPage, LinkRoot, LinkSource, QuizMix, SummarySource, QuizSource } from './gemini';
 import { cleanUrl } from '@/lib/storage/url';
@@ -31,9 +31,18 @@ export function testAiKey(provider: AiProvider): Promise<true> {
   return ask<true>({ type: 'forest:ai-test', provider });
 }
 
-/** Gemini's multiple-choice questions for these lily pads, in one request. Throws with a readable message if it fails. */
-export function aiQuizQuestions(seeds: Seed[], provider: AiProvider, mix?: QuizMix): Promise<Question[]> {
-  return ask<Question[]>({ type: 'forest:ai-quiz', provider, mix, sources: seeds.map(({ id, text, pageTitle }) => ({ id, text, pageTitle })) });
+/**
+ * Gemini's multiple-choice questions for these lily pads, in one request. A lily pad taken with the camera sends its
+ * screenshot too, to Gemini only (Cerebras cannot read images). Throws with a readable message if it fails.
+ */
+export async function aiQuizQuestions(seeds: Seed[], provider: AiProvider, mix?: QuizMix): Promise<Question[]> {
+  const sources = await Promise.all(
+    seeds.map(async ({ id, text, pageTitle, kind }) => {
+      const image = provider === 'gemini' && kind === 'media' ? await getScreenshot(id) : null;
+      return { id, text, pageTitle, ...(image ? { image } : {}) };
+    }),
+  );
+  return ask<Question[]>({ type: 'forest:ai-quiz', provider, mix, sources });
 }
 
 /** Gemini's study-guide summary for a forest. */

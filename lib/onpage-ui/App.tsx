@@ -34,6 +34,9 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
   const [tool, setTool] = useState<Tool>('none');
   const [spriteType, setSpriteType] = useState<SpriteType>('sprout');
   const [status, setStatus] = useState('');
+  // The toolbar's camera: while on, dragging with the chosen sprite takes a screenshot. Only with a sprite that is not the apple.
+  const [camera, setCamera] = useState(false);
+  const cameraFits = tool === 'plant' && spriteType !== 'fruitsprout';
   const themeId = useThemeId(); // for the sprite names in messages (the Minimal theme calls them Star, Triangle, ...)
   // The size the next sprite is planted at (1 is normal). - and + change it; sprites already planted keep their own size.
   const [plantScale, setPlantScale] = useState(1);
@@ -82,7 +85,14 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
   const onDeleted = useCallback((seed: Seed) => record({ undo: () => restoreSeed(seed), redo: () => deleteSeed(seed.id) }), [record]);
 
   const { flashId, jumpToSeed } = useSeedsOnPage(seeds);
-  const { removeSeed } = usePlanting({ tool, spriteType, forestId: currentForestId, scale: plantScale, isInsideUi, say, onCreated, onDeleted });
+  const { removeSeed } = usePlanting({ tool, spriteType, forestId: currentForestId, scale: plantScale, camera: camera && cameraFits, isInsideUi, say, onCreated, onDeleted });
+  // Picking the apple or the shovel, or putting the sprite down, turns the camera off.
+  useEffect(() => {
+    if (camera && !cameraFits) {
+      setCamera(false);
+      if (tool === 'plant') say(`The ${spriteLabel('fruitsprout', themeId).toLowerCase()} can't take screenshots`);
+    }
+  }, [camera, cameraFits, tool, say, themeId]);
   const dropSprite = useDropSprite({ forestId: currentForestId, scale: plantScale, isInsideUi, say, onCreated });
   // The three sprites used last are kept in settings, newest first, and shown on the toolbar.
   const { dragging, startSpriteDrag } = useSpriteDrag({
@@ -146,7 +156,7 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
       {visible && <PageOwl digging={tool === 'dig'} rate={advanced?.owlRate ?? 0} scale={advanced?.owlScale ?? 1} />}
       {groupSeed && <PadGroupPicker key={groupSeed.id} seed={groupSeed} onClose={closeGroupPicker} />}
       {noteSeed && <NoteEditor key={noteSeed.id} seed={noteSeed} onSave={(note) => void saveNote(noteSeed.id, note)} onClose={() => setNoteSeedId((id) => (id === noteSeed.id ? null : id))} />}
-      {hoverSeed?.note && hoverSeed.id !== noteSeed?.id && <NoteTooltip key={hoverSeed.id} seed={hoverSeed} />}
+      {(hoverSeed?.note || hoverSeed?.kind === 'media') && hoverSeed.id !== noteSeed?.id && <NoteTooltip key={hoverSeed.id} seed={hoverSeed} />}
       <CursorSprite type={visible ? spriteOnMouse : null} showOverUi={dragging !== null} scale={plantScale} isInsideUi={isInsideUi} />
       {toolbar && visible && (
         <Toolbar
@@ -165,6 +175,7 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
             if (tool === 'plant' && spriteType === type) return setTool('none');
             setSpriteType(type);
             setTool('plant');
+            if (camera && type !== 'fruitsprout') return say(`Drag a box to take a screenshot with the ${spriteLabel(type, themeId).toLowerCase()}`);
             if (TEXT_ONLY_SPRITES.includes(type)) say(`${spriteLabel(type, themeId)}s go on text: drag over a sentence`);
           }}
           onSpritePointerDown={startSpriteDrag}
@@ -180,6 +191,14 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
           stash={stash}
           onSwitchStash={(id) => void updateStashes({ currentId: id })}
           onEditStashes={() => void browser.runtime.sendMessage({ type: 'forest:open-viewer', page: 'settings' })}
+          camera={camera && cameraFits}
+          onToggleCamera={() => {
+            if (camera) return setCamera(false);
+            if (tool !== 'plant') return say('Pick a sprite first, then the camera');
+            if (spriteType === 'fruitsprout') return say(`The ${spriteLabel('fruitsprout', themeId).toLowerCase()} can't take screenshots`);
+            setCamera(true);
+            say(`Drag a box to take a screenshot with the ${spriteLabel(spriteType, themeId).toLowerCase()}`);
+          }}
         />
       )}
       {visible && <ScrollRail seeds={seeds} onJump={jumpToSeed} />}

@@ -18,6 +18,8 @@ interface PlantingOptions {
   forestId: string | null;
   /** The size new sprites are planted at (1 is normal), chosen with - and + before planting. */
   scale: number;
+  /** The toolbar's camera is on: a drag takes a screenshot that is saved with the sprite (never for the apple). */
+  camera: boolean;
   /** True for events that started inside our own toolbar, which the page tools must ignore. */
   isInsideUi(target: EventTarget | null): boolean;
   /** Called with a short message for the user, such as "Highlight saved". */
@@ -29,10 +31,10 @@ interface PlantingOptions {
 /**
  * Turns mouse activity on the page into saved seeds: drag over text to highlight, click to place a marker,
  * and with the shovel, click to remove. The lily pad and the apple only go on text (they are quiz material), so
- * with them a click places nothing. Dragging a box where no text gets selected saves a screenshot of it (not for
- * those two). Planting an apple also starts its active recall timer. Returns `removeSeed` for the markers, which handle their own clicks.
+ * with them a click places nothing. With the camera on, dragging a box saves a screenshot of it with the sprite
+ * (the lily pad too, for an AI quiz; never the apple). Planting an apple also starts its active recall timer. Returns `removeSeed` for the markers, which handle their own clicks.
  */
-export function usePlanting({ tool, spriteType, forestId, scale, isInsideUi, say, onCreated, onDeleted}: PlantingOptions): { removeSeed(seedId: string): Promise<void> } {
+export function usePlanting({ tool, spriteType, forestId, scale, camera, isInsideUi, say, onCreated, onDeleted}: PlantingOptions): { removeSeed(seedId: string): Promise<void> } {
   const themeId = useThemeId();
   const removeSeed = useCallback(
     async (seedId: string) => {
@@ -73,13 +75,12 @@ export function usePlanting({ tool, spriteType, forestId, scale, isInsideUi, say
         onCreated(seed);
         say('Marker placed');
       },
-      // A box dragged where no text was selected: a screenshot of it (lib/engine/screenshot.ts).
-      drawAreaBox: !TEXT_ONLY_SPRITES.includes(spriteType),
-      onArea: async (area) => {
-        if (TEXT_ONLY_SPRITES.includes(spriteType)) return say(`${spriteLabel(spriteType, themeId)}s go on text: drag over a sentence`);
+      // With the camera on, a dragged box is a screenshot (lib/engine/screenshot.ts). The apple never takes one.
+      camera: camera && spriteType !== 'fruitsprout',
+      onArea: async (area, start) => {
         say('Taking a screenshot...');
         try {
-          const seed = await plantScreenshot({ forestId, spriteType, area, scale });
+          const seed = await plantScreenshot({ forestId, spriteType, area, start, scale });
           onCreated(seed);
           say('Screenshot saved');
         } catch (error) {
@@ -87,7 +88,7 @@ export function usePlanting({ tool, spriteType, forestId, scale, isInsideUi, say
         }
       },
     });
-  }, [tool, spriteType, forestId, scale, isInsideUi, onCreated, removeSeed, say, themeId]);
+  }, [tool, spriteType, forestId, scale, camera, isInsideUi, onCreated, removeSeed, say, themeId]);
 
   return { removeSeed };
 }

@@ -1,21 +1,15 @@
-// Watches the mouse while a tool is active. Dragging over text highlights it; a plain click places a marker;
-// dragging a box where no text gets selected (a picture, a chart, blank space) is a screenshot of that box.
+// Watches the mouse while a tool is active. Dragging over text highlights it; a plain click places a marker.
+// With the camera on (the toolbar's camera button), every drag is a box instead: a screenshot of that box.
 import { areaBetween, isBigEnough, showAreaBox, type Area } from './screenshot';
 
 export interface PlantHandlers {
   isInsideUi(target: EventTarget | null): boolean;
   onHighlight(range: Range, text: string): void;
   onPlace(spot: { clientX: number; clientY: number; target: Element }): void;
-  /** A box was dragged with no text selected, in window coordinates at the moment the mouse was let go. */
-  onArea(area: Area): void;
-  /** Draw the dashed box while dragging. False for sprites that only go on text (they cannot take screenshots). */
-  drawAreaBox: boolean;
-}
-
-/** True if the page has some text selected right now. */
-function hasSelectedText(): boolean {
-  const selection = window.getSelection();
-  return !!selection && !selection.isCollapsed && selection.toString().trim() !== '';
+  /** Camera only: a box was dragged, in window coordinates at the moment the mouse was let go. `start` is where it began. */
+  onArea(area: Area, start: { x: number; y: number }): void;
+  /** The camera is on: drags draw a box (no text gets selected) and a plain click does nothing. */
+  camera: boolean;
 }
 
 const DRAG_DISTANCE_PX = 4;
@@ -36,17 +30,19 @@ export function startPlanting(handlers: PlantHandlers): () => void {
   const onMouseDown = (e: MouseEvent) => {
     presses++;
     down = e.button === 0 && !handlers.isInsideUi(e.target) ? { x: e.clientX + window.scrollX, y: e.clientY + window.scrollY } : null;
+    // With the camera on, a drag is always a box: stop the browser from selecting text under it.
+    if (down && handlers.camera) e.preventDefault();
   };
 
-  // While dragging, the dashed box shows, unless text is being selected (then it is a highlight).
+  // With the camera on, the dashed box shows while dragging.
   const onMouseMove = (e: MouseEvent) => {
-    if (!down || !handlers.drawAreaBox || !(e.buttons & 1)) return;
+    if (!down || !handlers.camera || !(e.buttons & 1)) return;
     const from = down;
     const { clientX, clientY } = e;
     cancelAnimationFrame(frame);
     frame = requestAnimationFrame(() => {
       const area = boxTo(from, clientX, clientY);
-      showAreaBox(isBigEnough(area) && !hasSelectedText() ? area : null);
+      showAreaBox(isBigEnough(area) ? area : null);
     });
   };
 
@@ -64,6 +60,11 @@ export function startPlanting(handlers: PlantHandlers): () => void {
     const { clientX, clientY } = e;
     const area = boxTo(from, clientX, clientY);
     const moved = Math.hypot(clientX + window.scrollX - from.x, clientY + window.scrollY - from.y) > DRAG_DISTANCE_PX;
+    if (handlers.camera) {
+      // Only a drag takes a screenshot; the sprite goes where the drag started (in window coordinates now).
+      if (moved && isBigEnough(area)) handlers.onArea(area, { x: from.x - window.scrollX, y: from.y - window.scrollY });
+      return;
+    }
     const pressesAtClick = presses;
     const clicks = e.detail;
     // The browser finishes updating the selection just after mouseup.
@@ -77,11 +78,8 @@ export function startPlanting(handlers: PlantHandlers): () => void {
         handlers.onHighlight(range, text);
         return;
       }
-      // A drag that selected no text: a screenshot of the box, if it is big enough.
-      if (moved) {
-        if (isBigEnough(area)) handlers.onArea(area);
-        return;
-      }
+      // A drag that selected no text does nothing (screenshots need the camera).
+      if (moved) return;
       // Only a single click places a marker. A double or triple click is for selecting words.
       if (clicks > 1) return;
       window.clearTimeout(pendingMarker);

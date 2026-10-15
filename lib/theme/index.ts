@@ -138,6 +138,9 @@ export function spriteColorHex(type: SpriteType, grown = false, themeId: string 
   return (grown && c.grownColor) || c.color;
 }
 
+/** The toolbar's camera (screenshots) and the badge on a sprite that has one. Every theme uses the same art. */
+export const cameraArtUrl = (): string | null => artUrl('camera.png');
+
 /** The shovel's art in a theme, and whether it needs tinting. */
 export function shovelArt(themeId: string = DEFAULT_THEME_ID): { url: string | null; tint: boolean } {
   const file = isMinimal(themeId) ? SHOVEL_ART.minimal : SHOVEL_ART.normal;

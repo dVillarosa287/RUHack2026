@@ -27,7 +27,7 @@ Quizzes, study guides and "Grow from link" use an AI provider. They only work if
 - **Google Gemini** (`generativelanguage.googleapis.com`), or
 - **Cerebras** (`api.cerebras.ai`)
 
-the following: the text of the notes involved (and their page titles and your typed notes), and for "Grow from link", the text of the page you pasted. Your API key is sent only to that provider, to sign the request.
+the following: the text of the notes involved (and their page titles and your typed notes), for a Gemini quiz the screenshots saved with its lily pads, and for "Grow from link", the text of the page you pasted. Your API key is sent only to that provider, to sign the request.
 
 That provider handles the data under its own terms and privacy policy, which you agree to when you create your key: Google's Gemini API terms (https://ai.google.dev/gemini-api/terms) and Google's privacy policy, or Cerebras' terms and privacy policy. Note that on Google's free tier, Google may use what you send to improve its products, and people may review it. Do not use the AI features on text you would not want the provider to see. AI answers can be wrong; check them.
 
@@ -35,7 +35,7 @@ Your API key is stored in this browser's extension storage, not encrypted (the s
 
 ## Fetching pages
 
-"Grow from link" downloads the page you paste, without your cookies or logins. A screenshot note takes a picture of the visible tab only when you drag one, and keeps it on your computer. "Save backup" writes one forest (its notes, quizzes and screenshots, never your settings or API keys) to a file in your downloads; that file is yours, and Wildernotes never sends it anywhere.
+"Grow from link" downloads the page you paste, without your cookies or logins. A screenshot note takes a picture of the visible tab only when you turn on the camera and drag a box, and keeps it on your computer (unless it is a lily pad's and you make a Gemini quiz, see above). "Export backup" writes one forest (its notes, quizzes and screenshots, never your settings or API keys) to a file in your downloads; that file is yours, and Wildernotes never sends it anywhere.
 
 ## Sharing and selling
 

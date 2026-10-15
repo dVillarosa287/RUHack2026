@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent } fr
 import type { Anchor, Seed } from '@/lib/storage';
 import { createLineBoil, getHighlightRange, MarkerTracker, UI_HOST_TAG } from '@/lib/engine';
 import { spriteTakesNote } from '@/lib/theme';
+import { CameraIcon } from '@/lib/theme/CameraIcon';
 import { SpriteIcon } from '@/lib/theme/SpriteIcon';
 
 interface MarkerLayerProps {
@@ -168,7 +169,7 @@ export function MarkerLayer({ seeds, digging, flashId, onDig, onMove, onHover, o
           className={`fo-marker${digging ? ' fo-dig' : ''}${seed.kind === 'highlight' ? ' fo-on-text' : ''}${flashId === seed.id ? ' fo-flash' : ''}${!digging && (spriteTakesNote(seed.spriteType) || seed.spriteType === 'lilypad') ? ' fo-has-note-box' : ''}`}
           style={{ visibility: 'hidden' }}
           // A seed with a note shows it in a card on hover (App.tsx) instead of this plain browser tip.
-          title={seed.note ? undefined : titleFor(seed, digging)}
+          title={seed.note || seed.kind === 'media' ? undefined : titleFor(seed, digging)}
           onPointerDown={(e) => startDrag(seed, e)}
           onPointerEnter={() => onHover(seed.id)}
           onPointerLeave={() => onHover(null)}
@@ -184,6 +185,12 @@ export function MarkerLayer({ seeds, digging, flashId, onDig, onMove, onHover, o
             size={MARKER_SIZE * (seed.scale ?? 1)} // each sprite keeps the size it was planted at
             grown={seed.growth === 'tree'}
           />
+          {/* Taken with the camera: hovering shows the screenshot (SeedNote.tsx). */}
+          {seed.kind === 'media' && (
+            <span className="fo-marker-camera" aria-hidden="true">
+              <CameraIcon size={10} />
+            </span>
+          )}
         </div>
       ))}
     </>

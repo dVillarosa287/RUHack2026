@@ -14,8 +14,11 @@ const MAX_MIX_QUESTIONS = 20;
 export type AiProvider = 'gemini' | 'cerebras';
 const providerName = (provider: AiProvider) => provider === 'cerebras' ? 'Cerebras' : 'Gemini';
 
-/** What the viewer sends: just the saved text, so nothing else from storage leaves the browser. */
-export type QuizSource = Pick<Seed, 'id' | 'text' | 'pageTitle'>;
+/**
+ * What the viewer sends: just the saved text, so nothing else from storage leaves the browser. A lily pad taken with
+ * the camera also sends its screenshot (a JPEG data URL), to Gemini only: Cerebras cannot read images.
+ */
+export type QuizSource = Pick<Seed, 'id' | 'text' | 'pageTitle'> & { image?: string };
 export type SummarySource = Pick<Seed, 'text' | 'pageTitle' | 'note'>;
 /** How many questions of each style a custom quiz asks for. Each matching question is one group of rows. */
 export interface QuizMix {
@@ -23,8 +26,8 @@ export interface QuizMix {
   typeIn: number;
   matching: number;
 }
-/** One piece of a request. */
-type Part = { text: string };
+/** One piece of a request: text, or an image (Gemini only). */
+type Part = { text: string } | { inlineData: { mimeType: string; data: string } };
 
 /** A failure the user can act on, with a message to show them. */
 export class GeminiError extends Error {}
@@ -83,7 +86,7 @@ async function generate(provider: AiProvider, key: string, parts: Part[], schema
             model: CEREBRAS_MODEL,
             messages: [
               ...(schema ? [{ role: 'system', content: `Return only valid JSON matching this schema: ${JSON.stringify(schema)}` }] : []),
-              { role: 'user', content: parts.map((part) => part.text).join('\n') },
+              { role: 'user', content: parts.map((part) => ('text' in part ? part.text : '')).join('\n') },
             ],
             ...(schema ? { response_format: { type: 'json_object' } } : {}),
           }),
@@ -140,10 +143,17 @@ export async function testAi(provider: AiProvider, key: string): Promise<void> {
 
 /** Multiple-choice questions for a quiz: one request for all of them. Bad items from Gemini are dropped, not shown. */
 export async function quizQuestions(key: string, sources: QuizSource[], provider: AiProvider = 'gemini', mix?: QuizMix): Promise<Question[]> {
-  const usable = sources.filter((s) => s.text.trim().split(/\s+/).length >= 4).slice(0, mix ? MAX_MIX_QUESTIONS : MAX_QUESTIONS);
+  // A screenshot is enough on its own with Gemini; Cerebras cannot see it, so those lily pads are left out there.
+  const hasImage = (s: QuizSource) => provider === 'gemini' && Boolean(s.image);
+  const usable = sources.filter((s) => hasImage(s) || s.text.trim().split(/\s+/).length >= 4).slice(0, mix ? MAX_MIX_QUESTIONS : MAX_QUESTIONS);
   if (usable.length === 0) throw new GeminiError('There is too little saved text here to ask about.');
 
-  const notes = usable.map((s) => ({ seedId: s.id, page: s.pageTitle, text: s.text.slice(0, 1500) }));
+  const notes = usable.map((s) => ({ seedId: s.id, page: s.pageTitle, text: hasImage(s) ? `(A screenshot, sent as an image below. Text in it: ${s.text.slice(0, 500)})` : s.text.slice(0, 1500) }));
+  // Each screenshot goes after the text, labelled with its seedId, as an inline JPEG.
+  const images: Part[] = usable.filter(hasImage).flatMap((s) => [
+    { text: `Screenshot for seedId ${s.id}:` },
+    { inlineData: { mimeType: 'image/jpeg', data: s.image!.slice(s.image!.indexOf(',') + 1) } },
+  ]);
   const parts: Part[] = [
     {
       text: [
@@ -161,6 +171,7 @@ export async function quizQuestions(key: string, sources: QuizSource[], provider
         '- "multiple-choice": exactly 4 short choices, one correct and three plausible but wrong. The answer must be copied exactly from the choices.',
         `- "type-in": a new full sentence of at least 8 words, in your own words, that tests the key idea, with "${BLANK}" in place of a key term of 1 to 3 words. The answer is that term; choices is [].`,
         'Do not mention "the note" or "the text" in the question.',
+        ...(images.length > 0 ? ['Some notes are screenshots, sent as images after this text, each labelled with its seedId. Ask about what the image shows (a diagram, chart, formula or picture), without saying "the image" or "the screenshot".'] : []),
         mix
           ? mix.matching > 0
             ? `Also give a "matching" array of exactly ${mix.matching} groups. Each group is { "rows": [...] } with 3 to 5 rows: seedId, "left" a short term or concept from that note (at most 6 words), "right" a short definition of it in your own words (at most 15 words), not a sentence copied from the note. Within a group every left and every right must be different; different groups should cover different ideas.`
@@ -173,6 +184,7 @@ export async function quizQuestions(key: string, sources: QuizSource[], provider
         JSON.stringify(notes),
       ].join('\n'),
     },
+    ...images,
   ];
 
   const raw = await generate(provider, key, parts, mix ? MIX_QUIZ_SCHEMA : QUIZ_SCHEMA);

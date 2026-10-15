@@ -42,6 +42,7 @@ A Chrome extension (Manifest V3) for annotating web pages for later reference an
 - **Owl (on the page):** while the toolbar is open, an owl now and then flies down from above and sits on a button or the top of a block of text (`lib/onpage-ui/PageOwl.tsx`). Its art comes from `owlArt(themeId)`; it is not the `owl` sprite.
 - **Animal:** the marker on the scroll rail for where you were before you jumped.
 - **Lily pad group:** lily pads joined to each other by roots (directly or through other lily pads). Never saved: worked out by `padGroups` (`lib/storage/padGroups.ts`). Joining a group adds a root; a pad on its own is not a group. A quiz can be made from one group.
+- **Camera:** the toolbar button under the tree. With a sprite picked (never the apple), it makes a drag take a screenshot saved with that sprite as a `media` seed (`lib/engine/screenshot.ts`), which shows a tiny camera badge and its picture on hover. A lily pad's screenshot is read by Gemini for its quiz; quizzes without AI skip it. Art: `images/camera.png` (`CameraIcon`).
 - **Stash:** the set of sprites the toolbar shows, in order (keys 1 to 9 and 0). `DEFAULT_STASH` is fixed (`lib/onpage-ui/hotbar.ts`); the user's own are saved with `getStashes`/`updateStashes` and edited on the Settings page.
 - **Large tree:** in the graph view, a bigger tree node for each web page that has 2 or more seeds in the forest. It sits near those seeds and is joined to them by very subtle lines. It is worked out from the seeds, never saved, and is not a seed.
 

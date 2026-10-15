@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as Reac
 import type { Tool } from '@/lib/engine';
 import type { Forest, Stash, SpriteType } from '@/lib/storage';
 import { SPRITES, cap, getWords, spriteLabel, useThemeId } from '@/lib/theme';
+import { CameraIcon } from '@/lib/theme/CameraIcon';
 import { ShovelIcon } from '@/lib/theme/ShovelIcon';
 import { ForestIcon, SpriteIcon } from '@/lib/theme/SpriteIcon';
 import { ForestPicker } from './ForestPicker';
@@ -35,6 +36,9 @@ interface ToolbarProps {
   onSwitchStash(id: string): void;
   /** "+ Make your own stash": opens the stash editor in the viewer's Settings. */
   onEditStashes(): void;
+  /** The camera is on: the chosen sprite takes a screenshot when the user drags a box. */
+  camera: boolean;
+  onToggleCamera(): void;
 }
 
 /** Pressing on these does not drag the toolbar. The forest list counts too, so its edges between rows do not start a drag. */
@@ -194,17 +198,23 @@ export function Toolbar(props: ToolbarProps) {
             )}
           </div>
 
+          {/* Same columns as the sprite tiles: the stash drop-down, then the camera under the tree button. */}
           <div className="fo-stash-row">
-            <span className="fo-stash-label">Stash</span>
-            <Picker
-              small
-              ariaLabel="Stash"
-              placeholder="Default"
-              currentId={props.stash.id}
-              onPick={props.onSwitchStash}
-              items={props.stashes.map((l) => ({ id: l.id, label: l.name }))}
-              extra={{ label: '+ Make or edit stashes', onClick: props.onEditStashes }}
-            />
+            <div className="fo-stash-pick">
+              <span className="fo-stash-label">Stash</span>
+              <Picker
+                small
+                ariaLabel="Stash"
+                placeholder="Default"
+                currentId={props.stash.id}
+                onPick={props.onSwitchStash}
+                items={props.stashes.map((l) => ({ id: l.id, label: l.name }))}
+                extra={{ label: '+ Make or edit stashes', onClick: props.onEditStashes }}
+              />
+            </div>
+            <button className="fo-tool fo-camera fo-tip-end" aria-label="Camera" data-tip="Screenshot: pick a sprite, then drag a box" aria-pressed={props.camera} onClick={props.onToggleCamera}>
+              <CameraIcon size={20} />
+            </button>
           </div>
 
           <div className="fo-status" role="status">{props.status}</div>

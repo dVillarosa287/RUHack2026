@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { getHighlightRange } from '@/lib/engine';
-import type { Seed } from '@/lib/storage';
+import { getScreenshot, type Seed } from '@/lib/storage';
 
 const GAP_PX = 6;
 const EDGE_PX = 8;
@@ -114,14 +114,28 @@ export function NoteEditor({ seed, onSave, onClose }: { seed: Seed; onSave(note:
   );
 }
 
-/** The note shown under a sprite while the mouse is over it. It ignores the mouse, so it never gets in the way. */
+/**
+ * The note (and, for a sprite taken with the camera, its screenshot) shown under a sprite while the mouse is over it.
+ * It ignores the mouse, so it never gets in the way.
+ */
 export function NoteTooltip({ seed }: { seed: Seed }) {
   const card = useRef<HTMLDivElement>(null);
+  const [shot, setShot] = useState<string | null>(null);
   useFollowMarker(card, seed.id);
+  useEffect(() => {
+    if (seed.kind !== 'media') return;
+    let live = true;
+    void getScreenshot(seed.id).then((url) => live && setShot(url));
+    return () => {
+      live = false;
+    };
+  }, [seed.id, seed.kind]);
+  const hint = seed.spriteType === 'lilypad' ? 'Click the sprite to choose its group' : seed.note ? 'Click the sprite to edit' : 'Click the sprite to add a note';
   return (
     <div ref={card} className="fo-note fo-note-view" style={{ visibility: 'hidden' }}>
-      <div className="fo-note-text">{seed.note}</div>
-      <div className="fo-note-hint">Click the sprite to edit</div>
+      {shot && <img className="fo-note-shot" src={shot} alt="Screenshot saved with this sprite" />}
+      {seed.note && <div className="fo-note-text">{seed.note}</div>}
+      <div className="fo-note-hint">{hint}</div>
     </div>
   );
 }

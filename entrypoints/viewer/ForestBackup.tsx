@@ -8,7 +8,7 @@ const button = 'rounded-lg border border-edge px-3 py-1.5 text-sm hover:bg-prima
 const fileName = (name: string) => `${name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'forest'}.wildernotes.json`;
 
 /**
- * "Save backup": downloads the whole forest (seeds, folders, roots, quizzes, screenshots) as one JSON file. The file
+ * "Export backup": downloads the whole forest (seeds, folders, roots, quizzes, screenshots) as one JSON file. The file
  * stays on the user's computer; settings and API keys are never in it. There is no cloud sync, so this is the
  * only way to keep a copy or move a forest to another computer.
  */
@@ -30,7 +30,7 @@ export function SaveBackupButton({ forest }: { forest: Forest }) {
   };
   return (
     <button className={button} disabled={busy} title="Download this forest as a file you can load back in later" onClick={() => void save()}>
-      {busy ? 'Saving…' : 'Save backup'}
+      {busy ? 'Exporting…' : 'Export backup'}
     </button>
   );
 }

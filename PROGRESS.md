@@ -99,6 +99,11 @@ Entry format:
 
 ### On-page UI and art notes
 
+- [Oct 15, camera] (Teobobeo99)
+  - Did: removed the old "drag a box where there is no text" screenshot. Added a camera button to the toolbar (under the tree, same height as the stash drop-down, which is now narrower): pick a sprite, click the camera, drag a box, and a screenshot is saved with that sprite where the drag started. The sprite gets a tiny camera badge; hovering it shows the picture. The apple, the shovel and "no sprite" can't use the camera (picking them turns it off). Lily pad screenshots go to Gemini as images for the quiz; quizzes without AI or with Cerebras skip them and say "Skipped 1 question...".
+  - Others can use / need to know: `CameraIcon` (`lib/theme/CameraIcon.tsx`) uses `images/camera.png`, which is NOT in the repo yet; until it is, a line drawing shows. `startPlanting` now takes `camera` instead of `drawAreaBox`; `plantScreenshot` takes `start`. `QuizSource.image` (Gemini only). Privacy docs updated: screenshots of lily pads can now go to Gemini, which needs the team's OK (BACKLOG D7). Tested in Chromium with Playwright (layout, apple/shovel rules, badge, hover, no-AI skip); not yet in real Chrome, and the Gemini image request was not tried with a real key.
+  - Need from someone else: add `images/camera.png`; the team's OK on sending lily pad screenshots to Gemini.
+
 - [Oct 15, memory + cursor] (Teobobeo99)
   - Did: (1) RAM: removed `will-change: transform` from `.fo-marker`, `.fo-pond-frog` and `.fo-page-owl` (`toolbar.css`); with the line boil's SVG filter it cost ~65 MB of GPU memory per open tab (5 tabs: GPU process 375 MB went to 127 MB, same as no extension). `listRecords` (`lib/storage/index.ts`) now reads only matching keys with `storage.local.getKeys()` instead of the whole database (big forest: 112-136 MB per tab went to 61-94). (2) The sprite on the mouse now sits bottom-middle on the cursor, exactly where it will be planted (`.fo-cursor-sprite`, `CursorSprite.tsx`); its old top-right offset grew with - and +, so big sprites landed off center.
   - Others can use / need to know: don't put `will-change` on anything that has the line boil. What's left is in `BACKLOG.md` F13: with the in-progress creature changes the GPU process sits at ~180-220 MB again. The measuring script was a scratch file (Playwright + `top` memory footprint), not committed.
@@ -285,6 +290,11 @@ Entry format:
   - Need from someone else: sprite art (see the art list in `BACKLOG.md` A3).
 
 ### Viewer notes
+
+- [Oct 15, latest] (Teobobeo99)
+  - Did: forests grid: clicking a forest now shows "Export backup", "Delete" and "Open" together on one line (they wrap as a group). "Save backup" renamed to "Export backup" everywhere (button, help, SPEC, privacy policy).
+  - Others can use / need to know: `SaveBackupButton` (ForestBackup.tsx) is now used in ForestGrid too. Compile, theme check and build pass; not yet clicked through in Chrome.
+  - Need from someone else: nothing
 
 - [Oct 15, later] (Teobobeo99)
   - Did: wording: "Recenter" (both graph buttons), "Quiz" instead of "Lily pad quiz", "Export", toolbar tree tip "Forest", default forest "My Forest", "+ Add note"/"Add note" in every theme, "Visiting owl size". Code: the quiz type `Fruit` is now `Quiz` (`getQuizzes`, `saveQuiz`, `updateQuiz`, `renameQuiz`, `quizId`); storage keys stay `fruit:` and the apple's id stays `fruitsprout` so saved data still loads.

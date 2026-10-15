@@ -11,13 +11,13 @@ The draft privacy policy is `docs/PRIVACY_POLICY.md`. Keep both files true: **an
 | Data | Where it lives | Leaves the browser? |
 |---|---|---|
 | Seeds (highlighted text, page URL and title, notes, anchors), forests, roots, fruits | `chrome.storage.local`, this browser only | Only the parts listed below, only when the user presses an AI button |
-| Screenshots (media seeds) | `chrome.storage.local` | Never |
+| Screenshots (media seeds) | `chrome.storage.local` | Only a lily pad's, as an image in a Gemini quiz request the user pressed (never to Cerebras) |
 | Gemini / Cerebras API keys | `chrome.storage.local`, not encrypted | Sent only to that provider's own address, as the key header of a request |
-| Quiz request | | Up to 10 seeds' text (1,500 chars each) and page titles, to Google Gemini or Cerebras |
+| Quiz request | | Up to 10 seeds' text (1,500 chars each) and page titles, to Google Gemini or Cerebras; with Gemini, also the screenshots of camera lily pads (JPEG, at most 1000 px wide) |
 | Study guide (export) | | Up to 100 seeds' text, page titles and notes, to the chosen provider |
 | Grow from link | | The extension fetches the pasted page (cookies off, `credentials: 'omit'`), then sends its text plus up to 150 seed snippets and notes to the chosen provider |
 | Every web page the user visits | Nothing saved unless the user plants a seed | Never. (The font used to come from Google Fonts on every page; it is now bundled, M1.) |
-| Tab screenshot (`captureVisibleTab`) | Cropped and saved locally | Never |
+| Tab screenshot (`captureVisibleTab`) | Cropped and saved locally | Only as part of a Gemini quiz request (see above) |
 | PDF detection (`webRequest`) | Reads only the Content-Type header of top-level pages, in memory | Never |
 
 There is no server, no account, no analytics, no ads, no selling of data. Uninstalling the extension deletes everything.

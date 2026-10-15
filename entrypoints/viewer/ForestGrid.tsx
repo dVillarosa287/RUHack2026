@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { createForest, deleteForest, getForests, getSeedsForForest, updateForest, type Forest } from '@/lib/storage';
 import { FOREST_ICONS, countOf, useWords } from '@/lib/theme';
 import { ForestIcon } from '@/lib/theme/SpriteIcon';
-import { LoadBackupButton } from './ForestBackup';
+import { LoadBackupButton, SaveBackupButton } from './ForestBackup';
 import { forestHref } from './route';
 import { useStored } from './useStored';
 
@@ -201,8 +201,12 @@ export function ForestGrid() {
               </button>
             ))}
           </div>
-          <button className="ml-auto rounded-lg border border-edge px-3 py-1.5 text-sm hover:bg-danger-soft" onClick={() => void remove(selected, selectedEntry.seedCount)}>Delete</button>
-          <button className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink hover:bg-primary-strong" onClick={() => open(selected)}>Open</button>
+          {/* One group, so the buttons always stay on the same line together. */}
+          <div className="ml-auto flex items-center gap-3">
+            <SaveBackupButton forest={selected} />
+            <button className="rounded-lg border border-edge px-3 py-1.5 text-sm hover:bg-danger-soft" onClick={() => void remove(selected, selectedEntry.seedCount)}>Delete</button>
+            <button className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink hover:bg-primary-strong" onClick={() => open(selected)}>Open</button>
+          </div>
         </div>
       ) : (
         <p className="mt-4 text-sm text-ink-muted">
