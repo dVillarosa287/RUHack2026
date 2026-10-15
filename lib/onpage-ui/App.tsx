@@ -35,6 +35,9 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
   // The seed whose note box is open (right after planting it, or after clicking its sprite), and the one under the mouse.
   const [noteSeedId, setNoteSeedId] = useState<string | null>(null);
   const [hoverSeedId, setHoverSeedId] = useState<string | null>(null);
+  // Where the frog and the owl sit right now (a lily pad's seed id, a page element), so the scroll rail can show them.
+  const [frogPadId, setFrogPadId] = useState<string | null>(null);
+  const [owlPerch, setOwlPerch] = useState<Element | null>(null);
   const history = useRef<Array<{ undo(): Promise<void>; redo(): Promise<void> }>>([]);
   const undone = useRef<Array<{ undo(): Promise<void>; redo(): Promise<void> }>>([]);
 
@@ -127,9 +130,9 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
         }}
       />
       {/* Now and then a frog jumps onto a lily pad. Drawn after the markers so it sits on top of the pad. */}
-      <PondFrog seeds={seeds} />
+      <PondFrog seeds={seeds} onSit={setFrogPadId} />
       {/* Now and then an owl flies down onto a button or a block of text, while the toolbar is open. */}
-      {visible && <PageOwl />}
+      {visible && <PageOwl onPerch={setOwlPerch} />}
       {noteSeed && <NoteEditor key={noteSeed.id} seed={noteSeed} onSave={(note) => void saveNote(noteSeed.id, note)} onClose={() => setNoteSeedId((id) => (id === noteSeed.id ? null : id))} />}
       {hoverSeed?.note && hoverSeed.id !== noteSeed?.id && <NoteTooltip key={hoverSeed.id} seed={hoverSeed} />}
       <CursorSprite type={visible ? spriteOnMouse : null} showOverUi={dragging !== null} scale={plantScale} isInsideUi={isInsideUi} />
@@ -163,7 +166,7 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
           onOpenCurrentForest={() => openViewer(currentForestId ?? undefined)}
         />
       )}
-      {visible && <ScrollRail seeds={seeds} onJump={jumpToSeed} />}
+      {visible && <ScrollRail seeds={seeds} onJump={jumpToSeed} frogPadId={frogPadId} owlPerch={owlPerch} />}
       {/* An apple's active recall question, when its time is up. Shown even while the toolbar is closed. */}
       <ReviewPopup />
     </>

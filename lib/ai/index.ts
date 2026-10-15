@@ -2,8 +2,8 @@
 // (entrypoints/background.ts), so these functions send it a message and wait for the answer.
 import { browser } from 'wxt/browser';
 import { addRoot, saveSeed, type Question, type Seed, type SpriteType } from '@/lib/storage';
-import { spriteColorKey } from '@/lib/theme';
-import type { AiProvider, LinkIdea, LinkPage, LinkRoot, LinkSource, QuizMix, SummarySource, QuizSource } from './gemini';
+import { spriteColorKey, spriteTakesNote } from '@/lib/theme';
+import { LINK_IDEA_SPRITES, type AiProvider, type LinkIdea, type LinkPage, type LinkRoot, type LinkSource, type QuizMix, type SummarySource, type QuizSource } from './gemini';
 import { cleanUrl } from '@/lib/storage/url';
 import { normalizeText, quoteAnchor, readPage } from './readPage';
 
@@ -41,7 +41,7 @@ export function aiForestSummary(forestName: string, seeds: Seed[], provider: AiP
   return ask<string>({ type: 'forest:ai-summary', provider, forestName, sources: seeds.map(({ text, pageTitle, note }) => ({ text, pageTitle, note })) });
 }
 
-/** The sprite the key ideas from a link are planted as. Grass is an ordinary sprite that never grows. */
+/** The sprite a key idea from a link is planted as when the AI gave none that is allowed. Grass is an ordinary sprite that never grows. */
 export const LINK_SPRITE: SpriteType = 'grass';
 
 /**
@@ -66,17 +66,19 @@ export async function growFromLink(forestId: string, address: string, seeds: See
     const text = anchor?.quote?.exact ?? idea.quote; // the page's own words, when the quote was found
     if (planted.has(same(text))) continue;
     planted.add(same(text));
+    // Similar ideas share a sprite; anything not allowed (an apple, a made-up name) becomes LINK_SPRITE.
+    const spriteType = LINK_IDEA_SPRITES.find((type) => type === idea.sprite) ?? LINK_SPRITE;
     const seed = await saveSeed({
       forestId,
       kind: 'highlight',
-      spriteType: LINK_SPRITE,
-      color: spriteColorKey(LINK_SPRITE),
+      spriteType,
+      color: spriteColorKey(spriteType),
       url: page.url,
       pageTitle: page.title,
       text,
       anchor,
       displayText: idea.label || undefined,
-      note: idea.note || undefined,
+      note: (spriteTakesNote(spriteType) && idea.note) || undefined, // a lily pad is quiz material, with no note
     });
     newIds.set(`new-${i + 1}`, seed.id);
   }

@@ -99,6 +99,11 @@ Entry format:
 
 ### On-page UI and art notes
 
+- [Oct 15] (roshan714)
+  - Did: frog and owl on the scroll rail. `PondFrog` has an optional `onSit(padId | null)`, `PageOwl` an optional `onPerch(el | null)`, both called only when the value changes (null while jumping/flying or gone). `App.tsx` keeps them in state and passes `frogPadId`/`owlPerch` to `ScrollRail`, which draws the frog on its lily pad's stop and the owl at its perch's height (both `.fo-rail-stop` buttons; click scrolls there and sets the animal). The rail now also shows when the page has no seeds but the owl sits. Lily pad/apple on the page: the code paths (click, toolbar drop, box drag, PDF) were already guarded, so nothing changed there.
+  - Others can use / need to know: compile and build pass; not tested in Chrome. To test, raise `ARRIVE_CHANCE` in `PondFrog.tsx`/`PageOwl.tsx` to 1 with the toolbar open on a Wikipedia article with a lily pad.
+  - Need from someone else: a person to check it in Chrome.
+
 - [Oct 11] (Teobobeo99)
   - Did: an owl on the page (`lib/onpage-ui/PageOwl.tsx`, `.fo-page-owl` in `toolbar.css`, one line in `App.tsx`). While the toolbar is open, now and then an owl dives down from above the window and sits on top of a button or on the first line of a paragraph, heading or list item; it may fly to another perch or away. Flying uses `owlfly.png` turned to face its way, sitting uses `owl.png`. Art per theme from `owlArt(themeId)` (`lib/theme/index.ts`): Jungle uses `jungle-images/`, every other theme (Minimal too) `forest-images/`; `wxt.config.ts` now publishes those folders as `sprites/forest/` and `sprites/jungle/`.
   - Others can use / need to know: chances are constants at the top of `PageOwl.tsx` (raise `ARRIVE_CHANCE` for a demo). Off with reduced motion and when the toolbar is closed. Tested in Chromium with chances at 100% in Jungle, Night Forest and Minimal (arrives, sits on text and on a button, hops, leaves, comes back, goes when the toolbar closes). `compile`, `build` and `check:theme` pass.
@@ -276,6 +281,10 @@ Entry format:
 
 ### Viewer notes
 
+- [Oct 15, night] (roshan714)
+  - Did: `SpritePicker` (`Pickers.tsx`) has an optional `exclude` list; `NewNoteForm.tsx` passes `TEXT_ONLY_SPRITES`, so a text note can't be a lily pad or an apple.
+  - Others can use / need to know: compile passes; not tested in Chrome.
+  - Need from someone else: nothing.
 - [Oct 15, evening] (roshan714)
   - Did: `QuizSetup` (`QuizView.tsx`): counts start at 0, each capped at total minus the others, `fit()` lowers them when the total drops, "Random questions: N" replaces "x of N chosen", and random ones get a random style in `create` before `onCreate`. `Pond.tsx`: 72px pads in a scrolling row (`.fo-pond-scroll` in `quiz.css`), ‹ › buttons when it overflows, follows the frog, `furthest`/`onPick` make earlier pads clickable. `PlayQuiz`: answers stored at index `at`, `reached` state, "Next" on an earlier answered question.
   - Others can use / need to know: the pond box is now `h-44` (was `h-36`), because the scrolling row clips the frog's hop otherwise. `fo-still` only on the very first load. Not yet tested in Chrome.
@@ -446,6 +455,11 @@ Entry format:
   - Need from someone else: nothing
 
 ### Data, AI and integration notes
+
+- [Oct 15, night] (roshan714)
+  - Did: Grow from link. `gemini.ts`: `MAX_IDEAS` 20, step 1 of the prompt asks for all the important information and to sort ideas into 2 to 5 themes with one sprite each, lily pads for quiz facts; `LINK_SCHEMA` ideas have a `sprite` enum (`LINK_IDEA_SPRITES`, no `fruitsprout`); `LinkIdea.sprite` is the raw string. `index.ts` `growFromLink` saves `idea.sprite` if it is in `LINK_IDEA_SPRITES`, else `LINK_SPRITE` (grass), with `spriteColorKey`, and no note when `!spriteTakesNote`.
+  - Others can use / need to know: still one request; duplicates, anchors, roots and the result message unchanged. Compile and build pass; not tried with a real key. Test: a forest, "Grow from link", a long Wikipedia article; expect a few sprite groups plus lily pads, then the lily pads' quiz in QuizBar.
+  - Need from someone else: a person to try it in Chrome with a real key.
 
 - [Oct 15, later] (roshan714)
   - Did: `Fruit.icon` (optional, approved) and `updateFruit(id, { name, icon })`. `quizQuestions(key, sources, provider, mix?)`: with `QuizMix` ({ multipleChoice, typeIn, matching }) it asks for exactly that mix in one request (`MIX_QUIZ_SCHEMA`: `matching` is groups of `{ rows }`), allows several questions per note (deduped by prompt), cuts extras and uses up to 20 notes. Without `mix` nothing changed. Passed through `aiQuizQuestions` and the `forest:ai-quiz` message.
@@ -713,6 +727,7 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 - [ ] [Viewer] Suggested roots shown in the graph for the user to accept or reject
 - [ ] [Viewer] [Data] "Grow from link": paste a link, Gemini reads the page, plants its key ideas and grows roots to related seeds (user's request, 2026-10-11) (in progress: built and tested by the agent in Chromium with a stand-in page and a stand-in Gemini answer; needs a check in Chrome on a real page with a real key)
 - [ ] [Data] Better "Grow from link": ideas a student would review, a note on each seed, quotes that anchor more often, no duplicates on a second run (user's request, 2026-10-14) (in progress: built, compile passes, quote matching checked with a script; needs a check in Chrome on a Wikipedia article with a real key)
+- [ ] [Data] Grow from link covers the whole page (up to 20 ideas), groups similar ideas under one sprite per theme, plants quiz facts as lily pads (no note), never apples (user's request, 2026-10-15) (in progress: built, compile and build pass; needs a check in Chrome on a Wikipedia article with a real key)
 - [ ] [Viewer] Automatic paths between nodes from the same page or site, drawn dashed
 - [ ] [Viewer] Switch to turn automatic paths off
 
@@ -739,6 +754,8 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 - [ ] [UI] Visual polish
 - [ ] [UI] Frogs on the page: now and then a frog jumps in from off screen onto a lily pad, sits there, and may hop to a lily pad close by (`PondFrog.tsx`) (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [UI] Owl on the page: now and then an owl flies down from above and sits on a button or the top of a block of text, and may fly to another perch or away (`PageOwl.tsx`) (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [UI] Frog and owl on the scroll rail: while one sits on the page its icon shows on the rail at that height; clicking it scrolls there; it goes when the animal leaves (user's request, 2026-10-15) (in progress: built, compile and build pass; needs a check in Chrome on a Wikipedia article)
+- [ ] [Viewer] The graph's "new note" sprite picker leaves out the lily pad and the apple (text only) (user's request, 2026-10-15) (in progress: built, compile passes; needs a check in Chrome)
 - [ ] [Viewer] Line boil on the graph's sprites, the same as on pages (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [Viewer] Help button (question mark, top right) with text explaining every user action (in progress: built, compile/theme check/build pass, still needs a check in Chrome by a person)
 - [ ] [UI] Themed forest drop-down on the toolbar (`ForestPicker.tsx`), replacing the browser's `<select>` list (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)

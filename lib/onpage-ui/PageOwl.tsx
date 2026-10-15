@@ -50,9 +50,12 @@ interface Owl {
  * Flying uses owlfly.png, mirrored and turned to face where it is going; sitting uses the plain owl.png. The art
  * depends on the theme (owlArt in lib/theme).
  */
-export function PageOwl() {
+export function PageOwl({ onPerch }: { /** What the owl sits on, or null while it flies or is gone. Called only when that changes. */ onPerch?(el: Element | null): void } = {}) {
   const themeId = useThemeId();
   const art = owlArt(themeId);
+  // Kept in a ref so a new callback does not restart the owl.
+  const onPerchRef = useRef(onPerch);
+  onPerchRef.current = onPerch;
   const box = useRef<HTMLDivElement>(null);
   const sitImg = useRef<HTMLImageElement>(null);
   const flyImg = useRef<HTMLImageElement>(null);
@@ -64,6 +67,13 @@ export function PageOwl() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const root = el.getRootNode() as ShadowRoot | Document;
     let owl: Owl | null = null;
+    // The perch last told to onPerch, so it is only called when that changes, not on every frame.
+    let reported: Element | null = null;
+    const report = (perch: Element | null) => {
+      if (perch === reported) return;
+      reported = perch;
+      onPerchRef.current?.(perch);
+    };
 
     const perchSpot = (perch: Perch): Point | null => {
       if (!perch.el.isConnected) return null;
@@ -156,6 +166,7 @@ export function PageOwl() {
       if (owl && (!target || (!owl.from && !onScreen(target)))) owl = null;
       if (!owl || !target) {
         el.style.visibility = 'hidden';
+        report(null);
         return;
       }
       let { x, y } = target;
@@ -183,8 +194,10 @@ export function PageOwl() {
       }
       if (!owl) {
         el.style.visibility = 'hidden';
+        report(null);
         return;
       }
+      report(flying ? null : owl.perch?.el ?? null);
       if (sitImg.current) sitImg.current.style.display = flying ? 'none' : 'block';
       if (flyImg.current) flyImg.current.style.display = flying ? 'block' : 'none';
       // Spots are on the screen; the owl is placed inside the UI host, so subtract where the host's corner is.
@@ -202,6 +215,7 @@ export function PageOwl() {
       cancelAnimationFrame(frame);
       window.clearInterval(timer);
       el.style.visibility = 'hidden';
+      report(null);
     };
   }, [enabled]);
 

@@ -41,9 +41,12 @@ interface Frog {
  * (`data-seed-id`) on every frame, so it moves with the pad when the page scrolls or reflows.
  * It wobbles with the same line boil as the markers. Not in the Minimal theme (its lily pad is a triangle), and not when the user asks for reduced motion.
  */
-export function PondFrog({ seeds }: { seeds: Seed[] }) {
+export function PondFrog({ seeds, onSit }: { seeds: Seed[]; /** The lily pad the frog sits on, or null while it jumps or is gone. Called only when that changes. */ onSit?(padId: string | null): void }) {
   const themeId = useThemeId();
   const { frogAlt } = useWords();
+  // Kept in a ref so a new callback does not restart the frog.
+  const onSitRef = useRef(onSit);
+  onSitRef.current = onSit;
   const box = useRef<HTMLDivElement>(null);
   const sitImg = useRef<HTMLImageElement>(null);
   const jumpImg = useRef<HTMLImageElement>(null);
@@ -58,6 +61,13 @@ export function PondFrog({ seeds }: { seeds: Seed[] }) {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const root = el.getRootNode() as ShadowRoot | Document;
     let frog: Frog | null = null;
+    // The lily pad last told to onSit, so it is only called when that changes, not on every frame.
+    let reported: string | null = null;
+    const report = (padId: string | null) => {
+      if (padId === reported) return;
+      reported = padId;
+      onSitRef.current?.(padId);
+    };
 
     // Where a frog sits on this lily pad right now: a bit below the middle of its sprite. Null if it is not drawn.
     const padSpot = (id: string): Spot | null => {
@@ -105,6 +115,7 @@ export function PondFrog({ seeds }: { seeds: Seed[] }) {
       const spot = frog ? padSpot(frog.padId) : null;
       if (!frog || !spot) {
         el.style.visibility = 'hidden';
+        report(null);
         return;
       }
       let { x, y } = spot;
@@ -119,6 +130,7 @@ export function PondFrog({ seeds }: { seeds: Seed[] }) {
         if (jumpImg.current) jumpImg.current.style.scale = spot.x < frog.from.x ? '-1 1' : '1 1';
         if (!flying) frog.from = null;
       }
+      report(flying ? null : frog.padId);
       if (sitImg.current) sitImg.current.style.display = flying ? 'none' : 'block';
       if (jumpImg.current) jumpImg.current.style.display = flying ? 'block' : 'none';
       // Spots are on the screen; the frog is placed inside the UI host, so subtract where the host's corner is. That
@@ -137,6 +149,7 @@ export function PondFrog({ seeds }: { seeds: Seed[] }) {
       cancelAnimationFrame(frame);
       window.clearInterval(timer);
       el.style.visibility = 'hidden';
+      report(null);
     };
   }, [enabled]);
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { SpriteType } from '@/lib/storage';
-import { spriteColorKey, useWords } from '@/lib/theme';
+import { TEXT_ONLY_SPRITES, spriteColorKey, useWords } from '@/lib/theme';
 import { SpritePicker } from './Pickers';
 
 /** A small form for a text note: a seed that did not come from a web page. The graph decides where it goes. */
@@ -19,7 +19,8 @@ export function NewNoteForm({ onPlant, onCancel }: { onPlant: (note: { spriteTyp
     >
       <p className="font-semibold">New text note</p>
       <textarea autoFocus className="h-24 w-full rounded-lg border border-edge bg-surface-alt p-2 text-sm" placeholder="Write your note…" value={text} onChange={(e) => setText(e.target.value)} />
-      <SpritePicker value={spriteType} onChange={setSpriteType} />
+      {/* The lily pad and the apple only go on page text, and a note has none. */}
+      <SpritePicker value={spriteType} onChange={setSpriteType} exclude={TEXT_ONLY_SPRITES} />
       <div className="flex justify-end gap-2">
         <button type="button" className="rounded-lg border border-edge px-3 py-1 text-sm hover:bg-primary-soft" onClick={onCancel}>Cancel</button>
         <button type="submit" disabled={!text.trim()} className="rounded-lg bg-primary px-3 py-1 text-sm font-semibold text-primary-ink hover:bg-primary-strong disabled:opacity-50">{words.plantNote}</button>

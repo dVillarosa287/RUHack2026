@@ -1,6 +1,6 @@
 // Calls to Google's Gemini API. Runs in the background worker only (CLAUDE.md: Gemini is called from there, only
 // when the user asks, with one request per quiz and JSON output). The viewer asks for it with lib/ai/index.ts.
-import type { Question, Seed } from '@/lib/storage';
+import type { Question, Seed, SpriteType } from '@/lib/storage';
 import { shuffle } from './fillBlank';
 
 /** The free-tier Flash model listed in Google AI Studio on the day (BACKLOG.md D5). Change it here when Google retires it. */
@@ -291,8 +291,13 @@ export async function forestSummary(key: string, forestName: string, sources: Su
 // ---------- grow from link ----------
 
 /** At most this many new seeds from one page, and this many roots, so one link never floods the graph. */
-const MAX_IDEAS = 6;
+const MAX_IDEAS = 20;
 const MAX_LINK_ROOTS = 20;
+/**
+ * The sprites a key idea may be planted as. Similar ideas share one (a theme); lilypad is for quiz facts, so the
+ * forest's quiz can use them. Never fruitsprout: no apples from a link. index.ts replaces anything else with LINK_SPRITE.
+ */
+export const LINK_IDEA_SPRITES: SpriteType[] = ['sprout', 'mushroom', 'house', 'flower', 'cat', 'grass', 'owl', 'rock', 'lilypad'];
 
 /** What "Grow from link" sends: the page that was read, and the forest's seeds to connect it to. */
 export interface LinkPage {
@@ -301,11 +306,12 @@ export interface LinkPage {
   text: string;
 }
 export type LinkSource = Pick<Seed, 'id' | 'text' | 'pageTitle' | 'note'>;
-/** A key idea from the page: a sentence copied from it, a few words to show on its node, and a short explanation. */
+/** A key idea from the page: a sentence copied from it, a few words to show on its node, a short explanation, and its sprite (unchecked here). */
 export interface LinkIdea {
   quote: string;
   label: string;
   note: string;
+  sprite: string;
 }
 /** A root to grow. `from` and `to` are a seed id, or "new-1", "new-2"... for the ideas, counted from 1. */
 export interface LinkRoot {
@@ -321,8 +327,8 @@ const LINK_SCHEMA = {
       type: 'ARRAY',
       items: {
         type: 'OBJECT',
-        properties: { quote: { type: 'STRING' }, label: { type: 'STRING' }, note: { type: 'STRING' } },
-        required: ['quote', 'label', 'note'],
+        properties: { quote: { type: 'STRING' }, label: { type: 'STRING' }, note: { type: 'STRING' }, sprite: { type: 'STRING', enum: LINK_IDEA_SPRITES } },
+        required: ['quote', 'label', 'note', 'sprite'],
       },
     },
     connections: {
@@ -349,12 +355,17 @@ export async function linkConnections(key: string, page: LinkPage, sources: Link
   const raw = await generate(provider, key, [{
     text: [
       'A student is collecting notes on a topic. They gave you a new web page to add to their notes.',
-      `1. Pick the 3 to ${MAX_IDEAS} ideas on the page a student would actually review for a test: definitions, key claims,`,
-      '   causes and effects, important numbers, names or dates. Spread them across the whole page, not only the opening.',
+      `1. Cover all the important information on the page, in up to ${MAX_IDEAS} ideas: every idea a student would review`,
+      '   for a test (definitions, key claims, causes and effects, important numbers, names or dates), from every section',
+      '   of the page, not only the opening. Fewer ideas are fine for a short page.',
       '   Skip menus, image captions, references, citations and "see also" lists. Skip any idea that repeats one of the',
       '   existing notes below. For each idea, copy ONE sentence from the page text exactly, character for character',
       '   (do not fix, shorten or join sentences), as "quote", and write a label of at most 6 words.',
       '   Also write a "note": 1 to 2 plain sentences (at most 200 characters) explaining the idea in a student\'s own words.',
+      '   Give each idea a "sprite". First sort the page\'s ideas into a few themes (2 to 5) and give each theme its own',
+      '   sprite, so every idea in one theme uses the same sprite. For example, a page on World War 2 could put the Allied',
+      '   Powers on "sprout" and the Axis Powers on "cat". Theme sprites: sprout, mushroom, house, flower, cat, grass, owl, rock.',
+      '   "lilypad" is not a theme: use it for a single fact that makes a good quiz question (a definition, date, name or number).',
       '2. Connect the ideas to the student\'s existing notes (listed below as JSON) where they are truly related: same concept,',
       '   cause and effect, an example of, a contrast with. Also connect ideas to each other where it helps.',
       '   Refer to an idea as "new-1", "new-2"... in the order you listed them, and to a note by its seedId.',
@@ -377,7 +388,7 @@ export async function linkConnections(key: string, page: LinkPage, sources: Link
     const idea = item as Partial<LinkIdea>;
     const quote = String(idea.quote ?? '').trim();
     if (!quote || ideas.length >= MAX_IDEAS || ideas.some((kept) => kept.quote === quote)) return;
-    ideas.push({ quote: quote.slice(0, 500), label: String(idea.label ?? '').trim().slice(0, 60), note: String(idea.note ?? '').trim().slice(0, 300) });
+    ideas.push({ quote: quote.slice(0, 500), label: String(idea.label ?? '').trim().slice(0, 60), note: String(idea.note ?? '').trim().slice(0, 300), sprite: String(idea.sprite ?? '').trim() });
     renumber.set(`new-${i + 1}`, `new-${ideas.length}`);
   });
   if (ideas.length === 0) throw new GeminiError(`${providerName(provider)} did not find any key ideas on that page. Try another link.`);

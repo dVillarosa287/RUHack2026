@@ -83,6 +83,9 @@ Done already, waiting for a check in Chrome: sprites as real art tinted with pal
 | Saved, named quizzes: every quiz kept as "Quiz 1", "Quiz 2"…, chosen from a list and renamed | `lib/storage/` (`Fruit.name`, approved), `entrypoints/viewer/useQuiz.ts`, `entrypoints/viewer/QuizView.tsx` | Quiz screen | S | Sonnet | Done: roshan714 (needs a check in Chrome) |
 | Quizzes grid with icons (`#/…/quiz/<c>`, `/new`, `/<fruitId>`), and a custom AI quiz setup (number of questions and mix of styles) | `lib/storage/` (`Fruit.icon`, `updateFruit`, approved), `lib/ai/`, `entrypoints/background.ts` (one argument), `entrypoints/viewer/` (quiz files, `route.ts`, `App.tsx`, new `QuizGrid.tsx`) | Saved, named quizzes | M | Sonnet | Done: roshan714 (needs a check in Chrome) |
 | Quiz setup counts capped with "Random questions", a scrolling pond, and jumping back to earlier pads | `entrypoints/viewer/QuizView.tsx`, `Pond.tsx`, `quiz.css` | Quizzes grid | S | Sonnet | Done: roshan714 (needs a check in Chrome) |
+| Frog and owl on the scroll rail: while one sits on the page its icon shows on the rail; clicking scrolls there | `lib/onpage-ui/` (`PondFrog`, `PageOwl`, `ScrollRail`, `App`) | Frog and owl on the page | S | Sonnet | Done: roshan714 (needs a check in Chrome) |
+| Lily pad and apple only on text: also left out of the graph's "new note" sprite picker | `entrypoints/viewer/NewNoteForm.tsx`, `Pickers.tsx` | nothing | S | Sonnet | Done: roshan714 (needs a check in Chrome) |
+| Grow from link covers the whole page (about 20 ideas), groups similar ideas under one sprite, quiz facts as lily pads | `lib/ai/gemini.ts`, `lib/ai/index.ts` | Better "Grow from link" | S | Sonnet | Done: roshan714 (needs a check in Chrome with a real key) |
 
 ## Two sessions at once
 
