@@ -787,12 +787,16 @@
   border-radius: 8px;
 }
 
-/* The tiny camera in a sprite's bottom right corner, just the art with no box behind it: it was taken with the camera and has a screenshot (MarkerLayer.tsx). */
+/* The tiny camera in a sprite's bottom right corner: it was taken with the camera and has a screenshot (MarkerLayer.tsx). */
 .fo-marker-camera {
   position: absolute;
   right: -2px;
   bottom: -2px;
   display: flex;
+  padding: 1px;
+  border-radius: 4px;
+  background: var(--fo-surface);
+  color: var(--fo-ink);
   pointer-events: none;
 }
 
