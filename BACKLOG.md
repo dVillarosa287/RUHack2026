@@ -9,15 +9,9 @@ How to use this file:
 
 ## Open decisions (agents: ask the user, do not guess)
 
-### D3. App name
-
-A well-known focus-timer app is already called Forest. Pick a distinct name before submitting.
-
-Blocks: write-up and extension name in Wrap-up.
-
 ### D8. Data model additions for the new sprites and active recall (team to confirm)
 
-Also (2026-10-11, user's request): screenshots are saved as separate `shot:<seedId>` records (a JPEG data URL) with the `unlimitedStorage` permission, and the extension has the `webRequest` permission (to spot PDFs by their Content-Type). Asked for by the user (2026-10-11): `SpriteType` has four new values (`cat`, `grass`, `owl`, `rock`), and `Settings` has `reviewMinutes` (the active recall time, default 5). `Seed.color` is no longer chosen by the user; it is set to the sprite's color key and nothing reads it. Also (2026-10-11, user's request): `SpriteType` has `house`, and `Seed` has an optional `scale` (the size its sprite was planted at, 0.5 to 2). And `Seed` has an optional `note` (the user's own words typed after planting; not for the lily pad or the apple). Tell the team; nothing existing was removed.
+Also (2026-10-11, user's request): screenshots are saved as separate `shot:<seedId>` records (a JPEG data URL) with the `unlimitedStorage` permission, and the extension has the `webRequest` permission (to spot PDFs by their Content-Type). Asked for by the user (2026-10-11): `SpriteType` has four new values (`cat`, `grass`, `owl`, `rock`), and `Settings` has `reviewMinutes` (the active recall time, default 5). `Seed.color` is no longer chosen by the user; it is set to the sprite's color key and nothing reads it. Also (2026-10-11, user's request): `SpriteType` has `house`, and `Seed` has an optional `scale` (the size its sprite was planted at, 0.5 to 2). And `Seed` has an optional `note` (the user's own words typed after planting; not for the lily pad or the apple). Tell the team; nothing existing was removed. Also (2026-10-15, user's request): two new interface records, `advanced` (`AdvancedSettings`: owl and frog rate and size, default sprite size) and `stashes` (`StashState`: the user's own toolbar stashes and the chosen one), kept apart from `Settings` like `toolbar`; `updateFruit` can now change a quiz's `questions`. Lily pad groups are not saved (worked out from roots).
 
 ## Needs fixing
 
@@ -30,6 +24,12 @@ Format:
 - Page where it happens:
 - Demo-blocking: yes / no
 ```
+
+### F13. Memory: what is left after the Oct 15 fixes  [UI] [Data] (agent)
+- What happens: measured with Playwright Chromium, 5 tabs of a long article (memory footprint, as in Chrome's Task Manager). No extension: 31 MB per tab, GPU process 125 MB. Fixed on Oct 15: `will-change: transform` on markers, frog and owl, together with the line boil filter, cost about 65 MB of GPU memory per open tab (GPU 375 MB went to 127 MB); `listRecords` copied the whole database (screenshots too) into every tab several times per page load (3,000 seeds + 60 screenshots: 112-136 MB per tab, now 61-94). Still open: (1) with the in-progress owl/frog/creature changes the GPU process is ~180 MB with the toolbar closed and ~220 MB with it open, versus 127 MB without them; (2) `getSeedsForUrl` still reads every seed in every tab on every storage change; (3) `deleteForest` and `saveScreenshot` still read the whole database (rare actions).
+- What should happen: GPU process close to 125 MB, tabs about 20 MB above a page's own size. For (1), find which new creature code draws or animates while idle (an always-mounted boil or animation). For (2), only re-read seeds when a `seed:` key changed (onChanged gives the keys), or keep an index of seed ids per page (a data-model change, needs the team's OK).
+- Page where it happens: every page, more with many tabs and a big forest.
+- Demo-blocking: no
 
 ### F9. A marker's "Near:" text can include the page's CSS  [Engine] (agent)
 - What happens: `nearbyText` (lib/engine/anchor.ts) read `<style>` contents on a test page, so a marker's text was "Near: Shot testbody{font:18px…".
@@ -47,6 +47,12 @@ Format:
 - What happens: a modal `<dialog>` makes the rest of the page inert, including our toolbar (it is drawn above but not clickable). Also, WXT's `:host{all:initial !important}` overrides our `:host` rule (z-index, pointer-events, font never applied).
 - What should happen: probably fine for the hackathon; note only.
 - Page where it happens: sites with modal dialogs.
+- Demo-blocking: no
+
+### F12. Taking a lily pad out of its group can split the group  [UI] (agent)
+- What happens: choosing "On its own" (or another group) removes all of that pad's roots to other lily pads. If it was the only link between two halves of a group, those halves become two groups.
+- What should happen: probably fine (groups are just roots); could reconnect the halves automatically if users find it surprising.
+- Page where it happens: any page with a group of 3 or more lily pads joined in a chain.
 - Demo-blocking: no
 
 ### F1. Viewer shows "This forest no longer exists" for a forest id typed in by hand  [Viewer] (agent)
@@ -128,9 +134,13 @@ These are expected problems from SPEC section 6. Turn one into a "Needs fixing" 
 
 ## Closed
 
+- D9 apple spaced repetition: approved by the user with the team's OK (2026-10-15). `AdvancedSettings` has `reviewRepeats` (default true) and `reviewSpacing` (0.5, 1 or 2; default 1); `Seed` has an optional `reviewStep`. An apple's answer now sets its next review time (never its growth). Built in `lib/onpage-ui/ReviewPopup.tsx`.
 - Quiz icons: approved by the user, team informed (2026-10-15). `Fruit` has an optional `icon` (an art id like `Forest.icon`; missing means `FOREST_ICONS[0]`), changed with the new `updateFruit(id, { name, icon })` (`renameFruit` now calls it).
 - Saved, named quizzes: approved by the user, team informed (2026-10-15). `Fruit` has an optional `name` ("Quiz 1"…; missing on older quizzes). `saveFruit` no longer removes older quizzes of the same color, and `renameFruit(id, name)` was added. Numbers are counted per forest and color, so the apples' one-question fruits do not push up the lily pad quiz numbers.
 - Quiz styles type-in and matching: approved by the user, team informed (2026-10-14). `Question.type` is now `'multiple-choice' | 'fill-blank' | 'type-in' | 'matching'`, and `Question` has an optional `pairs` ({ left, right }[], matching only). Older quizzes load unchanged. `SeedInput` also accepts `note`, so "Grow from link" saves its explanation.
+- F12. Font downloaded from Google on every web page: fixed (2026-10-15). Bundled in `public/fonts/`, registered by `loadAppFont()` (`lib/theme/font.ts`). Needs a check in Chrome.
+- D3. App name: decided, Wildernotes (2026-10-15). Still run the trademark search in `docs/PUBLISHING.md` M8.
+
 - F2. Jump highlight flashed for one second: fixed (2026-10-10). It now stays lit 2.5s and fades over 1.5s (`lib/engine/highlights.ts`); marker glow does the same in `toolbar.css`. Tested in Chromium; needs a check in Chrome. Changed later (2026-10-11): the copy sits a little to the top right of the mouse at 60% opacity, instead of on top of it.
 - F3. Sprites landed off-center from the mouse: fixed (2026-10-10). Sprites are centered on the spot and text anchors use the middle of the line. Tested in Chromium; needs a check in Chrome.
 - F4. Selected sprite did not follow the mouse: fixed (2026-10-10) with `CursorSprite`. Tested in Chromium; needs a check in Chrome.
@@ -141,6 +151,6 @@ These are expected problems from SPEC section 6. Turn one into a "Needs fixing" 
 - A2. Graph node positions: approved. `Seed` has optional `graphX` and `graphY`. The graph spreads nodes out automatically once (d3-force), then keeps the positions the user gives them (2026-10-10).
 - D1. Active recall, how the five-minute review works: decided (2026-10-10). `fruitsprout` is the fifth toolbar sprite. It grows into an apple tree after five minutes, not because of a correct answer, and stays an apple tree after its question. Its review is one question, separate from the lily pad quiz (lily pads of one color in one forest). Only the sprout and the fruit sprout grow; the lily pad, mushroom and flower never change. The one-question review is stored as a `Fruit` with a single question, so no new data type is needed.
 - D2. Name of the general toolbar sprite: decided it is called "sprout" (2026-10-10). Growth has two stages, sprout then tree, and a sprout becomes a tree when the page is reloaded.
-- D7. Lily pad screenshots: tried and removed (2026-10-11). The user chose text-only lily pads instead, so there is no `shot:` record and no `unlimitedStorage` permission.
+- D7. Lily pad screenshots: tried and removed (2026-10-11), then brought back through the toolbar's camera (2026-10-15, user's request): a lily pad taken with the camera is a `media` seed whose screenshot (`shot:<id>`) goes to Gemini as an image for its quiz question; quizzes without AI and Cerebras skip it. Sending screenshots to Gemini is new data leaving the browser: `docs/PRIVACY_POLICY.md` and `docs/PUBLISHING.md` are updated, and the team agreed (2026-10-15).
 - D5. Gemini model name: `gemini-3.8-flash`, chosen by the user (2026-10-11). It is set once as `GEMINI_MODEL` in `lib/ai/gemini.ts`. The Settings page's "Test key" button checks that the key and this name work.
 - D4. React and WXT, or the plain fallback: decided WXT with React (2026-10-10). The plain fallback is not used.

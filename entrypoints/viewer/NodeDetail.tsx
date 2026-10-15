@@ -2,16 +2,20 @@ import { useEffect, useState } from "react";
 import {
   deleteRoot,
   deleteSeed,
+  padGroups,
   updateSeed,
   type Folder,
   type Root,
   type Seed,
 } from "@/lib/storage";
-import { cap, getWords, spriteLabel, spriteTakesNote, useThemeId, type Words } from "@/lib/theme";
+import { SPRITE_ORDER, cap, getWords, spriteColorKey, spriteLabel, spriteTakesNote, useThemeId, type Words } from "@/lib/theme";
+import { Dropdown } from "./Dropdown";
 import { ShovelIcon } from "@/lib/theme/ShovelIcon";
 import { SpriteIcon } from "@/lib/theme/SpriteIcon";
 import { openOnPage } from "./ForestList";
 import { seedLabel } from "./GraphNodes";
+import { LILYPAD_QUIZ } from "./QuizBar";
+import { newQuizHref } from "./route";
 import { Screenshot } from "./Screenshot";
 
 const KIND_LABEL: Record<Seed["kind"], string> = {
@@ -34,6 +38,15 @@ async function removeSeedAndRoots(seed: Seed, roots: Root[], words: Words): Prom
   return true;
 }
 
+/**
+ * The sprites a seed can be changed to. The apple keeps its sprite (its recall question and timer belong to it) and
+ * no other seed can become one; the lily pad only goes on highlighted text.
+ */
+function spriteChoices(seed: Seed): Seed["spriteType"][] {
+  if (seed.spriteType === "fruitsprout") return [];
+  return SPRITE_ORDER.filter((t) => t !== "fruitsprout" && (t !== "lilypad" || seed.kind === "highlight"));
+}
+
 /** The panel beside the graph that shows the selected node: what it is, where it came from, and its roots. */
 export function NodeDetail({
   seed,
@@ -41,12 +54,15 @@ export function NodeDetail({
   seedsById,
   folders,
   onClose,
+  onSelectSeed,
 }: {
   seed: Seed;
   roots: Root[];
   seedsById: Map<string, Seed>;
   folders: Folder[];
   onClose: () => void;
+  /** Opens another node in this panel (a lily pad in the same group). */
+  onSelectSeed: (seedId: string) => void;
 }) {
   // A note's text is edited here and saved when the box loses focus, not on every key press.
   const [draft, setDraft] = useState(seed.text);
@@ -63,6 +79,12 @@ export function NodeDetail({
     [seed.id, seed.displayText],
   );
 
+  // A lily pad's group: the lily pads joined to it by roots (lib/storage/padGroups.ts).
+  const group = seed.spriteType === "lilypad" ? padGroups([...seedsById.values()], roots).find((g) => g.pads.some((p) => p.id === seed.id)) : undefined;
+  const choices = spriteChoices(seed);
+  const [changingSprite, setChangingSprite] = useState(false);
+  useEffect(() => setChangingSprite(false), [seed.id]);
+
   const myRoots = roots.filter(
     (r) => r.fromSeedId === seed.id || r.toSeedId === seed.id,
   );
@@ -77,6 +99,11 @@ export function NodeDetail({
         />
         <div className="min-w-0 flex-1">
           <p className="font-semibold">{spriteLabel(seed.spriteType, themeId)}</p>
+          {choices.length > 0 && (
+            <button className="text-xs text-primary underline" onClick={() => setChangingSprite((open) => !open)}>
+              {changingSprite ? "Done" : "Change sprite"}
+            </button>
+          )}
           <p className="text-xs uppercase tracking-wide text-ink-muted">
             {KIND_LABEL[seed.kind]} ·{" "}
             {new Date(seed.createdAt).toLocaleDateString()}
@@ -90,6 +117,24 @@ export function NodeDetail({
           ×
         </button>
       </div>
+
+      {changingSprite && (
+        // Saved on the seed, so the new sprite shows everywhere: the graph, the list, and on the web page.
+        <div className="flex flex-wrap gap-1">
+          {choices.map((type) => (
+            <button
+              key={type}
+              type="button"
+              title={spriteLabel(type, themeId)}
+              aria-pressed={type === seed.spriteType}
+              onClick={() => type !== seed.spriteType && void updateSeed(seed.id, { spriteType: type, color: spriteColorKey(type) })}
+              className={`rounded-lg border-2 p-1 ${type === seed.spriteType ? "border-primary bg-primary-soft" : "border-transparent hover:bg-primary-soft"}`}
+            >
+              <SpriteIcon type={type} size={28} />
+            </button>
+          ))}
+        </div>
+      )}
 
       <label className="block">
         <span className="mb-1 block text-xs uppercase tracking-wide text-ink-muted">
@@ -175,25 +220,54 @@ export function NodeDetail({
         </a>
       )}
 
-      <label className="block">
+      <div>
         <span className="mb-1 block text-xs uppercase tracking-wide text-ink-muted">
           {cap(words.folder)}
         </span>
-        <select
-          className="w-full rounded-lg border border-edge bg-surface-alt p-1.5 text-sm"
+        <Dropdown
+          ariaLabel={cap(words.folder)}
+          className="w-full"
           value={seed.folderId ?? ""}
-          onChange={(e) =>
-            void updateSeed(seed.id, { folderId: e.target.value || null })
-          }
-        >
-          <option value="">{`No ${words.folder}`}</option>
-          {folders.map((f) => (
-            <option key={f.id} value={f.id}>
-              {f.name}
-            </option>
-          ))}
-        </select>
-      </label>
+          options={[
+            { value: "", label: `No ${words.folder}` },
+            ...folders.map((f) => ({ value: f.id, label: f.name })),
+          ]}
+          onChange={(value) => void updateSeed(seed.id, { folderId: value || null })}
+        />
+      </div>
+
+      {seed.spriteType === "lilypad" && (
+        <div>
+          <p className="mb-1 text-xs uppercase tracking-wide text-ink-muted">Group</p>
+          {group ? (
+            <>
+              <ul className="mb-2 space-y-1">
+                {group.pads.map((pad) => (
+                  <li key={pad.id}>
+                    <button
+                      className={`flex w-full items-center gap-2 rounded px-1 text-left text-sm hover:bg-primary-soft ${pad.id === seed.id ? "font-semibold" : ""}`}
+                      onClick={() => onSelectSeed(pad.id)}
+                    >
+                      <SpriteIcon type="lilypad" size={18} />
+                      <span className="min-w-0 flex-1 truncate">{seedLabel(pad, themeId)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href={newQuizHref(seed.forestId, LILYPAD_QUIZ, group.id)}
+                className="block rounded-lg border border-edge px-2 py-1 text-center text-sm hover:bg-primary-soft"
+              >
+                Quiz this group ({group.pads.length})
+              </a>
+            </>
+          ) : (
+            <p className="text-sm text-ink-muted">
+              On its own. Connect it to another {spriteLabel("lilypad", themeId).toLowerCase()} (Shift+click both) to make a group, or click it on its page.
+            </p>
+          )}
+        </div>
+      )}
 
       <div>
         <p className="mb-1 text-xs uppercase tracking-wide text-ink-muted">

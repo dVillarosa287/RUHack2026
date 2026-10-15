@@ -36,7 +36,7 @@ function helpSections(themeId: string): Section[] {
         `• Click a spot on the page to ${put} it there. It stays attached to the text under it, so it follows the page when you scroll or resize. You can drag it to a new spot.`,
         `• Drag over some text to highlight it in the sprite's color. The sprite sits above the highlight and cannot be moved away from it.`,
         `• Click a link to ${put} a sprite on it. You stay on the page, and the sprite remembers where the link goes. Clicking it here in the viewer opens that link.`,
-        `• Drag over an area with no text (a picture or a chart) to save a screenshot of it.`,
+        `• Screenshots: pick a sprite, click the camera under the tree button, then drag a box. The sprite goes where you started and shows the picture when hovered. A lily pad screenshot is read by Gemini for its quiz (a quiz without AI skips it). The apple cannot take one.`,
         `• Drag a sprite from the toolbar and drop it on the page.`,
         `Keys while the toolbar is open: ${keys} pick a sprite. - and + make the sprite on your mouse smaller or larger before you ${put} it. Esc puts it down. Ctrl+Z (Cmd+Z on Mac) undoes, and Ctrl+Shift+Z redoes. The keys do nothing while you are typing in a text field on the site.`,
         `Pick the shovel, then click a sprite or highlight to remove it (the sprite and its highlight go together).`,
@@ -47,7 +47,7 @@ function helpSections(themeId: string): Section[] {
       title: 'What the sprites are for',
       lines: [
         `The ${pad.toLowerCase()} means "quiz me on this". It only goes on text: drag over a sentence. A plain click with it places nothing.`,
-        `The ${apple.toLowerCase()} is for active recall. It also only goes on text. After the active recall time (set in Settings, 5 minutes to start with) ${minimal ? 'a' : 'it grows into an apple tree and a'} small pop-up in the top left of the page you are on asks you one fill-in-the-blank question about the text. Answer it or skip it.${minimal ? '' : ' The apple tree stays on the page.'}`,
+        `The ${apple.toLowerCase()} is for active recall. It also only goes on text. After the active recall time (set in Settings, 5 minutes to start with) ${minimal ? 'a' : 'it grows into an apple tree and a'} small pop-up in the top left of the page you are on asks you one fill-in-the-blank question about the text. Answer it or skip it.${minimal ? '' : ' The apple tree stays on the page.'} It asks again after 1 day, 3 days and a week; a wrong answer starts over from 1 day. Advanced settings can turn this off or change the gaps.`,
         `The ${name('sprout').toLowerCase()} grows into ${minimal ? 'a cloud' : 'a tree'} the next time you reload the page. The others never change, and quiz answers never change anything you saved.`,
         `The other sprites are yours to give a meaning, for example "key idea", "confusing, come back to this" or "definition".`,
         ...(minimal ? [] : [`On pages with ${pad.toLowerCase()}s, a frog now and then jumps onto one and sits there. It is only for fun and is not saved.`]),
@@ -86,8 +86,8 @@ function helpSections(themeId: string): Section[] {
         `Drag with the right mouse button to move a node together with the nodes joined to it by ${words.roots}. On a big tree it moves the tree and all of its ${words.seeds}.`,
         `A big tree appears for every web page that has 2 or more ${words.seeds} in this ${words.forest}, joined to them by faint lines. It is worked out for you and cannot be quizzed.`,
         `Hover a node to light it and its neighbours and fade the rest. Scroll to zoom, drag the background to move around.`,
-        `"+ Text note" adds a ${words.seed} of your own that is not from a web page.`,
-        `"Summarize & export" (under the graph) asks the AI for a study guide of the ${words.forest} and saves it as a PDF or DOCX file.`,
+        `"+ Add note" adds a ${words.seed} of your own that is not from a web page.`,
+        `"Export" (under the graph) asks the AI for a study guide of the ${words.forest} and saves it as a PDF or DOCX file.`,
       ],
     },
     {
@@ -96,6 +96,7 @@ function helpSections(themeId: string): Section[] {
         `The "${words.quizName(pad)}" button on a ${words.forest}'s page turns all its ${pad.toLowerCase()}s into a quiz, one question per ${pad.toLowerCase()} (at most 10).`,
         `With an API key the AI writes multiple choice questions. Without one, the quiz is fill in the blank, made in your browser. You can remake it with the AI or without any time. The quiz says which one wrote it.`,
         `At the end you see your score and the questions you missed, and can try again.`,
+        `Every quiz is kept. Click a quiz's tile to rename it, change its icon or delete it (deleting cannot be undone).`,
       ],
     },
     {
@@ -110,6 +111,8 @@ function helpSections(themeId: string): Section[] {
       title: 'Good to know',
       lines: [
         `Everything is saved in this browser on this computer. There is no account, server or sync, so another computer does not see it.`,
+        `"Export backup" on a ${words.forest}'s page or under the ${words.forests} grid downloads it as a file. "Load backup" under the ${words.forests} grid adds it back as a new ${words.forest}, here or on another computer. Settings and API keys are never in the file. Removing the extension deletes everything that has no backup.`,
+        `The search box on a ${words.forest}'s page and in its graph finds ${words.seeds} by their text, note, page title or address.`,
         `Highlights are found again by their text. If a site changes the wording, a highlight may not show, but it is still listed here.`,
         `Scanned PDFs have no text, so they can be marked with sprites and screenshots but not highlighted.`,
       ],

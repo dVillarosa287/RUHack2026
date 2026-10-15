@@ -1,5 +1,5 @@
-// Screenshots: with a sprite picked, dragging a box where no text gets selected (over a picture, a chart, blank
-// space) saves a picture of that box as a `media` seed. The browser only lets the background worker take the
+// Screenshots: with a sprite picked and the toolbar's camera on, dragging a box saves a picture of that box as a
+// `media` seed. The browser only lets the background worker take the
 // picture (of the whole visible tab), so the page asks it to, then crops the picture to the box here.
 import { browser } from 'wxt/browser';
 import { saveScreenshot, saveSeed, type Seed, type SpriteType } from '@/lib/storage';
@@ -141,13 +141,13 @@ export async function captureArea(area: Area): Promise<string> {
 }
 
 /**
- * Takes the screenshot of the box and saves it as a `media` seed. Its sprite sits near the box's top-left corner,
- * attached (like any marker) to the page element under that spot. The picture is saved in its own record.
+ * Takes the screenshot of the box and saves it as a `media` seed. Its sprite sits where the drag started (`start`,
+ * window coordinates), attached (like any marker) to the page element under that spot. The picture is saved in its own record.
  */
-export async function plantScreenshot({ forestId, spriteType, area, scale }: { forestId: string; spriteType: SpriteType; area: Area; scale?: number }): Promise<Seed> {
+export async function plantScreenshot({ forestId, spriteType, area, start, scale }: { forestId: string; spriteType: SpriteType; area: Area; start: { x: number; y: number }; scale?: number }): Promise<Seed> {
   const text = textInArea(area);
-  const x = area.left + Math.min(12, area.width / 2);
-  const y = area.top + Math.min(12, area.height / 2);
+  const x = Math.min(Math.max(start.x, 0), window.innerWidth - 1);
+  const y = Math.min(Math.max(start.y, 0), window.innerHeight - 1);
   const target = pageElementAt(x, y);
   const image = await captureArea(area);
   const seed = await saveSeed({

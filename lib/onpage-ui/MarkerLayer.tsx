@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent } fr
 import type { Anchor, Seed } from '@/lib/storage';
 import { createLineBoil, getHighlightRange, MarkerTracker, UI_HOST_TAG } from '@/lib/engine';
 import { spriteTakesNote } from '@/lib/theme';
+import { CameraIcon } from '@/lib/theme/CameraIcon';
 import { SpriteIcon } from '@/lib/theme/SpriteIcon';
 
 interface MarkerLayerProps {
@@ -15,6 +16,8 @@ interface MarkerLayerProps {
   onHover(seedId: string | null): void;
   /** The user clicked a sprite that can carry a note (not the lily pad or the apple), to write or edit it. */
   onEditNote(seedId: string): void;
+  /** The user clicked a lily pad, to choose its group. */
+  onPickPadGroup(seedId: string): void;
 }
 
 const DRAG_DISTANCE_PX = 4;
@@ -37,6 +40,7 @@ function aboveHighlight(seedId: string): { x: number; y: number } | null {
 /** The browser's plain tip for a sprite without a note: what it is attached to, and how to add a note. */
 function titleFor(seed: Seed, digging: boolean): string {
   const base = seed.linkTarget ? `${seed.text} → ${seed.linkTarget}` : seed.text;
+  if (!digging && seed.spriteType === 'lilypad') return `${base}\n(Click to choose its group)`.trim();
   return !digging && spriteTakesNote(seed.spriteType) ? `${base}\n(Click to add a note)`.trim() : base;
 }
 
@@ -46,7 +50,7 @@ function titleFor(seed: Seed, digging: boolean): string {
  * right place when the page resizes, reflows, or a section opens or closes. Scrolling the page needs no work at all:
  * markers sit in page coordinates, so the browser scrolls them with the text.
  */
-export function MarkerLayer({ seeds, digging, flashId, onDig, onMove, onHover, onEditNote }: MarkerLayerProps) {
+export function MarkerLayer({ seeds, digging, flashId, onDig, onMove, onHover, onEditNote, onPickPadGroup }: MarkerLayerProps) {
   // Highlights get their sprite too, centered above the highlighted text.
   const markers = useMemo(() => seeds.filter((s) => (s.kind === 'sprite' || s.kind === 'link' || s.kind === 'highlight' || s.kind === 'media') && s.anchor), [seeds]);
   const elements = useRef(new Map<string, HTMLDivElement>());
@@ -162,16 +166,18 @@ export function MarkerLayer({ seeds, digging, flashId, onDig, onMove, onHover, o
             else elements.current.delete(seed.id);
           }}
           data-seed-id={seed.id}
-          className={`fo-marker${digging ? ' fo-dig' : ''}${seed.kind === 'highlight' ? ' fo-on-text' : ''}${flashId === seed.id ? ' fo-flash' : ''}${!digging && spriteTakesNote(seed.spriteType) ? ' fo-has-note-box' : ''}`}
+          className={`fo-marker${digging ? ' fo-dig' : ''}${seed.kind === 'highlight' ? ' fo-on-text' : ''}${flashId === seed.id ? ' fo-flash' : ''}${!digging && (spriteTakesNote(seed.spriteType) || seed.spriteType === 'lilypad') ? ' fo-has-note-box' : ''}`}
           style={{ visibility: 'hidden' }}
           // A seed with a note shows it in a card on hover (App.tsx) instead of this plain browser tip.
-          title={seed.note ? undefined : titleFor(seed, digging)}
+          title={seed.note || seed.kind === 'media' ? undefined : titleFor(seed, digging)}
           onPointerDown={(e) => startDrag(seed, e)}
           onPointerEnter={() => onHover(seed.id)}
           onPointerLeave={() => onHover(null)}
           onClick={() => {
             if (digging) return onDig(seed.id);
-            if (!justDragged.current && spriteTakesNote(seed.spriteType)) onEditNote(seed.id);
+            if (justDragged.current) return;
+            if (seed.spriteType === 'lilypad') onPickPadGroup(seed.id);
+            else if (spriteTakesNote(seed.spriteType)) onEditNote(seed.id);
           }}
         >
           <SpriteIcon
@@ -179,6 +185,12 @@ export function MarkerLayer({ seeds, digging, flashId, onDig, onMove, onHover, o
             size={MARKER_SIZE * (seed.scale ?? 1)} // each sprite keeps the size it was planted at
             grown={seed.growth === 'tree'}
           />
+          {/* Taken with the camera: hovering shows the screenshot (SeedNote.tsx). */}
+          {seed.kind === 'media' && (
+            <span className="fo-marker-camera" aria-hidden="true">
+              <CameraIcon size={10} />
+            </span>
+          )}
         </div>
       ))}
     </>

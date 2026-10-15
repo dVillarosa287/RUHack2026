@@ -2,6 +2,7 @@
 
 // sprout and mushroom are placeholders for now; cat, grass, owl and rock were added 2026-10-11 (user's request), and
 // house later that day. Each theme draws and colors them its own way (lib/theme).
+// 'fruitsprout' is the apple (Active Recall). The stored value keeps its old name so saved seeds still load; call it the apple everywhere else.
 export type SpriteType = 'sprout' | 'lilypad' | 'mushroom' | 'flower' | 'fruitsprout' | 'cat' | 'grass' | 'owl' | 'rock' | 'house';
 export type Growth = 'sprout' | 'tree';
 export type SeedKind = 'highlight' | 'sprite' | 'link' | 'note' | 'media';
@@ -59,6 +60,8 @@ export interface Seed {
   graphY?: number;
   /** How big its sprite is drawn on the page: 1 is normal, 0.5 to 2. Chosen with - and + before planting. Old seeds have none (normal). */
   scale?: number;
+  /** Apples only: how many spaced repetition reviews in a row were answered right (0, 1, 2…). Missing means 0. */
+  reviewStep?: number;
 }
 
 /** What a caller passes to saveSeed. The storage module fills in the rest. */
@@ -84,7 +87,7 @@ export interface Question {
   pairs?: { left: string; right: string }[];
 }
 
-export interface Fruit {
+export interface Quiz {
   id: string;
   forestId: string;
   color: string;
@@ -111,6 +114,41 @@ export interface ToolbarState {
   scale: number;
 }
 
+/**
+ * Advanced settings: things a user may want to tune or turn off (Settings page, "Advanced settings"). Kept in their
+ * own record, like ToolbarState, so the shared Settings shape does not change. Every new tunable goes here (CLAUDE.md).
+ */
+export interface AdvancedSettings {
+  /** How often the owl visits a page while the toolbar is open: 0 is never, 1 is normal, 2 is twice as often. */
+  owlRate: number;
+  /** The owl's size, 1 is normal. */
+  owlScale: number;
+  /** How often a frog jumps onto a lily pad: 0 is never, 1 is normal. */
+  frogRate: number;
+  /** The frog's size next to its lily pad, 1 is normal. */
+  frogScale: number;
+  /** The size new sprites are planted at (- and + still change it on the page), 1 is normal, 0.5 to 2. */
+  plantScale: number;
+  /** Apples ask their question again later (1, 3, then 7 days). Off means each apple asks once. */
+  reviewRepeats: boolean;
+  /** How far apart those reviews are: 0.5 is shorter, 1 normal, 2 longer. */
+  reviewSpacing: number;
+}
+
+/** A named set of sprites for the toolbar, in order. The first ten get the keys 1 to 9 and 0. */
+export interface Stash {
+  id: string;
+  name: string;
+  sprites: SpriteType[];
+}
+
+/** The user's own stashes and which one the toolbar shows. Interface state, in its own record. The default stash is not saved here (lib/onpage-ui/hotbar.ts). */
+export interface StashState {
+  /** 'default', or the id of one of `custom`. */
+  currentId: string;
+  custom: Stash[];
+}
+
 export interface Settings {
   currentForestId: string | null;
   /** The three most recently used sprites, newest first. */
@@ -119,6 +157,6 @@ export interface Settings {
   geminiKey: string;
   cerebrasKey: string;
   autoConnections: boolean;
-  /** Minutes after planting an apple (fruit sprout) before it grows into an apple tree and asks its question. */
+  /** Minutes after planting an apple (quiz sprout) before it grows into an apple tree and asks its question. */
   reviewMinutes: number;
 }

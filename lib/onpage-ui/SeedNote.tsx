@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import type { Seed } from '@/lib/storage';
+import { getHighlightRange } from '@/lib/engine';
+import { getScreenshot, type Seed } from '@/lib/storage';
 
 const GAP_PX = 6;
 const EDGE_PX = 8;
@@ -7,8 +8,9 @@ const EDGE_PX = 8;
 /**
  * Keeps a card just under its seed's sprite. The card is never placed from a saved screen spot: on every frame it
  * finds the sprite MarkerLayer drew for the seed (which follows the seed's anchor) and sits next to it. `onShown` runs the first time the card becomes visible.
+ * `underText` puts a highlight's card just under its highlighted text instead (the lily pad's group picker).
  */
-function useFollowMarker(card: RefObject<HTMLDivElement | null>, seedId: string, onShown?: () => void) {
+export function useFollowMarker(card: RefObject<HTMLDivElement | null>, seedId: string, onShown?: () => void, underText = false) {
   const shownOnce = useRef(false);
   useEffect(() => {
     let frame = 0;
@@ -27,7 +29,9 @@ function useFollowMarker(card: RefObject<HTMLDivElement | null>, seedId: string,
         const below = spot.bottom + GAP_PX;
         const onText = marker.classList.contains('fo-on-text');
         let y = onText ? above : below;
-        if (onText && y < EDGE_PX) y = below;
+        const textBottom = underText && onText ? getHighlightRange(seedId)?.getBoundingClientRect().bottom : undefined;
+        if (textBottom !== undefined) y = textBottom + GAP_PX + height > window.innerHeight - EDGE_PX ? above : textBottom + GAP_PX;
+        else if (onText && y < EDGE_PX) y = below;
         else if (!onText && y + height > window.innerHeight - EDGE_PX) y = above;
         // x and y are window coordinates; the card is placed in page coordinates (like the markers, see .fo-note in
         // toolbar.css), so it scrolls with its sprite without waiting for the next frame. Only write what changed.
@@ -48,7 +52,7 @@ function useFollowMarker(card: RefObject<HTMLDivElement | null>, seedId: string,
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [card, seedId, onShown]);
+  }, [card, seedId, onShown, underText]);
 }
 
 /**
@@ -110,14 +114,28 @@ export function NoteEditor({ seed, onSave, onClose }: { seed: Seed; onSave(note:
   );
 }
 
-/** The note shown under a sprite while the mouse is over it. It ignores the mouse, so it never gets in the way. */
+/**
+ * The note (and, for a sprite taken with the camera, its screenshot) shown under a sprite while the mouse is over it.
+ * It ignores the mouse, so it never gets in the way.
+ */
 export function NoteTooltip({ seed }: { seed: Seed }) {
   const card = useRef<HTMLDivElement>(null);
+  const [shot, setShot] = useState<string | null>(null);
   useFollowMarker(card, seed.id);
+  useEffect(() => {
+    if (seed.kind !== 'media') return;
+    let live = true;
+    void getScreenshot(seed.id).then((url) => live && setShot(url));
+    return () => {
+      live = false;
+    };
+  }, [seed.id, seed.kind]);
+  const hint = seed.spriteType === 'lilypad' ? 'Click the sprite to choose its group' : seed.note ? 'Click the sprite to edit' : 'Click the sprite to add a note';
   return (
     <div ref={card} className="fo-note fo-note-view" style={{ visibility: 'hidden' }}>
-      <div className="fo-note-text">{seed.note}</div>
-      <div className="fo-note-hint">Click the sprite to edit</div>
+      {shot && <img className="fo-note-shot" src={shot} alt="Screenshot saved with this sprite" />}
+      {seed.note && <div className="fo-note-text">{seed.note}</div>}
+      <div className="fo-note-hint">{hint}</div>
     </div>
   );
 }

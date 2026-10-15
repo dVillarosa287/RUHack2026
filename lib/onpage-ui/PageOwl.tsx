@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { createLineBoil } from '@/lib/engine';
 import { owlArt, useThemeId } from '@/lib/theme';
+import { grabCreature } from './creatureGrab';
 
-// How often the owl rolls the dice, and its chances each time. Raise the chances to see it sooner in a demo.
+// How often the owl rolls the dice, and its chances each time (times the user's "Owl visits" in Advanced settings).
 const CHECK_EVERY_MS = 5000;
 /** Chance that an owl flies down from above the window, when there is no owl yet. */
 const ARRIVE_CHANCE = 0.15;
@@ -10,7 +11,7 @@ const ARRIVE_CHANCE = 0.15;
 const MOVE_CHANCE = 0.2;
 const ARRIVE_MS = 1400;
 const LEAVE_MS = 1100;
-/** Width of the owl in px (the sprites on the page are 38). */
+/** Width of the owl in px at normal size (the sprites on the page are 38). Advanced settings can scale it. */
 const OWL_SIZE = 46;
 /** Which way the head points in owlfly.png, in degrees (0 is right, 90 is down): down and to the left. */
 const FLY_ART_HEADING = 125;
@@ -49,8 +50,17 @@ interface Owl {
  * or reflows. If its perch scrolls off screen or is removed, the owl is gone, and a new one can come later.
  * Flying uses owlfly.png, mirrored and turned to face where it is going; sitting uses the plain owl.png. The art
  * depends on the theme (owlArt in lib/theme).
+ *
+ * The user can drag the owl onto anything on the page (it then sits there), or click it with the shovel to send it
+ * away (creatureGrab.ts). `rate` (0 is never) and `scale` come from Advanced settings.
  */
-export function PageOwl({ onPerch }: { /** What the owl sits on, or null while it flies or is gone. Called only when that changes. */ onPerch?(el: Element | null): void } = {}) {
+export function PageOwl({ digging, rate, scale, onPerch }: {
+  digging: boolean;
+  rate: number;
+  scale: number;
+  /** What the owl sits on, or null while it flies, is carried or is gone. Called only when that changes. */
+  onPerch?(el: Element | null): void;
+}) {
   const themeId = useThemeId();
   const art = owlArt(themeId);
   // Kept in a ref so a new callback does not restart the owl.
@@ -59,7 +69,10 @@ export function PageOwl({ onPerch }: { /** What the owl sits on, or null while i
   const box = useRef<HTMLDivElement>(null);
   const sitImg = useRef<HTMLImageElement>(null);
   const flyImg = useRef<HTMLImageElement>(null);
-  const enabled = art.sit !== null && art.fly !== null;
+  const enabled = art.sit !== null && art.fly !== null && rate > 0;
+  // Read through refs inside the animation, so changing them does not chase the owl away.
+  const live = useRef({ digging, rate, scale });
+  live.current = { digging, rate, scale };
 
   useEffect(() => {
     const el = box.current;
@@ -74,6 +87,9 @@ export function PageOwl({ onPerch }: { /** What the owl sits on, or null while i
       reported = perch;
       onPerchRef.current?.(perch);
     };
+    // Where the user is carrying the owl, in window coordinates, or null when it is not being carried.
+    let carried: Point | null = null;
+    const size = () => OWL_SIZE * live.current.scale;
 
     const perchSpot = (perch: Perch): Point | null => {
       if (!perch.el.isConnected) return null;
@@ -94,9 +110,9 @@ export function PageOwl({ onPerch }: { /** What the owl sits on, or null while i
       if (target.matches(TEXT)) {
         const range = document.createRange();
         range.selectNodeContents(target);
-        const line = Array.from(range.getClientRects()).find((r) => r.width >= OWL_SIZE);
+        const line = Array.from(range.getClientRects()).find((r) => r.width >= size());
         if (!line) return null;
-        dx = line.left - rect.left + OWL_SIZE / 2 + Math.random() * (line.width - OWL_SIZE);
+        dx = line.left - rect.left + size() / 2 + Math.random() * (line.width - size());
         dy = line.top - rect.top + 3; // a little into the line, so its feet touch the letters
       }
       const spot = { x: rect.left + dx, y: rect.top + dy };
@@ -110,7 +126,7 @@ export function PageOwl({ onPerch }: { /** What the owl sits on, or null while i
       const candidates = Array.from(document.querySelectorAll(`${BUTTONS}, ${TEXT}`)).filter((target) => {
         if (target === except) return false;
         const rect = target.getBoundingClientRect();
-        if (rect.width < 24 || rect.top < OWL_SIZE * 1.3 || rect.top > window.innerHeight - 20) return false;
+        if (rect.width < 24 || rect.top < size() * 1.3 || rect.top > window.innerHeight - 20) return false;
         if (rect.left < 0 || rect.right > window.innerWidth) return false;
         return target.matches(BUTTONS) || (target.textContent ?? '').trim().length >= 20;
       });
@@ -123,14 +139,15 @@ export function PageOwl({ onPerch }: { /** What the owl sits on, or null while i
 
     const roll = () => {
       if (document.hidden) return;
+      if (carried) return;
       if (!owl) {
-        if (Math.random() >= ARRIVE_CHANCE) return;
+        if (Math.random() >= ARRIVE_CHANCE * live.current.rate) return;
         const perch = findPerch();
         const spot = perch && perchSpot(perch);
         if (!perch || !spot) return;
         // It comes down from above the window, from a little to the left or right of its perch.
         const side = Math.random() < 0.5 ? -1 : 1;
-        const from = { x: spot.x + side * (150 + Math.random() * 200), y: -OWL_SIZE };
+        const from = { x: spot.x + side * (150 + Math.random() * 200), y: -size() };
         owl = { perch, away: null, from, kind: 'arrive', start: performance.now(), duration: ARRIVE_MS };
         return;
       }
@@ -144,7 +161,7 @@ export function PageOwl({ onPerch }: { /** What the owl sits on, or null while i
         owl = { perch: next, away: null, from: here, kind: 'hop', start: performance.now(), duration: 500 + distance * 0.8 };
       } else {
         const side = here.x < window.innerWidth / 2 ? -1 : 1; // away towards the nearer side
-        const away = { x: here.x + side * 300, y: -OWL_SIZE * 2 };
+        const away = { x: here.x + side * 300, y: -size() * 2 };
         owl = { perch: null, away, from: here, kind: 'leave', start: performance.now(), duration: LEAVE_MS };
       }
     };
@@ -161,6 +178,17 @@ export function PageOwl({ onPerch }: { /** What the owl sits on, or null while i
     let frame = 0;
     const tick = () => {
       frame = requestAnimationFrame(tick);
+      // Spots are on the screen; the owl is placed inside the UI host, so subtract where the host's corner is.
+      const host = root instanceof ShadowRoot ? root.host.getBoundingClientRect() : { left: 0, top: 0 };
+      if (carried) {
+        report(null);
+        if (sitImg.current) sitImg.current.style.display = 'block';
+        if (flyImg.current) flyImg.current.style.display = 'none';
+        el.style.width = `${size()}px`;
+        el.style.transform = `translate(${Math.round(carried.x - host.left)}px, ${Math.round(carried.y - host.top)}px)`;
+        el.style.visibility = 'visible';
+        return;
+      }
       let target = owl ? (owl.perch ? perchSpot(owl.perch) : owl.away) : null;
       // Gone if its perch was removed, or if it sits on something that has scrolled off screen.
       if (owl && (!target || (!owl.from && !onScreen(target)))) owl = null;
@@ -200,9 +228,7 @@ export function PageOwl({ onPerch }: { /** What the owl sits on, or null while i
       report(flying ? null : owl.perch?.el ?? null);
       if (sitImg.current) sitImg.current.style.display = flying ? 'none' : 'block';
       if (flyImg.current) flyImg.current.style.display = flying ? 'block' : 'none';
-      // Spots are on the screen; the owl is placed inside the UI host, so subtract where the host's corner is.
-      const host = root instanceof ShadowRoot ? root.host.getBoundingClientRect() : { left: 0, top: 0 };
-      el.style.width = `${OWL_SIZE}px`;
+      el.style.width = `${size()}px`;
       el.style.transform = `translate(${Math.round(x - host.left)}px, ${Math.round(y - host.top)}px)`;
       el.style.visibility = 'visible';
     };
@@ -210,7 +236,27 @@ export function PageOwl({ onPerch }: { /** What the owl sits on, or null while i
     const timer = window.setInterval(roll, CHECK_EVERY_MS);
     // The same wobbly outline as the sprites on the page, so the owl looks hand drawn too.
     const stopBoil = createLineBoil([el], root);
+    // Dragged: it sits on whatever it is dropped on, its feet where the mouse let go. Shovel: it flies away.
+    const stopGrab = grabCreature(el, {
+      isDigging: () => live.current.digging,
+      onDig: () => {
+        const here = owl?.perch ? perchSpot(owl.perch) : null;
+        owl = here ? { perch: null, away: { x: here.x, y: -size() * 2 }, from: here, kind: 'leave', start: performance.now(), duration: LEAVE_MS } : null;
+      },
+      onDrag: (x, y) => {
+        carried = { x, y };
+      },
+      onDrop: (x, y) => {
+        carried = null;
+        const target = document.elementFromPoint(x, y);
+        // Dropped on our own toolbar or outside the page: it goes back to where it was.
+        if (!target || (root instanceof ShadowRoot && target === root.host)) return;
+        const rect = target.getBoundingClientRect();
+        owl = { perch: { el: target, dx: x - rect.left, dy: y - rect.top }, away: null, from: null, kind: 'hop', start: performance.now(), duration: 0 };
+      },
+    });
     return () => {
+      stopGrab();
       stopBoil();
       cancelAnimationFrame(frame);
       window.clearInterval(timer);
@@ -221,7 +267,7 @@ export function PageOwl({ onPerch }: { /** What the owl sits on, or null while i
 
   if (!enabled) return null;
   return (
-    <div ref={box} className="fo-page-owl" style={{ visibility: 'hidden' }} aria-hidden="true">
+    <div ref={box} className={`fo-page-owl${digging ? ' fo-dig' : ''}`} title={digging ? 'Send the owl away' : 'Drag the owl somewhere else'} style={{ visibility: 'hidden' }} aria-hidden="true">
       <img ref={sitImg} src={art.sit!} alt="" />
       <img ref={flyImg} src={art.fly!} alt="" style={{ display: 'none' }} />
     </div>

@@ -4,8 +4,10 @@ const DEFAULT_SPEED_MS = 100;
 const DEFAULT_FRAMES = 8;
 const BASE_FREQUENCY = 0.04;
 const NUM_OCTAVES = 3;
-const SEEDS = [1, 42, 7, 99, 23, 61, 83, 14, 55, 37, 72, 5];
 let controllerId = 0;
+
+/** A different noise pattern for each frame. Any distinct whole numbers work; these just spread them out. */
+const noiseSeed = (frame: number) => frame * 37 + 11;
 
 interface LineBoilOptions {
   scale?: number;
@@ -45,7 +47,7 @@ function buildFilters(root: Document | ShadowRoot | HTMLElement, scale: number, 
     turbulence.setAttribute('type', 'fractalNoise');
     turbulence.setAttribute('baseFrequency', String(BASE_FREQUENCY));
     turbulence.setAttribute('numOctaves', String(NUM_OCTAVES));
-    turbulence.setAttribute('seed', String(SEEDS[frame % SEEDS.length]));
+    turbulence.setAttribute('seed', String(noiseSeed(frame)));
     turbulence.setAttribute('stitchTiles', 'stitch');
     turbulence.setAttribute('result', 'noise');
 
@@ -91,8 +93,9 @@ function readOptions(options: LineBoilOptions) {
 }
 
 /**
- * Applies the SVG turbulence/displacement approach from tomcreighton's boil library
- * (https://github.com/tomcreighton/boil) to elements inside this document or shadow root.
+ * Makes lines wobble like hand-drawn animation ("line boil") by cycling SVG noise filters (feTurbulence +
+ * feDisplacementMap, a standard SVG technique), on elements inside this document or shadow root. The idea came from
+ * tomcreighton/boil; that repo has no licence, so no code from it may be copied here.
  */
 export function createLineBoil(elements: Iterable<HTMLElement>, root: Document | ShadowRoot, options: LineBoilOptions = {}): () => void {
   const targetElements = Array.from(elements);

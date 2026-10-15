@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
 import { buildMarkerAnchor, nearbyText, useDropSprite, usePlanting, useSeedsOnPage, type Tool } from '@/lib/engine';
-import { createForest, deleteSeed, getSeed, restoreSeed, updateSeed, updateSettings, updateToolbarState, type Seed, type SpriteType } from '@/lib/storage';
+import { createForest, deleteSeed, getSeed, restoreSeed, updateStashes, updateSeed, updateSettings, updateToolbarState, type Seed, type SpriteType } from '@/lib/storage';
 import { CursorSprite } from './CursorSprite';
 import { FOREST_ICONS, TEXT_ONLY_SPRITES, spriteLabel, spriteTakesNote, useThemeId } from '@/lib/theme';
 import { ReviewPopup } from './ReviewPopup';
@@ -10,6 +10,8 @@ import { PageOwl } from './PageOwl';
 import { PondFrog } from './PondFrog';
 import { ScrollRail } from './ScrollRail';
 import { NoteEditor, NoteTooltip } from './SeedNote';
+import { PadGroupPicker } from './PadGroupPicker';
+import { allStashes, currentStash, hotbarOf } from './hotbar';
 import { Toolbar } from './Toolbar';
 import { useKeybinds } from './useKeybinds';
 import { usePageData } from './usePageData';
@@ -23,21 +25,33 @@ import { useSpriteDrag } from './useSpriteDrag';
  *  - useDropSprite   saves a sprite dropped from the toolbar (lib/engine), useSpriteDrag carries it (this folder)
  *  - MarkerLayer, CursorSprite, Toolbar and ScrollRail draw the markers, the sprite on the mouse, the toolbar and the rail (this folder)
  *  - NoteEditor and NoteTooltip let the user write their own note on a seed and show it on hover (SeedNote.tsx)
+ *  - PadGroupPicker chooses a clicked lily pad's group; PageOwl and PondFrog are the visiting creatures
  */
 export function App({ shadowHost }: { shadowHost: HTMLElement }) {
-  const { toolbar, forests, currentForestId, seeds } = usePageData();
+  const { toolbar, forests, currentForestId, seeds, advanced, stashes } = usePageData();
+  const stash = currentStash(stashes);
+  const hotbar = hotbarOf(stash);
   const [tool, setTool] = useState<Tool>('none');
   const [spriteType, setSpriteType] = useState<SpriteType>('sprout');
   const [status, setStatus] = useState('');
+  // The toolbar's camera: while on, dragging with the chosen sprite takes a screenshot. Only with a sprite that is not the apple.
+  const [camera, setCamera] = useState(false);
+  const cameraFits = tool === 'plant' && spriteType !== 'fruitsprout';
   const themeId = useThemeId(); // for the sprite names in messages (the Minimal theme calls them Star, Triangle, ...)
   // The size the next sprite is planted at (1 is normal). - and + change it; sprites already planted keep their own size.
   const [plantScale, setPlantScale] = useState(1);
+  // It starts at the default size from Advanced settings, once those are read.
+  const defaultScale = advanced?.plantScale ?? 1;
+  useEffect(() => setPlantScale(defaultScale), [defaultScale]);
   // The seed whose note box is open (right after planting it, or after clicking its sprite), and the one under the mouse.
   const [noteSeedId, setNoteSeedId] = useState<string | null>(null);
   const [hoverSeedId, setHoverSeedId] = useState<string | null>(null);
   // Where the frog and the owl sit right now (a lily pad's seed id, a page element), so the scroll rail can show them.
   const [frogPadId, setFrogPadId] = useState<string | null>(null);
   const [owlPerch, setOwlPerch] = useState<Element | null>(null);
+  // The lily pad whose group picker is open.
+  const [groupSeedId, setGroupSeedId] = useState<string | null>(null);
+  const closeGroupPicker = useCallback(() => setGroupSeedId(null), []);
   const history = useRef<Array<{ undo(): Promise<void>; redo(): Promise<void> }>>([]);
   const undone = useRef<Array<{ undo(): Promise<void>; redo(): Promise<void> }>>([]);
 
@@ -74,7 +88,14 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
   const onDeleted = useCallback((seed: Seed) => record({ undo: () => restoreSeed(seed), redo: () => deleteSeed(seed.id) }), [record]);
 
   const { flashId, jumpToSeed } = useSeedsOnPage(seeds);
-  const { removeSeed } = usePlanting({ tool, spriteType, forestId: currentForestId, scale: plantScale, isInsideUi, say, onCreated, onDeleted });
+  const { removeSeed } = usePlanting({ tool, spriteType, forestId: currentForestId, scale: plantScale, camera: camera && cameraFits, isInsideUi, say, onCreated, onDeleted });
+  // Picking the apple or the shovel, or putting the sprite down, turns the camera off.
+  useEffect(() => {
+    if (camera && !cameraFits) {
+      setCamera(false);
+      if (tool === 'plant') say(`The ${spriteLabel('fruitsprout', themeId).toLowerCase()} can't take screenshots`);
+    }
+  }, [camera, cameraFits, tool, say, themeId]);
   const dropSprite = useDropSprite({ forestId: currentForestId, scale: plantScale, isInsideUi, say, onCreated });
   // The three sprites used last are kept in settings, newest first, and shown on the toolbar.
   const { dragging, startSpriteDrag } = useSpriteDrag({
@@ -96,7 +117,7 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
   useEffect(() => {
     if (!visible) setTool('none');
   }, [visible]);
-  useKeybinds({ enabled: visible, tool, setSpriteType, setTool, setPlantScale, history, undone });
+  useKeybinds({ enabled: visible, tool, hotbar, setSpriteType, setTool, setPlantScale, history, undone });
   // Tell the user the new size when - or + changes it (not on the first render).
   const firstScale = useRef(true);
   useEffect(() => {
@@ -110,6 +131,7 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
   // The new seed reaches `seeds` from storage a moment after it is planted; until then its note box waits.
   const noteSeed = seeds.find((seed) => seed.id === noteSeedId) ?? null;
   const hoverSeed = seeds.find((seed) => seed.id === hoverSeedId) ?? null;
+  const groupSeed = seeds.find((seed) => seed.id === groupSeedId) ?? null;
 
   const openViewer = (forestId?: string) => void browser.runtime.sendMessage({ type: 'forest:open-viewer', forestId });
 
@@ -122,6 +144,7 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
         onDig={(id) => void removeSeed(id)}
         onHover={setHoverSeedId}
         onEditNote={setNoteSeedId}
+        onPickPadGroup={setGroupSeedId}
         onMove={async (id, x, y, target) => {
           const previous = seeds.find((seed) => seed.id === id);
           if (!previous) return;
@@ -130,11 +153,13 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
         }}
       />
       {/* Now and then a frog jumps onto a lily pad. Drawn after the markers so it sits on top of the pad. */}
-      <PondFrog seeds={seeds} onSit={setFrogPadId} />
+      {/* Both can be dragged, or dug up with the shovel. How often they come and their size are in Advanced settings. */}
+      <PondFrog seeds={seeds} digging={tool === 'dig'} rate={advanced?.frogRate ?? 0} scale={advanced?.frogScale ?? 1} onSit={setFrogPadId} />
       {/* Now and then an owl flies down onto a button or a block of text, while the toolbar is open. */}
-      {visible && <PageOwl onPerch={setOwlPerch} />}
+      {visible && <PageOwl digging={tool === 'dig'} rate={advanced?.owlRate ?? 0} scale={advanced?.owlScale ?? 1} onPerch={setOwlPerch} />}
+      {groupSeed && <PadGroupPicker key={groupSeed.id} seed={groupSeed} onClose={closeGroupPicker} />}
       {noteSeed && <NoteEditor key={noteSeed.id} seed={noteSeed} onSave={(note) => void saveNote(noteSeed.id, note)} onClose={() => setNoteSeedId((id) => (id === noteSeed.id ? null : id))} />}
-      {hoverSeed?.note && hoverSeed.id !== noteSeed?.id && <NoteTooltip key={hoverSeed.id} seed={hoverSeed} />}
+      {(hoverSeed?.note || hoverSeed?.kind === 'media') && hoverSeed.id !== noteSeed?.id && <NoteTooltip key={hoverSeed.id} seed={hoverSeed} />}
       <CursorSprite type={visible ? spriteOnMouse : null} showOverUi={dragging !== null} scale={plantScale} isInsideUi={isInsideUi} />
       {toolbar && visible && (
         <Toolbar
@@ -153,6 +178,7 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
             if (tool === 'plant' && spriteType === type) return setTool('none');
             setSpriteType(type);
             setTool('plant');
+            if (camera && type !== 'fruitsprout') return say(`Drag a box to take a screenshot with the ${spriteLabel(type, themeId).toLowerCase()}`);
             if (TEXT_ONLY_SPRITES.includes(type)) say(`${spriteLabel(type, themeId)}s go on text: drag over a sentence`);
           }}
           onSpritePointerDown={startSpriteDrag}
@@ -164,6 +190,18 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
             say(`Created ${name}`);
           }}
           onOpenCurrentForest={() => openViewer(currentForestId ?? undefined)}
+          stashes={allStashes(stashes)}
+          stash={stash}
+          onSwitchStash={(id) => void updateStashes({ currentId: id })}
+          onEditStashes={() => void browser.runtime.sendMessage({ type: 'forest:open-viewer', page: 'settings' })}
+          camera={camera && cameraFits}
+          onToggleCamera={() => {
+            if (camera) return setCamera(false);
+            if (tool !== 'plant') return say('Pick a sprite first, then the camera');
+            if (spriteType === 'fruitsprout') return say(`The ${spriteLabel('fruitsprout', themeId).toLowerCase()} can't take screenshots`);
+            setCamera(true);
+            say(`Drag a box to take a screenshot with the ${spriteLabel(spriteType, themeId).toLowerCase()}`);
+          }}
         />
       )}
       {visible && <ScrollRail seeds={seeds} onJump={jumpToSeed} frogPadId={frogPadId} owlPerch={owlPerch} />}

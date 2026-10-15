@@ -6,7 +6,7 @@ import { splitShadowRootCss } from 'wxt/utils/split-shadow-root-css';
 import { UI_HOST_TAG } from '@/lib/engine';
 import { App } from '@/lib/onpage-ui/App';
 import { keepOnTop } from '@/lib/onpage-ui/topLayer';
-import { watchTheme } from '@/lib/theme';
+import { loadAppFont, watchTheme } from '@/lib/theme';
 import toolbarCss from '@/lib/onpage-ui/toolbar.css?inline';
 
 export function mountOnPageUi() {
@@ -30,6 +30,7 @@ export function mountOnPageUi() {
   for (const type of ['keydown', 'keyup', 'keypress']) shadow.addEventListener(type, (e) => e.stopPropagation());
 
   document.documentElement.append(host);
+  void loadAppFont();
   watchTheme(shadow);
   keepOnTop(host);
   ReactDOM.createRoot(container).render(<App shadowHost={host} />);

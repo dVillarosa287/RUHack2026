@@ -3,13 +3,14 @@ import ReactDOM from 'react-dom/client';
 import { UI_HOST_TAG } from '@/lib/engine';
 import { App } from '@/lib/onpage-ui/App';
 import { keepOnTop } from '@/lib/onpage-ui/topLayer';
-import { watchTheme } from '@/lib/theme';
+import { loadAppFont, watchTheme } from '@/lib/theme';
 import '@/lib/onpage-ui/toolbar.css';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
   cssInjectionMode: 'ui',
   async main(ctx) {
+    void loadAppFont();
     const ui = await createShadowRootUi(ctx, {
       name: UI_HOST_TAG,
       position: 'inline',

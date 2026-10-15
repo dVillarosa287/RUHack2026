@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { fillBlankQuestion, isCorrectAnswer } from '@/lib/ai';
 import { appleFruitKey } from '@/lib/engine';
-import { getDueReviews, getFruits, onDataChanged, updateSeed, type Question, type Seed } from '@/lib/storage';
+import { getAdvancedSettings, getDueReviews, getQuizzes, onDataChanged, updateSeed, type Question, type Seed } from '@/lib/storage';
 import { getWords, spriteLabel, useThemeId } from '@/lib/theme';
 import { SpriteIcon } from '@/lib/theme/SpriteIcon';
 
@@ -10,14 +10,37 @@ import { SpriteIcon } from '@/lib/theme/SpriteIcon';
  * lib/engine/recall.ts). Apples planted before that existed get a fill-in-the-blank question from their own text.
  */
 async function questionFor(seed: Seed): Promise<Question | null> {
-  const saved = (await getFruits(seed.forestId)).find((f) => f.color === appleFruitKey(seed.id))?.questions[0];
+  const saved = (await getQuizzes(seed.forestId)).find((f) => f.color === appleFruitKey(seed.id))?.questions[0];
   return saved ?? fillBlankQuestion(seed);
+}
+
+/** Spaced repetition: after the first review, the question comes back after these many days, one after another. */
+const REPEAT_DAYS = [1, 3, 7];
+const FIRST_DAYS = 1;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * When the apple asks again, and its new step. Right moves on to the next gap (and stops after the last one), wrong
+ * starts again from the first gap, and a skip keeps its place and asks again after the first gap. Advanced settings
+ * can turn the repeats off, or make the gaps shorter or longer (`reviewSpacing`).
+ */
+async function nextReview(seed: Seed, outcome: 'right' | 'wrong' | 'skip'): Promise<Pick<Seed, 'nextReviewAt' | 'reviewStep'>> {
+  const { reviewRepeats, reviewSpacing } = await getAdvancedSettings();
+  const step = seed.reviewStep ?? 0;
+  if (!reviewRepeats) return { nextReviewAt: null, reviewStep: step };
+  const after = (days: number) => Date.now() + days * reviewSpacing * DAY_MS;
+  if (outcome === 'skip') return { nextReviewAt: after(FIRST_DAYS), reviewStep: step };
+  if (outcome === 'wrong') return { nextReviewAt: after(FIRST_DAYS), reviewStep: 1 };
+  const days = REPEAT_DAYS[step];
+  if (days === undefined) return { nextReviewAt: null, reviewStep: step }; // the last review: done for good
+  return { nextReviewAt: after(days), reviewStep: step + 1 };
 }
 
 /**
  * Active recall: when an apple's time is up it has grown into an apple tree (the background worker's alarm does that),
  * and this pop-up in the top left of the page asks one question about the text it was planted on. It shows in the
- * tab the user is looking at, whatever page that is. Answering (or skipping) clears the apple's `nextReviewAt`.
+ * tab the user is looking at, whatever page that is. Answering (or skipping) sets the apple's next review (nextReview),
+ * or clears `nextReviewAt` when there are no more. Only the review time changes, never the apple's growth.
  */
 export function ReviewPopup() {
   const [seed, setSeed] = useState<Seed | null>(null);
@@ -62,12 +85,13 @@ export function ReviewPopup() {
 
   if (!seed) return null;
 
-  const finish = async () => {
-    await updateSeed(seed.id, { nextReviewAt: null, growth: 'tree' });
+  const right = question && question !== 'loading' && given !== null ? isCorrectAnswer(question, given) : null;
+  // "Show answer" counts as wrong. With no question at all ("read this again") it counts as right.
+  const finish = async (outcome: 'right' | 'wrong' | 'skip') => {
+    await updateSeed(seed.id, { ...(await nextReview(seed, outcome)), growth: 'tree' });
     showing.current = null;
     setSeed(null);
   };
-  const right = question && question !== 'loading' && given !== null ? isCorrectAnswer(question, given) : null;
 
   return (
     <div className="fo-review" role="dialog" aria-label="Active recall">
@@ -120,11 +144,11 @@ export function ReviewPopup() {
 
       <div className="fo-review-actions">
         {question !== 'loading' && (given !== null || question === null) ? (
-          <button className="fo-review-main" onClick={() => void finish()}>Done</button>
+          <button className="fo-review-main" onClick={() => void finish(right === false ? 'wrong' : 'right')}>Done</button>
         ) : (
           <>
             {question && question !== 'loading' && <button className="fo-review-skip" onClick={() => setGiven('')}>Show answer</button>}
-            <button className="fo-review-skip" onClick={() => void finish()}>Skip</button>
+            <button className="fo-review-skip" onClick={() => void finish('skip')}>Skip</button>
           </>
         )}
       </div>

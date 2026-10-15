@@ -8,6 +8,7 @@ import { DEFAULT_THEME_ID, FOREST_THEME, JUNGLE_THEME, MINIMAL_THEME, getTheme, 
 export const APP_NAME = 'Wildernotes';
 
 export { applyTheme, watchTheme } from './apply';
+export { FONT_FAMILY, loadAppFont } from './font';
 export { useThemeId, watchThemeId } from './themeId';
 // The words the user reads per theme (forest or folder, seed or item, ...). See ./words.ts.
 export { cap, countOf, getWords, useWords, type Words } from './words';
@@ -40,7 +41,7 @@ export interface ThemeSprite {
   emoji: string;
   /** File in images/. Most art is colored already. "uncolored-*" art (black outline, white fill) is tinted with the sprite's color. */
   image: string;
-  /** What it looks like grown (growth `tree`). Only the sprout and the fruit sprout (apple) grow. */
+  /** What it looks like grown (growth `tree`). Only the sprout and the quiz sprout (apple) grow. */
   grownImage?: string;
   /** Shown under the toolbar button on hover, for sprites that do something special. */
   tip?: string;
@@ -136,6 +137,9 @@ export function spriteColorHex(type: SpriteType, grown = false, themeId: string 
   const c = getTheme(themeId).sprites[type];
   return (grown && c.grownColor) || c.color;
 }
+
+/** The toolbar's camera (screenshots) and the badge on a sprite that has one. Every theme uses the same art. */
+export const cameraArtUrl = (): string | null => artUrl('camera.png');
 
 /** The shovel's art in a theme, and whether it needs tinting. */
 export function shovelArt(themeId: string = DEFAULT_THEME_ID): { url: string | null; tint: boolean } {

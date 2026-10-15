@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { getFolders, getForest, getSeedsForForest } from '@/lib/storage';
 import { countOf, useWords } from '@/lib/theme';
 import { FolderSidebar, isUnfiled, type FolderChoice } from './FolderSidebar';
+import { SaveBackupButton } from './ForestBackup';
 import { ForestHeader } from './ForestHeader';
 import { ForestList } from './ForestList';
 import { GrowFromLink } from './GrowFromLink';
 import { QuizBar } from './QuizBar';
+import { SeedSearch, seedMatches } from './SeedSearch';
 import { graphHref } from './route';
 import { useStored } from './useStored';
 
@@ -17,6 +19,7 @@ import { useStored } from './useStored';
 export function ForestView({ forestId }: { forestId: string }) {
   const data = useStored(async () => ({ forest: await getForest(forestId), seeds: await getSeedsForForest(forestId), folders: await getFolders(forestId) }), [forestId]);
   const [folder, setFolder] = useState<FolderChoice>('all');
+  const [query, setQuery] = useState('');
   const words = useWords(); // "seeds" or "items", by theme
 
   if (!data) return <p>Loading…</p>;
@@ -26,7 +29,8 @@ export function ForestView({ forestId }: { forestId: string }) {
   const pageCount = new Set(data.seeds.map((s) => s.url).filter(Boolean)).size;
   const summary = `${countOf(data.seeds.length, words.seed, words.seeds)} on ${countOf(pageCount, 'page', 'pages')}`;
 
-  const shown = folder === 'all' ? data.seeds : folder === 'none' ? data.seeds.filter((s) => isUnfiled(s, data.folders)) : data.seeds.filter((s) => s.folderId === folder);
+  const inFolder = folder === 'all' ? data.seeds : folder === 'none' ? data.seeds.filter((s) => isUnfiled(s, data.folders)) : data.seeds.filter((s) => s.folderId === folder);
+  const shown = inFolder.filter((s) => seedMatches(s, query));
 
   return (
     <>
@@ -35,6 +39,7 @@ export function ForestView({ forestId }: { forestId: string }) {
         summary={summary}
         actions={
           <>
+            <SaveBackupButton forest={data.forest} />
             <GrowFromLink forestId={forestId} seeds={data.seeds} showGraphLink />
             <a href={graphHref(forestId)} className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink hover:bg-primary-strong">Graph view</a>
           </>
@@ -44,7 +49,8 @@ export function ForestView({ forestId }: { forestId: string }) {
       <div className="flex gap-6">
         <FolderSidebar forestId={forestId} folders={data.folders} seeds={data.seeds} choice={folder} onChoose={setFolder} />
         <div className="min-w-0 flex-1">
-          <ForestList seeds={shown} emptyText={folder === 'all' ? undefined : `No ${words.seeds} here. Drag ${words.aSeed} from "All ${words.seeds}" onto a ${words.folder} to move it.`} />
+          <SeedSearch value={query} onChange={setQuery} className="mb-3" />
+          <ForestList seeds={shown} emptyText={query.trim() ? `No ${words.seeds} match "${query.trim()}".` : folder === 'all' ? undefined : `No ${words.seeds} here. Drag ${words.aSeed} from "All ${words.seeds}" onto a ${words.folder} to move it.`} />
         </div>
       </div>
     </>

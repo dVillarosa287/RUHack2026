@@ -1,13 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Crafty+Girls&display=swap");
-
-@font-face {
-  font-family: 'Crafty Girls';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/craftygirls/v16/va9B4kXI39VaDdlPJo8N_NveRhf6.woff2) format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
+/* The font, Crafty Girls, is bundled and registered by loadAppFont() (lib/theme/font.ts), never fetched from Google. */
 
 /* On-page styles. Plain CSS in px, because this lives inside a web page whose own font size and CSS must
    not change how the toolbar looks. Colors come only from theme tokens, var(--fo-...), never from color
@@ -392,6 +383,47 @@
     outline: 2px solid var(--fo-primary);
 }
 
+/* The stash drop-down under the sprite buttons (Picker.tsx, small), and the camera under the tree button. It uses
+   the sprite tiles' columns (.fo-tools), so the camera lines up with the last column. */
+.fo-stash-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) 4px repeat(2, 1fr);
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.fo-stash-pick {
+    grid-column: 1 / 7;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+/* As tall as the stash drop-down (.fo-picker-small). */
+.fo-tool.fo-camera {
+    grid-column: 7;
+    height: 26px;
+    border-radius: 8px;
+}
+
+.fo-stash-label {
+    flex: none;
+    font-size: 12px;
+    color: var(--fo-ink-muted);
+}
+
+.fo-picker-small .fo-picker-button {
+    height: 26px;
+    font-size: 12px;
+}
+
+.fo-picker-small .fo-picker-option {
+    min-height: 26px;
+    font-size: 12px;
+}
+
 .fo-status {
     font-size: 12px;
     font-weight: 600;
@@ -418,7 +450,6 @@
     cursor: grab;
     user-select: none;
     touch-action: none;
-    will-change: transform;
     font-family: "Crafty Girls", sans-serif;
 }
 
@@ -441,7 +472,7 @@
 
 /* The frog that jumps onto lily pads now and then (PondFrog.tsx), and the owl that flies onto buttons and text (PageOwl.tsx).
    Like a marker each is placed inside the host (`absolute`), and its bottom middle sits on the spot its component sets with
-   `transform` on every frame. They ignore the mouse, so whatever is under them still works. */
+   `transform` on every frame. */
 .fo-pond-frog,
 .fo-page-owl {
   position: absolute;
@@ -449,8 +480,22 @@
   left: 0;
   translate: -50% -100%;
   filter: drop-shadow(0 2px 3px var(--fo-shadow));
+  /* No `will-change` here or on .fo-marker: with the line boil's SVG filter it gave each one its own GPU layer, about
+     65 MB of GPU memory per open tab. */
+  /* The user can drag a creature somewhere else, or dig it up with the shovel (creatureGrab.ts). */
+  cursor: grab;
+  touch-action: none;
+}
+
+.fo-pond-frog.fo-dig,
+.fo-page-owl.fo-dig {
+  cursor: pointer;
+}
+
+/* While carried it ignores the mouse, so the page under it can be found where it is dropped. */
+.fo-creature-dragging {
   pointer-events: none;
-  will-change: transform;
+  cursor: grabbing;
 }
 .fo-pond-frog img,
 .fo-page-owl img {
@@ -459,17 +504,16 @@
   height: auto;
 }
 
-/* A copy of the chosen sprite that follows the mouse, a little to the top right of it and see-through, so the
-   spot you are about to click stays visible. It ignores the mouse, so clicks reach the page. CursorSprite
-   moves it on every mouse move. Its bottom left corner stays 8px right of and 8px above the mouse at every size:
-   the box takes the sprite's size and `translate` lifts it by its own height. */
+/* A see-through copy of the chosen sprite that follows the mouse. It ignores the mouse, so clicks reach the page.
+   CursorSprite moves it on every mouse move. Its bottom middle sits on the mouse, exactly like a planted .fo-marker,
+   so the sprite lands where it is shown at every size (it used to sit to the top right, and that gap grew with - and +,
+   so bigger sprites landed off center). */
 .fo-cursor-sprite {
   position: fixed;
   top: 0;
   left: 0;
   display: flex;
-  margin: -8px 0 0 8px;
-  translate: 0 -100%;
+  translate: -50% -100%;
   opacity: 0.6;
   filter: drop-shadow(0 4px 6px var(--fo-shadow));
   pointer-events: none;
@@ -733,6 +777,29 @@
   pointer-events: none;
 }
 
+/* A camera sprite's screenshot in its hover card (SeedNote.tsx). */
+.fo-note-shot {
+  display: block;
+  max-width: 100%;
+  max-height: 180px;
+  margin: 0 auto 6px;
+  border: 1px solid var(--fo-edge);
+  border-radius: 8px;
+}
+
+/* The tiny camera in a sprite's bottom right corner: it was taken with the camera and has a screenshot (MarkerLayer.tsx). */
+.fo-marker-camera {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: flex;
+  padding: 1px;
+  border-radius: 4px;
+  background: var(--fo-surface);
+  color: var(--fo-ink);
+  pointer-events: none;
+}
+
 .fo-note textarea {
   display: block;
   width: 100%;
@@ -768,7 +835,47 @@
   color: var(--fo-ink-muted);
 }
 
-/* The dashed box dragged over a part of the page that has no text, to screenshot it (lib/engine/screenshot.ts). */
+/* The lily pad's group picker (PadGroupPicker.tsx), in a note card under the highlighted text. */
+.fo-group-title {
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.fo-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.fo-group-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fo-ink);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fo-group-option:hover,
+.fo-group-option:focus-visible {
+  background: var(--fo-primary-soft);
+  filter: brightness(1.15);
+}
+
+.fo-group-option[aria-pressed='true'] {
+  background: var(--fo-surface);
+}
+
+/* The dashed box dragged with the camera on, to screenshot it (lib/engine/screenshot.ts). */
 .fo-area {
   position: fixed;
   box-sizing: border-box;

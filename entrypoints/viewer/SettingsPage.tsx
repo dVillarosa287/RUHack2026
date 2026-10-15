@@ -2,6 +2,38 @@ import { useEffect, useState } from "react";
 import { CEREBRAS_MODEL, GEMINI_MODEL, testAiKey, type AiProvider } from "@/lib/ai";
 import { getSettings, updateSettings } from "@/lib/storage";
 import { DEFAULT_THEME_ID, THEMES, useWords } from "@/lib/theme";
+import { AdvancedSettings } from "./AdvancedSettings";
+import { Dropdown } from "./Dropdown";
+import { StashEditor } from "./StashEditor";
+
+/** The public copy of docs/PRIVACY_POLICY.md. The same link goes on the Chrome Web Store listing. */
+const PRIVACY_POLICY_URL = "https://github.com/dVillarosa287/RUHack2026/blob/main/docs/PRIVACY_POLICY.md";
+
+/** Where each provider's key and text go, and its terms. Must match docs/PRIVACY_POLICY.md (Chrome Web Store rules). */
+const PROVIDERS: Record<AiProvider, { name: string; host: string; terms: string; extra: string }> = {
+  gemini: {
+    name: "Google",
+    host: "generativelanguage.googleapis.com",
+    terms: "https://ai.google.dev/gemini-api/terms",
+    extra: " On Google's free tier, Google may use what you send to improve its products, and people may read it.",
+  },
+  cerebras: { name: "Cerebras", host: "api.cerebras.ai", terms: "https://www.cerebras.ai/terms-of-service", extra: "" },
+};
+
+/** What leaves the browser when an AI button is pressed, shown under each key field. */
+function AiDisclosure({ provider, forestWord }: { provider: AiProvider; forestWord: string }) {
+  const p = PROVIDERS[provider];
+  return (
+    <p className="text-xs text-ink-muted">
+      Your key is your own account with {p.name}. It is stored only in this browser and sent only to {p.host}, and
+      only when you press an AI button. Then the text you saved in that {forestWord} (and, for "Grow from link", the
+      text of the linked page) is sent there too. We have no server and never see your key or notes. {p.name}'s{" "}
+      <a href={p.terms} target="_blank" rel="noreferrer" className="text-primary underline">terms</a> apply.{p.extra}{" "}
+      AI answers can be wrong.{" "}
+      <a href={PRIVACY_POLICY_URL} target="_blank" rel="noreferrer" className="text-primary underline">Privacy policy</a>
+    </p>
+  );
+}
 
 /**
  * Settings: where the user pastes their Gemini API key and selects their theme.
@@ -146,11 +178,7 @@ export function SettingsPage() {
             {test.text}
           </p>
         )}
-        <p className="text-xs text-ink-muted">
-          Keys stay in this browser. When you use an AI feature, the text
-          you saved in that {words.forest} is sent to the selected provider to write the questions or
-          summary. Nothing is sent unless you ask for it.
-        </p>
+        <AiDisclosure provider="gemini" forestWord={words.forest} />
       </section>
 
       <br />
@@ -179,6 +207,7 @@ export function SettingsPage() {
         </form>
         {saved === 'cerebras' && !test && <p className="text-sm text-primary">{cerebrasKey ? "Key saved." : "Key removed."}</p>}
         {test?.provider === 'cerebras' && <p className={`text-sm ${test.ok ? "text-primary" : "text-ink"}`}>{test.ok ? "" : "Not working: "}{test.text}</p>}
+        <AiDisclosure provider="cerebras" forestWord={words.forest} />
       </section>
 
       <br />
@@ -189,17 +218,13 @@ export function SettingsPage() {
           Choose your preferred color scheme and visual appearance for the app.
         </p>
         <div className="flex items-center gap-3">
-          <select
-            className="rounded-lg border border-edge bg-surface-alt px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary"
+          <Dropdown
+            ariaLabel="Theme"
+            className="w-56"
             value={theme}
-            onChange={(e) => handleThemeChange(e.target.value)}
-          >
-            {Object.values(THEMES).map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+            options={Object.values(THEMES).map((t) => ({ value: t.id, label: t.name }))}
+            onChange={handleThemeChange}
+          />
         </div>
       </section>
 
@@ -210,22 +235,26 @@ export function SettingsPage() {
         <p className="text-sm text-ink-muted">
           {words.recallHelp}
         </p>
-        <select
-          className="rounded-lg border border-edge bg-surface-alt px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary"
-          value={reviewMinutes}
-          onChange={(e) => {
-            const minutes = Number(e.target.value);
+        <Dropdown
+          ariaLabel="Active recall time"
+          className="w-56"
+          value={String(reviewMinutes)}
+          options={REVIEW_CHOICES.map(([minutes, label]) => ({ value: String(minutes), label }))}
+          onChange={(value) => {
+            const minutes = Number(value);
             setReviewMinutes(minutes);
             void updateSettings({ reviewMinutes: minutes });
           }}
-        >
-          {REVIEW_CHOICES.map(([minutes, label]) => (
-            <option key={minutes} value={minutes}>
-              {label}
-            </option>
-          ))}
-        </select>
+        />
       </section>
+
+      <br />
+
+      <StashEditor />
+
+      <br />
+
+      <AdvancedSettings />
     </>
   );
 }

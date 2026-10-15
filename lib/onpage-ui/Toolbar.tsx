@@ -1,11 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Tool } from '@/lib/engine';
-import type { Forest, SpriteType } from '@/lib/storage';
+import type { Forest, Stash, SpriteType } from '@/lib/storage';
 import { SPRITES, cap, getWords, spriteLabel, useThemeId } from '@/lib/theme';
+import { CameraIcon } from '@/lib/theme/CameraIcon';
 import { ShovelIcon } from '@/lib/theme/ShovelIcon';
 import { ForestIcon, SpriteIcon } from '@/lib/theme/SpriteIcon';
 import { ForestPicker } from './ForestPicker';
-import { HOTBAR, TOOLBAR_LAYOUT, hotbarKey } from './hotbar';
+import { hotbarKey, hotbarOf, toolbarLayout } from './hotbar';
+import { Picker } from './Picker';
 
 interface ToolbarProps {
   forests: Forest[];
@@ -28,6 +30,15 @@ interface ToolbarProps {
   onCreateForest(name: string): void;
   /** The tree button: open the current forest in the viewer. */
   onOpenCurrentForest(): void;
+  /** The stashes to choose from (the default first) and the one in use, which sets the sprite buttons. */
+  stashes: Stash[];
+  stash: Stash;
+  onSwitchStash(id: string): void;
+  /** "+ Make your own stash": opens the stash editor in the viewer's Settings. */
+  onEditStashes(): void;
+  /** The camera is on: the chosen sprite takes a screenshot when the user drags a box. */
+  camera: boolean;
+  onToggleCamera(): void;
 }
 
 /** Pressing on these does not drag the toolbar. The forest list counts too, so its edges between rows do not start a drag. */
@@ -60,6 +71,7 @@ export function Toolbar(props: ToolbarProps) {
   // The same for resizing.
   const [dragScale, setDragScale] = useState<number | null>(null);
   const scale = dragScale ?? props.scale;
+  const hotbar = hotbarOf(props.stash);
   const [, setWindowSize] = useState(0);
 
   useEffect(() => {
@@ -153,7 +165,7 @@ export function Toolbar(props: ToolbarProps) {
 
         <div className="fo-panel">
           <div className="fo-tools">
-            {TOOLBAR_LAYOUT.flatMap((row, r) =>
+            {toolbarLayout(hotbar).flatMap((row, r) =>
               row.map((slot, c) => {
                 // Where each button sits is in hotbar.ts. Grid column 5 is the slight gap before the lily pad and apple column.
                 const place = { gridRow: r + 1, gridColumn: c < 4 ? c + 1 : c + 2 };
@@ -167,14 +179,14 @@ export function Toolbar(props: ToolbarProps) {
                 }
                 if (slot === 'forest') {
                   return (
-                    <button key={slot} style={place} className="fo-tool fo-tip-end" aria-label="Open this forest" data-tip={cap(words.forests)} onClick={props.onOpenCurrentForest}>
+                    <button key={slot} style={place} className="fo-tool fo-tip-end" aria-label="Open this forest" data-tip={cap(words.forest)} onClick={props.onOpenCurrentForest}>
                       <ForestIcon icon="tree" size={28} />
                     </button>
                   );
                 }
                 const tip = SPRITES[slot].tip;
                 const name = spriteLabel(slot, themeId);
-                const key = hotbarKey(HOTBAR.indexOf(slot));
+                const key = hotbarKey(hotbar.indexOf(slot));
                 // aria-label stays the plain English sprite name whatever the theme; the themed name is the hover text.
                 return (
                   <button key={slot} style={place} className="fo-tool" title={tip ? undefined : key ? `${name} (${key})` : name} aria-label={SPRITES[slot].label} data-tip={tip ? `${name}: ${tip}` : undefined} aria-pressed={props.tool === 'plant' && props.spriteType === slot} onClick={() => props.onPickSprite(slot)} onPointerDown={(e) => props.onSpritePointerDown(slot, e)}>
@@ -184,6 +196,25 @@ export function Toolbar(props: ToolbarProps) {
                 );
               }),
             )}
+          </div>
+
+          {/* Same columns as the sprite tiles: the stash drop-down, then the camera under the tree button. */}
+          <div className="fo-stash-row">
+            <div className="fo-stash-pick">
+              <span className="fo-stash-label">Stash</span>
+              <Picker
+                small
+                ariaLabel="Stash"
+                placeholder="Default"
+                currentId={props.stash.id}
+                onPick={props.onSwitchStash}
+                items={props.stashes.map((l) => ({ id: l.id, label: l.name }))}
+                extra={{ label: '+ Make or edit stashes', onClick: props.onEditStashes }}
+              />
+            </div>
+            <button className="fo-tool fo-camera fo-tip-end" aria-label="Camera" data-tip="Screenshot: pick a sprite, then drag a box" aria-pressed={props.camera} onClick={props.onToggleCamera}>
+              <CameraIcon size={20} />
+            </button>
           </div>
 
           <div className="fo-status" role="status">{props.status}</div>
