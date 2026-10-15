@@ -1,6 +1,6 @@
-# Full spec: Forest annotation extension
+# Full spec: Wildernotes
 
-Working title: "Forest". Team of four. This is the complete project plan. `CLAUDE.md` holds the short version every session needs; this file holds everything else. Read the section for the feature you are building.
+Product name: Wildernotes (first called "Forest" during the hackathon). Team of four. This is the complete project plan. `CLAUDE.md` holds the short version every session needs; this file holds everything else. Read the section for the feature you are building.
 
 Sections:
 

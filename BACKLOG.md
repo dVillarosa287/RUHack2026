@@ -9,12 +9,6 @@ How to use this file:
 
 ## Open decisions (agents: ask the user, do not guess)
 
-### D3. App name
-
-A well-known focus-timer app is already called Forest. Pick a distinct name before submitting.
-
-Blocks: write-up and extension name in Wrap-up.
-
 ### D8. Data model additions for the new sprites and active recall (team to confirm)
 
 Also (2026-10-11, user's request): screenshots are saved as separate `shot:<seedId>` records (a JPEG data URL) with the `unlimitedStorage` permission, and the extension has the `webRequest` permission (to spot PDFs by their Content-Type). Asked for by the user (2026-10-11): `SpriteType` has four new values (`cat`, `grass`, `owl`, `rock`), and `Settings` has `reviewMinutes` (the active recall time, default 5). `Seed.color` is no longer chosen by the user; it is set to the sprite's color key and nothing reads it. Also (2026-10-11, user's request): `SpriteType` has `house`, and `Seed` has an optional `scale` (the size its sprite was planted at, 0.5 to 2). And `Seed` has an optional `note` (the user's own words typed after planting; not for the lily pad or the apple). Tell the team; nothing existing was removed.
@@ -131,6 +125,9 @@ These are expected problems from SPEC section 6. Turn one into a "Needs fixing" 
 - Quiz icons: approved by the user, team informed (2026-10-15). `Fruit` has an optional `icon` (an art id like `Forest.icon`; missing means `FOREST_ICONS[0]`), changed with the new `updateFruit(id, { name, icon })` (`renameFruit` now calls it).
 - Saved, named quizzes: approved by the user, team informed (2026-10-15). `Fruit` has an optional `name` ("Quiz 1"…; missing on older quizzes). `saveFruit` no longer removes older quizzes of the same color, and `renameFruit(id, name)` was added. Numbers are counted per forest and color, so the apples' one-question fruits do not push up the lily pad quiz numbers.
 - Quiz styles type-in and matching: approved by the user, team informed (2026-10-14). `Question.type` is now `'multiple-choice' | 'fill-blank' | 'type-in' | 'matching'`, and `Question` has an optional `pairs` ({ left, right }[], matching only). Older quizzes load unchanged. `SeedInput` also accepts `note`, so "Grow from link" saves its explanation.
+- F12. Font downloaded from Google on every web page: fixed (2026-10-15). Bundled in `public/fonts/`, registered by `loadAppFont()` (`lib/theme/font.ts`). Needs a check in Chrome.
+- D3. App name: decided, Wildernotes (2026-10-15). Still run the trademark search in `docs/PUBLISHING.md` M8.
+
 - F2. Jump highlight flashed for one second: fixed (2026-10-10). It now stays lit 2.5s and fades over 1.5s (`lib/engine/highlights.ts`); marker glow does the same in `toolbar.css`. Tested in Chromium; needs a check in Chrome. Changed later (2026-10-11): the copy sits a little to the top right of the mouse at 60% opacity, instead of on top of it.
 - F3. Sprites landed off-center from the mouse: fixed (2026-10-10). Sprites are centered on the spot and text anchors use the middle of the line. Tested in Chromium; needs a check in Chrome.
 - F4. Selected sprite did not follow the mouse: fixed (2026-10-10) with `CursorSprite`. Tested in Chromium; needs a check in Chrome.

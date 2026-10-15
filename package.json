@@ -1,6 +1,6 @@
 {
-  "name": "forest-extension",
-  "description": "Plant notes on any web page and watch them grow into a forest",
+  "name": "wildernotes",
+  "description": "Plant notes on any web page and watch them grow into a wild notebook.",
   "private": true,
   "version": "0.1.0",
   "type": "module",

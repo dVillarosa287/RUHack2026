@@ -8,6 +8,7 @@ import { DEFAULT_THEME_ID, FOREST_THEME, JUNGLE_THEME, MINIMAL_THEME, getTheme, 
 export const APP_NAME = 'Wildernotes';
 
 export { applyTheme, watchTheme } from './apply';
+export { FONT_FAMILY, loadAppFont } from './font';
 export { useThemeId, watchThemeId } from './themeId';
 // The words the user reads per theme (forest or folder, seed or item, ...). See ./words.ts.
 export { cap, countOf, getWords, useWords, type Words } from './words';

@@ -463,6 +463,13 @@ Entry format:
   - Did: `Question` gained `type-in`/`matching` and optional `pairs` (approved). `quizQuestions` (`gemini.ts`) mixes multiple-choice and type-in and adds one matching question last from a `matching` array (still one request). `fillBlankQuestions` makes every other question type-in and adds a matching one with 3+ seeds; `shuffle` is now exported. Grow from link: new prompt, `note` per idea saved on the seed, `normalizeText` in `readPage.ts` lets `quoteAnchor` find quotes with changed quotes/dashes/spaces/case (its `exact` is the page's own text), duplicates from the same url are skipped.
   - Others can use / need to know: `SeedInput` accepts `note`. `growFromLink` now returns the counts actually saved. Compile passes; check:theme only shows the Windows bug (BACKLOG F5). Not yet tested in Chrome with a real key.
   - Need from someone else: a person with a key to run Grow from link on a Wikipedia article twice and check notes and highlights.
+- [Oct 15] (Teo's agent)
+  - Did: Chrome Web Store prep. New `docs/PUBLISHING.md` (checklist), `docs/PRIVACY_POLICY.md` (draft), `THIRD_PARTY_NOTICES.md`; `CLAUDE.md` renamed to Wildernotes with a privacy rule and a "Release" stage. Code: font bundled (`public/fonts/`, `loadAppFont()` in `lib/theme/font.ts`, called by the content script, PDF page and viewer); `AiDisclosure` under both keys in `SettingsPage.tsx`; `lineBoil.ts` no longer copies the unlicensed boil code (own noise seeds).
+  - Others can use / need to know: compile, check:theme and build pass, and the build has no Google Fonts address; not yet checked in Chrome (font on a web page, a PDF and the viewer; Settings text). Any new permission or network request must update the privacy policy in the same change.
+  - Decided later the same day: all art is the team's own (M6 done); David publishes; code is "All rights reserved" (new `LICENSE`); the privacy policy contact will be a new shared team inbox.
+  - Then: contact email wildernotes.app@gmail.com (policy and dashboard), team agreement, 2-step verification and trademark search all done (M2, M7, M8).
+  - Need from someone else: David: fill in the dashboard from `docs/PUBLISHING.md` sections 4 and 5 (M4, M5), and a Chrome check of the font and Settings text before submitting.
+
 - [Oct 11] (GitHub Copilot)
   - Did: Grow from link now labels its in-progress step and tooltip with the selected provider, so Cerebras no longer appears as Gemini during graph generation.
   - Others can use / need to know: request routing was already provider-aware; this fixed the remaining hard-coded UI text. `npm run compile` passes.

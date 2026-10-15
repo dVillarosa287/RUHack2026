@@ -3,6 +3,35 @@ import { CEREBRAS_MODEL, GEMINI_MODEL, testAiKey, type AiProvider } from "@/lib/
 import { getSettings, updateSettings } from "@/lib/storage";
 import { DEFAULT_THEME_ID, THEMES, useWords } from "@/lib/theme";
 
+/** The public copy of docs/PRIVACY_POLICY.md. The same link goes on the Chrome Web Store listing. */
+const PRIVACY_POLICY_URL = "https://github.com/dVillarosa287/RUHack2026/blob/main/docs/PRIVACY_POLICY.md";
+
+/** Where each provider's key and text go, and its terms. Must match docs/PRIVACY_POLICY.md (Chrome Web Store rules). */
+const PROVIDERS: Record<AiProvider, { name: string; host: string; terms: string; extra: string }> = {
+  gemini: {
+    name: "Google",
+    host: "generativelanguage.googleapis.com",
+    terms: "https://ai.google.dev/gemini-api/terms",
+    extra: " On Google's free tier, Google may use what you send to improve its products, and people may read it.",
+  },
+  cerebras: { name: "Cerebras", host: "api.cerebras.ai", terms: "https://www.cerebras.ai/terms-of-service", extra: "" },
+};
+
+/** What leaves the browser when an AI button is pressed, shown under each key field. */
+function AiDisclosure({ provider, forestWord }: { provider: AiProvider; forestWord: string }) {
+  const p = PROVIDERS[provider];
+  return (
+    <p className="text-xs text-ink-muted">
+      Your key is your own account with {p.name}. It is stored only in this browser and sent only to {p.host}, and
+      only when you press an AI button. Then the text you saved in that {forestWord} (and, for "Grow from link", the
+      text of the linked page) is sent there too. We have no server and never see your key or notes. {p.name}'s{" "}
+      <a href={p.terms} target="_blank" rel="noreferrer" className="text-primary underline">terms</a> apply.{p.extra}{" "}
+      AI answers can be wrong.{" "}
+      <a href={PRIVACY_POLICY_URL} target="_blank" rel="noreferrer" className="text-primary underline">Privacy policy</a>
+    </p>
+  );
+}
+
 /**
  * Settings: where the user pastes their Gemini API key and selects their theme.
  */
@@ -146,11 +175,7 @@ export function SettingsPage() {
             {test.text}
           </p>
         )}
-        <p className="text-xs text-ink-muted">
-          Keys stay in this browser. When you use an AI feature, the text
-          you saved in that {words.forest} is sent to the selected provider to write the questions or
-          summary. Nothing is sent unless you ask for it.
-        </p>
+        <AiDisclosure provider="gemini" forestWord={words.forest} />
       </section>
 
       <br />
@@ -179,6 +204,7 @@ export function SettingsPage() {
         </form>
         {saved === 'cerebras' && !test && <p className="text-sm text-primary">{cerebrasKey ? "Key saved." : "Key removed."}</p>}
         {test?.provider === 'cerebras' && <p className={`text-sm ${test.ok ? "text-primary" : "text-ink"}`}>{test.ok ? "" : "Not working: "}{test.text}</p>}
+        <AiDisclosure provider="cerebras" forestWord={words.forest} />
       </section>
 
       <br />

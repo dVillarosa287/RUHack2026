@@ -67,7 +67,8 @@ export default defineConfig({
     content_security_policy: { extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';" },
     // An action with no popup lets background.ts react when the icon is clicked.
     action: { default_title: 'Wildernotes: show or hide the toolbar' },
-    // The art is drawn inside web pages, so web pages must be allowed to load it.
-    web_accessible_resources: [{ resources: ['sprites/*', ...THEMED_ART_FOLDERS.map((theme) => `sprites/${theme}/*`)], matches: ['<all_urls>'] }],
+    // The art and the font are used inside web pages, so web pages must be allowed to load them. The font is bundled
+    // (lib/theme/font.ts) so no page ever asks Google Fonts for it.
+    web_accessible_resources: [{ resources: ['sprites/*', ...THEMED_ART_FOLDERS.map((theme) => `sprites/${theme}/*`), 'fonts/*'], matches: ['<all_urls>'] }],
   },
 });

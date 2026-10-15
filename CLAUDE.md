@@ -1,6 +1,6 @@
-# Forest annotation extension (working title "Forest")
+# Wildernotes
 
-HackRU project. A Chrome extension (Manifest V3) for annotating web pages for later reference and studying. The whole app is plant and forest themed (sprites, words and art). Its colors are the palette in `docs/THEME.md`.
+A Chrome extension (Manifest V3) for annotating web pages for later reference and studying, being prepared for release on the Chrome Web Store. It started as a HackRU 2026 project. The whole app is plant and forest themed (sprites, words and art); "forest" is still the in-app word for a collection of notes, but the product is called Wildernotes (`APP_NAME` in `lib/theme/index.ts`). Its colors are the palette in `docs/THEME.md`.
 
 ## What it does
 
@@ -12,7 +12,8 @@ HackRU project. A Chrome extension (Manifest V3) for annotating web pages for la
 ## Team and context
 
 - Four people, each with their own branch and their own Claude session. There are no fixed roles: anyone takes any job. "Page engine", "On-page UI and art", "Viewer" and "Data, AI and integration" are areas of the product. They tag checklist items and say which folders a job touches. They are not people. Before you start a job, claim it by writing your name in the "Taken by" column of `docs/DIVIDING_WORK.md`, so two people do not do the same one.
-- Hackathon of about 24 hours. A working demo matters more than complete features.
+- The hackathon is over. Wildernotes is now a real extension for real users: reliability, privacy and passing Chrome Web Store review matter more than new features. Older notes and docs that talk about "the demo" or hour ranges are history.
+- David Villarosa publishes Wildernotes to the Chrome Web Store from his developer account. The code is "All rights reserved" (`LICENSE`): public so anyone can check it, but not open source. Never copy code or art from a project without a licence that allows it; credit ideas in `THIRD_PARTY_NOTICES.md`.
 - Some of the team are new to coding. Keep code simple, keep files small, and say briefly why a choice was made.
 
 ## Other project files
@@ -23,6 +24,8 @@ HackRU project. A Chrome extension (Manifest V3) for annotating web pages for la
 - `docs/DIVIDING_WORK.md`: jobs that can be handed to different people or helper agents at the same time, with their folders, dependencies and suggested models.
 - `docs/TWO_SESSIONS.md`: how two people with their own Claude sessions split Stage 2 into a page lane and a viewer lane, the model and effort to use, and the prompt to paste.
 - `docs/THEME.md`: the palette and the rules for every color and style. Read it before you write any CSS, Tailwind classes or inline styles.
+- `docs/PUBLISHING.md`: the Chrome Web Store checklist (privacy, permissions, the user's API key, licences) and what must be fixed before submitting.
+- `docs/PRIVACY_POLICY.md`: the user-facing privacy policy. It must always describe what the code really does.
 
 ## Vocabulary (use these exact names in code and UI)
 
@@ -44,7 +47,7 @@ HackRU project. A Chrome extension (Manifest V3) for annotating web pages for la
 - WXT (Manifest V3), TypeScript, React, Tailwind CSS.
 - React Flow (`@xyflow/react`) for the graph view.
 - `chrome.storage.local` for all data.
-- Gemini API (current Flash model, free tier) for quizzes, suggested roots and summaries.
+- Gemini API (current Flash model, free tier) or Cerebras for quizzes, suggested roots and summaries, with the user's own API key (`lib/ai/gemini.ts`).
 - `chrome.alarms` for timers.
 - Browser `speechSynthesis` for the frog's voice, ElevenLabs as an optional upgrade.
 - PNG or SVG sprites at 64 by 64, CSS animations.
@@ -60,7 +63,8 @@ Reasons for each choice: `docs/SPEC.md` section 2.
 - Draw highlights with the CSS Custom Highlight API. Do not wrap page text in new elements.
 - Never store raw pixel coordinates as the only location. Use the anchor shape in the data model. A marker is attached to the text under it (with the element and scroll position as fallbacks) and is drawn from that anchor on every frame by `MarkerTracker`, so it follows the page when it scrolls, resizes or reflows. Never position a marker from a saved screen or page coordinate.
 - Clean URLs (strip tracking parameters and the `#` part) before using them as keys.
-- Gemini is called only from the background service worker, only when the user asks, with one request per quiz and JSON output. The key comes from settings in local storage. Never commit a key.
+- Gemini (or Cerebras) is called only from the background service worker, only when the user asks, with one request per quiz and JSON output. The key comes from settings in local storage. Never commit a key.
+- Privacy (Chrome Web Store rules, `docs/PUBLISHING.md`): the user's API key is sent only to that provider's own address, never anywhere else, never logged, and there is never a default key of ours in the code. No analytics, trackers, or requests to our own or any other server. No code or files loaded from the internet (fonts, scripts, images all ship inside the extension). Nothing leaves the browser unless the user pressed a button that clearly says so. Any change that adds a permission, a network request, or a new kind of data leaving the browser must update `docs/PRIVACY_POLICY.md` and `docs/PUBLISHING.md` in the same change, and needs the team's OK.
 - Use `chrome.alarms` for anything that waits longer than a few seconds. The background worker sleeps after about 30 seconds idle.
 - Sprites and colors are loaded from the theme (`lib/theme/`). Do not hard-code sprite paths or colors in components.
 - Every color and style follows `docs/THEME.md`: only the palette's exact colors (each has a normal, lighter and darker tone), always through theme tokens (`var(--fo-...)`). No gradients. Backgrounds use only the Background colors and text only the Foreground colors, never mixed with other colors. A color outside the palette may only be made with a CSS filter. No hex codes, `rgb()` or stock Tailwind color classes outside `lib/theme/themes.ts`. Run `npm run check:theme` before you finish; it must pass.
@@ -101,7 +105,9 @@ Stay inside the folders of the job you claimed. If your job needs a change in a 
 - **Stage 2:** sprites. The toolbar, scroll rail, forest grid and graph view make it look and feel like a forest.
 - **Stage 3:** quizzes, animation and quality of life, built in the priority order in `PROGRESS.md`.
 
-Build only items from the current stage. Do not start Stage 3 or anything listed as Future early.
+- **Release (now):** get Wildernotes onto the Chrome Web Store. The "Must fix before submitting" list in `docs/PUBLISHING.md` comes first, then bugs in `BACKLOG.md`, then unfinished Stage 2 and 3 items.
+
+Stages 1 to 3 were the hackathon plan. Do not start anything listed as Future without the user asking.
 
 ## How to work in this repo
 
