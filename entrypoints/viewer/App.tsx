@@ -38,7 +38,7 @@ export function App() {
       {route.page === 'forests' && <ForestGrid />}
       {route.page === 'forest' && <ForestView forestId={route.forestId} />}
       {route.page === 'graph' && <GraphView forestId={route.forestId} />}
-      {route.page === 'quiz' && <QuizView forestId={route.forestId} color={route.color} fruitId={route.fruitId} />}
+      {route.page === 'quiz' && <QuizView forestId={route.forestId} color={route.color} fruitId={route.fruitId} group={route.group} />}
       {route.page === 'settings' && <SettingsPage />}
     </div>
   );

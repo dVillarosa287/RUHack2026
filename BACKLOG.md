@@ -9,9 +9,13 @@ How to use this file:
 
 ## Open decisions (agents: ask the user, do not guess)
 
+### D9. Spaced repetition settings for the apple (team to confirm)
+
+Asked for by the user (2026-10-15): two new fields in the `advanced` record (`AdvancedSettings`, an interface record, not `Settings`): `reviewRepeats` (on/off, default on) and `reviewSpacing` (`shorter`, `normal` or `longer`, times 0.5, 1, 2). `Seed.nextReviewAt` (already in the model) holds the next review; a step counter may also be needed (an optional `Seed.reviewStep`, or worked out from the saved Fruit). It also bends the rule "answers never change a seed": an apple's answer now changes its next review time (never its growth). See `docs/SPEC.md`, Active recall.
+
 ### D8. Data model additions for the new sprites and active recall (team to confirm)
 
-Also (2026-10-11, user's request): screenshots are saved as separate `shot:<seedId>` records (a JPEG data URL) with the `unlimitedStorage` permission, and the extension has the `webRequest` permission (to spot PDFs by their Content-Type). Asked for by the user (2026-10-11): `SpriteType` has four new values (`cat`, `grass`, `owl`, `rock`), and `Settings` has `reviewMinutes` (the active recall time, default 5). `Seed.color` is no longer chosen by the user; it is set to the sprite's color key and nothing reads it. Also (2026-10-11, user's request): `SpriteType` has `house`, and `Seed` has an optional `scale` (the size its sprite was planted at, 0.5 to 2). And `Seed` has an optional `note` (the user's own words typed after planting; not for the lily pad or the apple). Tell the team; nothing existing was removed.
+Also (2026-10-11, user's request): screenshots are saved as separate `shot:<seedId>` records (a JPEG data URL) with the `unlimitedStorage` permission, and the extension has the `webRequest` permission (to spot PDFs by their Content-Type). Asked for by the user (2026-10-11): `SpriteType` has four new values (`cat`, `grass`, `owl`, `rock`), and `Settings` has `reviewMinutes` (the active recall time, default 5). `Seed.color` is no longer chosen by the user; it is set to the sprite's color key and nothing reads it. Also (2026-10-11, user's request): `SpriteType` has `house`, and `Seed` has an optional `scale` (the size its sprite was planted at, 0.5 to 2). And `Seed` has an optional `note` (the user's own words typed after planting; not for the lily pad or the apple). Tell the team; nothing existing was removed. Also (2026-10-15, user's request): two new interface records, `advanced` (`AdvancedSettings`: owl and frog rate and size, default sprite size) and `loadouts` (`LoadoutState`: the user's own toolbar loadouts and the chosen one), kept apart from `Settings` like `toolbar`; `updateFruit` can now change a quiz's `questions`. Lily pad groups are not saved (worked out from roots).
 
 ## Needs fixing
 
@@ -24,6 +28,12 @@ Format:
 - Page where it happens:
 - Demo-blocking: yes / no
 ```
+
+### F13. Memory: what is left after the Oct 15 fixes  [UI] [Data] (agent)
+- What happens: measured with Playwright Chromium, 5 tabs of a long article (memory footprint, as in Chrome's Task Manager). No extension: 31 MB per tab, GPU process 125 MB. Fixed on Oct 15: `will-change: transform` on markers, frog and owl, together with the line boil filter, cost about 65 MB of GPU memory per open tab (GPU 375 MB went to 127 MB); `listRecords` copied the whole database (screenshots too) into every tab several times per page load (3,000 seeds + 60 screenshots: 112-136 MB per tab, now 61-94). Still open: (1) with the in-progress owl/frog/creature changes the GPU process is ~180 MB with the toolbar closed and ~220 MB with it open, versus 127 MB without them; (2) `getSeedsForUrl` still reads every seed in every tab on every storage change; (3) `deleteForest` and `saveScreenshot` still read the whole database (rare actions).
+- What should happen: GPU process close to 125 MB, tabs about 20 MB above a page's own size. For (1), find which new creature code draws or animates while idle (an always-mounted boil or animation). For (2), only re-read seeds when a `seed:` key changed (onChanged gives the keys), or keep an index of seed ids per page (a data-model change, needs the team's OK).
+- Page where it happens: every page, more with many tabs and a big forest.
+- Demo-blocking: no
 
 ### F9. A marker's "Near:" text can include the page's CSS  [Engine] (agent)
 - What happens: `nearbyText` (lib/engine/anchor.ts) read `<style>` contents on a test page, so a marker's text was "Near: Shot testbody{font:18px…".
@@ -41,6 +51,12 @@ Format:
 - What happens: a modal `<dialog>` makes the rest of the page inert, including our toolbar (it is drawn above but not clickable). Also, WXT's `:host{all:initial !important}` overrides our `:host` rule (z-index, pointer-events, font never applied).
 - What should happen: probably fine for the hackathon; note only.
 - Page where it happens: sites with modal dialogs.
+- Demo-blocking: no
+
+### F12. Taking a lily pad out of its group can split the group  [UI] (agent)
+- What happens: choosing "On its own" (or another group) removes all of that pad's roots to other lily pads. If it was the only link between two halves of a group, those halves become two groups.
+- What should happen: probably fine (groups are just roots); could reconnect the halves automatically if users find it surprising.
+- Page where it happens: any page with a group of 3 or more lily pads joined in a chain.
 - Demo-blocking: no
 
 ### F1. Viewer shows "This forest no longer exists" for a forest id typed in by hand  [Viewer] (agent)

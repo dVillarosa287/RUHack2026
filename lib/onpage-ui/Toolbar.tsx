@@ -1,11 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Tool } from '@/lib/engine';
-import type { Forest, SpriteType } from '@/lib/storage';
+import type { Forest, Loadout, SpriteType } from '@/lib/storage';
 import { SPRITES, cap, getWords, spriteLabel, useThemeId } from '@/lib/theme';
 import { ShovelIcon } from '@/lib/theme/ShovelIcon';
 import { ForestIcon, SpriteIcon } from '@/lib/theme/SpriteIcon';
 import { ForestPicker } from './ForestPicker';
-import { HOTBAR, TOOLBAR_LAYOUT, hotbarKey } from './hotbar';
+import { hotbarKey, hotbarOf, toolbarLayout } from './hotbar';
+import { Picker } from './Picker';
 
 interface ToolbarProps {
   forests: Forest[];
@@ -28,6 +29,12 @@ interface ToolbarProps {
   onCreateForest(name: string): void;
   /** The tree button: open the current forest in the viewer. */
   onOpenCurrentForest(): void;
+  /** The loadouts to choose from (the default first) and the one in use, which sets the sprite buttons. */
+  loadouts: Loadout[];
+  loadout: Loadout;
+  onSwitchLoadout(id: string): void;
+  /** "+ Make your own loadout": opens the loadout editor in the viewer's Settings. */
+  onEditLoadouts(): void;
 }
 
 /** Pressing on these does not drag the toolbar. The forest list counts too, so its edges between rows do not start a drag. */
@@ -60,6 +67,7 @@ export function Toolbar(props: ToolbarProps) {
   // The same for resizing.
   const [dragScale, setDragScale] = useState<number | null>(null);
   const scale = dragScale ?? props.scale;
+  const hotbar = hotbarOf(props.loadout);
   const [, setWindowSize] = useState(0);
 
   useEffect(() => {
@@ -153,7 +161,7 @@ export function Toolbar(props: ToolbarProps) {
 
         <div className="fo-panel">
           <div className="fo-tools">
-            {TOOLBAR_LAYOUT.flatMap((row, r) =>
+            {toolbarLayout(hotbar).flatMap((row, r) =>
               row.map((slot, c) => {
                 // Where each button sits is in hotbar.ts. Grid column 5 is the slight gap before the lily pad and apple column.
                 const place = { gridRow: r + 1, gridColumn: c < 4 ? c + 1 : c + 2 };
@@ -174,7 +182,7 @@ export function Toolbar(props: ToolbarProps) {
                 }
                 const tip = SPRITES[slot].tip;
                 const name = spriteLabel(slot, themeId);
-                const key = hotbarKey(HOTBAR.indexOf(slot));
+                const key = hotbarKey(hotbar.indexOf(slot));
                 // aria-label stays the plain English sprite name whatever the theme; the themed name is the hover text.
                 return (
                   <button key={slot} style={place} className="fo-tool" title={tip ? undefined : key ? `${name} (${key})` : name} aria-label={SPRITES[slot].label} data-tip={tip ? `${name}: ${tip}` : undefined} aria-pressed={props.tool === 'plant' && props.spriteType === slot} onClick={() => props.onPickSprite(slot)} onPointerDown={(e) => props.onSpritePointerDown(slot, e)}>
@@ -184,6 +192,19 @@ export function Toolbar(props: ToolbarProps) {
                 );
               }),
             )}
+          </div>
+
+          <div className="fo-loadout-row">
+            <span className="fo-loadout-label">Loadout</span>
+            <Picker
+              small
+              ariaLabel="Loadout"
+              placeholder="Default"
+              currentId={props.loadout.id}
+              onPick={props.onSwitchLoadout}
+              items={props.loadouts.map((l) => ({ id: l.id, label: l.name }))}
+              extra={{ label: '+ Make or edit loadouts', onClick: props.onEditLoadouts }}
+            />
           </div>
 
           <div className="fo-status" role="status">{props.status}</div>

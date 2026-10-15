@@ -2,11 +2,12 @@ import { useEffect, useRef } from 'react';
 import { createLineBoil } from '@/lib/engine';
 import type { Seed } from '@/lib/storage';
 import { artUrl, useThemeId, useWords } from '@/lib/theme';
+import { grabCreature } from './creatureGrab';
 
 const FROG_SITTING = artUrl('frogsit.png');
 const FROG_JUMPING = artUrl('frogjump.png');
 
-// How often the frog rolls the dice, and its chances each time. Raise the chances to see it sooner in a demo.
+// How often the frog rolls the dice, and its chances each time (times the user's "Frog visits" in Advanced settings).
 const CHECK_EVERY_MS = 4000;
 /** Chance that a frog jumps in from off screen, when a lily pad is on screen and there is no frog yet. */
 const ARRIVE_CHANCE = 0.2;
@@ -40,8 +41,11 @@ interface Frog {
  * The frog never asks the page where the text is: it reads where MarkerLayer drew the lily pad's sprite
  * (`data-seed-id`) on every frame, so it moves with the pad when the page scrolls or reflows.
  * It wobbles with the same line boil as the markers. Not in the Minimal theme (its lily pad is a triangle), and not when the user asks for reduced motion.
+ *
+ * The user can drag the frog to another lily pad (it lands on the one nearest where it is dropped), or click it with
+ * the shovel to send it away (creatureGrab.ts). `rate` (0 is never) and `scale` come from Advanced settings.
  */
-export function PondFrog({ seeds }: { seeds: Seed[] }) {
+export function PondFrog({ seeds, digging, rate, scale }: { seeds: Seed[]; digging: boolean; rate: number; scale: number }) {
   const themeId = useThemeId();
   const { frogAlt } = useWords();
   const box = useRef<HTMLDivElement>(null);
@@ -50,7 +54,10 @@ export function PondFrog({ seeds }: { seeds: Seed[] }) {
   const padIds = useRef<string[]>([]);
   padIds.current = seeds.filter((seed) => seed.spriteType === 'lilypad' && seed.kind === 'highlight').map((seed) => seed.id);
   const hasPads = padIds.current.length > 0;
-  const enabled = hasPads && themeId !== 'minimal' && FROG_SITTING !== null && FROG_JUMPING !== null;
+  const enabled = hasPads && rate > 0 && themeId !== 'minimal' && FROG_SITTING !== null && FROG_JUMPING !== null;
+  // Read through refs inside the animation, so changing them does not chase the frog away.
+  const live = useRef({ digging, rate, scale });
+  live.current = { digging, rate, scale };
 
   useEffect(() => {
     const el = box.current;
@@ -58,6 +65,8 @@ export function PondFrog({ seeds }: { seeds: Seed[] }) {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const root = el.getRootNode() as ShadowRoot | Document;
     let frog: Frog | null = null;
+    // Where the user is carrying the frog, in window coordinates, or null when it is not being carried.
+    let carried: { x: number; y: number } | null = null;
 
     // Where a frog sits on this lily pad right now: a bit below the middle of its sprite. Null if it is not drawn.
     const padSpot = (id: string): Spot | null => {
@@ -77,10 +86,10 @@ export function PondFrog({ seeds }: { seeds: Seed[] }) {
     const pick = <T,>(list: T[]): T => list[Math.floor(Math.random() * list.length)]!;
 
     const roll = () => {
-      if (document.hidden) return;
+      if (document.hidden || carried) return;
       if (!frog) {
         const pads = padsOnScreen();
-        if (pads.length === 0 || Math.random() >= ARRIVE_CHANCE) return;
+        if (pads.length === 0 || Math.random() >= ARRIVE_CHANCE * live.current.rate) return;
         const { id, spot } = pick(pads);
         // It comes in from the nearer side of the window, a little above or below the pad.
         const fromLeft = spot.x < window.innerWidth / 2;
@@ -101,6 +110,13 @@ export function PondFrog({ seeds }: { seeds: Seed[] }) {
     let frame = 0;
     const tick = () => {
       frame = requestAnimationFrame(tick);
+      const host = root instanceof ShadowRoot ? root.host.getBoundingClientRect() : { left: 0, top: 0 };
+      if (carried && frog) {
+        if (sitImg.current) sitImg.current.style.display = 'block';
+        if (jumpImg.current) jumpImg.current.style.display = 'none';
+        el.style.transform = `translate(${Math.round(carried.x - host.left)}px, ${Math.round(carried.y - host.top)}px)`;
+        return;
+      }
       if (frog && !padIds.current.includes(frog.padId)) frog = null; // its lily pad was dug up
       const spot = frog ? padSpot(frog.padId) : null;
       if (!frog || !spot) {
@@ -121,10 +137,9 @@ export function PondFrog({ seeds }: { seeds: Seed[] }) {
       }
       if (sitImg.current) sitImg.current.style.display = flying ? 'none' : 'block';
       if (jumpImg.current) jumpImg.current.style.display = flying ? 'block' : 'none';
-      // Spots are on the screen; the frog is placed inside the UI host, so subtract where the host's corner is. That
-      // is right whether the host is fixed to the screen or sits at the top of the page and scrolls with it.
-      const host = root instanceof ShadowRoot ? root.host.getBoundingClientRect() : { left: 0, top: 0 };
-      el.style.width = `${Math.round(spot.size * 0.9)}px`;
+      // Spots are on the screen; the frog is placed inside the UI host, so subtract where the host's corner is (`host`
+      // above). That is right whether the host is fixed to the screen or sits at the top of the page and scrolls with it.
+      el.style.width = `${Math.round(spot.size * 0.9 * live.current.scale)}px`;
       el.style.transform = `translate(${Math.round(x - host.left)}px, ${Math.round(y - host.top)}px)`;
       el.style.visibility = 'visible';
     };
@@ -132,7 +147,24 @@ export function PondFrog({ seeds }: { seeds: Seed[] }) {
     const timer = window.setInterval(roll, CHECK_EVERY_MS);
     // The same wobbly outline as the sprites on the page (MarkerLayer), so the frog looks hand drawn too.
     const stopBoil = createLineBoil([el], root);
+    // Dragged: it hops onto the lily pad on screen nearest to where it was let go. Shovel: it is gone.
+    const stopGrab = grabCreature(el, {
+      isDigging: () => live.current.digging,
+      onDig: () => {
+        frog = null;
+      },
+      onDrag: (x, y) => {
+        carried = { x, y };
+      },
+      onDrop: (x, y) => {
+        carried = null;
+        if (!frog) return;
+        const nearest = padsOnScreen().sort((a, b) => Math.hypot(a.spot.x - x, a.spot.y - y) - Math.hypot(b.spot.x - x, b.spot.y - y))[0];
+        frog = { padId: nearest?.id ?? frog.padId, from: { x, y }, start: performance.now(), duration: HOP_MS, arc: 30 };
+      },
+    });
     return () => {
+      stopGrab();
       stopBoil();
       cancelAnimationFrame(frame);
       window.clearInterval(timer);
@@ -142,7 +174,7 @@ export function PondFrog({ seeds }: { seeds: Seed[] }) {
 
   if (!enabled) return null;
   return (
-    <div ref={box} className="fo-pond-frog" style={{ visibility: 'hidden' }} aria-hidden="true">
+    <div ref={box} className={`fo-pond-frog${digging ? ' fo-dig' : ''}`} title={digging ? 'Send the frog away' : 'Drag the frog to another lily pad'} style={{ visibility: 'hidden' }} aria-hidden="true">
       <img ref={sitImg} src={FROG_SITTING!} alt={frogAlt} />
       <img ref={jumpImg} src={FROG_JUMPING!} alt="" style={{ display: 'none' }} />
     </div>

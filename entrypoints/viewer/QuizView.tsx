@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { isCorrectAnswer, type AiProvider, type QuizMix } from '@/lib/ai';
 import { getWords, spriteLabel, useThemeId, useWords } from '@/lib/theme';
-import type { Question, Seed } from '@/lib/storage';
+import type { PadGroup, Question, Seed } from '@/lib/storage';
+import { seedLabel } from './GraphNodes';
 import { Pond } from './Pond';
+import { Dropdown } from './Dropdown';
 import { QuizGrid } from './QuizGrid';
 import { forestHref, NEW_QUIZ, newQuizHref, playQuizHref, quizHref, settingsHref } from './route';
 import { useQuiz, type QuizMaker } from './useQuiz';
@@ -16,8 +18,8 @@ const mainButton = 'rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-p
  * the next one with each question. Making a quiz is a separate step the user starts, because the AI options send the
  * lily pads' text to the provider; a saved quiz is reused after that.
  */
-export function QuizView({ forestId, color, fruitId }: { forestId: string; color: string; fruitId?: string }) {
-  const { data, fruits, make, making, notice } = useQuiz(forestId, color);
+export function QuizView({ forestId, color, fruitId, group }: { forestId: string; color: string; fruitId?: string; group?: string }) {
+  const { data, fruits, make, addNewPads, making, notice } = useQuiz(forestId, color);
   const themeId = useThemeId();
   const pad = spriteLabel('lilypad', themeId); // "Lily pad", or the theme's own name for it
   const words = getWords(themeId); // "forest" or "folder", by theme
@@ -30,11 +32,12 @@ export function QuizView({ forestId, color, fruitId }: { forestId: string; color
   if (!data) return <p>Loading…</p>;
 
   // Makes the quiz, then plays it straight away.
-  const create = async (maker: QuizMaker, mix?: QuizMix) => {
-    const fruit = await make(maker, mix);
+  const create = async (maker: QuizMaker, mix?: QuizMix, padIds?: string[]) => {
+    const fruit = await make(maker, mix, padIds);
     if (fruit) window.location.hash = playQuizHref(forestId, color, fruit.id);
   };
   const playing = fruitId && fruitId !== NEW_QUIZ ? fruits.find((f) => f.id === fruitId) : undefined;
+  const changes = playing ? data.changes[playing.id] : undefined;
 
   return (
     <>
@@ -52,10 +55,15 @@ export function QuizView({ forestId, color, fruitId }: { forestId: string; color
       ) : !fruitId ? (
         <QuizGrid forestId={forestId} color={color} fruits={fruits} />
       ) : fruitId === NEW_QUIZ ? (
-        <MakeQuiz count={data.pads.length} hasGeminiKey={data.hasGeminiKey} hasCerebrasKey={data.hasCerebrasKey} making={making} onMake={(maker, mix) => void create(maker, mix)} initialSetup={setupFor} />
+        <MakeQuiz pads={data.pads} groups={data.groups} initialGroup={group} hasGeminiKey={data.hasGeminiKey} hasCerebrasKey={data.hasCerebrasKey} making={making} onMake={(maker, mix, padIds) => void create(maker, mix, padIds)} initialSetup={setupFor} />
       ) : playing ? (
+        <>
+        {changes && (changes.newPads.length > 0 || changes.removed > 0) && (
+          <QuizChangesNotice newCount={changes.newPads.length} removed={changes.removed} making={making !== null} onUpdate={() => void addNewPads(playing)} />
+        )}
         <PlayQuiz
-          key={playing.id}
+          // A new key when questions are added, so the quiz starts again with them.
+          key={`${playing.id}:${playing.questions.length}`}
           questions={playing.questions}
           pads={data.pads}
           color={color}
@@ -68,6 +76,7 @@ export function QuizView({ forestId, color, fruitId }: { forestId: string; color
             window.location.hash = newQuizHref(forestId, color);
           }}
         />
+        </>
       ) : (
         <p className="rounded-xl bg-surface p-6 text-ink-muted">This quiz no longer exists.</p>
       )}
@@ -75,27 +84,107 @@ export function QuizView({ forestId, color, fruitId }: { forestId: string; color
   );
 }
 
-/** The start screen: how to make the quiz, with the notice that the Gemini option sends text to Google. */
-function MakeQuiz({ count, hasGeminiKey, hasCerebrasKey, making, onMake, initialSetup }: { count: number; hasGeminiKey: boolean; hasCerebrasKey: boolean; making: QuizMaker | null; onMake(m: QuizMaker, mix?: QuizMix): void; initialSetup: AiProvider | null }) {
+/** Shown above a saved quiz when lily pads were planted or removed since it was made. */
+function QuizChangesNotice({ newCount, removed, making, onUpdate }: { newCount: number; removed: number; making: boolean; onUpdate(): void }) {
+  const pad = spriteLabel('lilypad', useThemeId()).toLowerCase();
+  return (
+    <section className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border-2 border-primary bg-surface p-4 text-sm">
+      <p className="min-w-0 flex-1">
+        {newCount > 0 && <>{newCount === 1 ? `A new ${pad} was` : `${newCount} new ${pad}s were`} added since this quiz was made. </>}
+        {removed > 0 && <>{removed === 1 ? 'One question was' : `${removed} questions were`} taken out because {removed === 1 ? `its ${pad} was` : `their ${pad}s were`} removed.</>}
+      </p>
+      {newCount > 0 && (
+        <button className={mainButton} disabled={making} onClick={onUpdate}>
+          {making ? 'Adding…' : `Add questions for the new ${pad}s`}
+        </button>
+      )}
+    </section>
+  );
+}
+
+/** A short name for a lily pad group: its first pad, and how many pads it has. */
+const groupName = (group: PadGroup, themeId: string) => `Group: ${seedLabel(group.pads[0]!, themeId)} (${group.pads.length})`;
+
+/**
+ * Which lily pads go into the quiz: "Select all", a group (lily pads joined by roots; pads in no group are not in this
+ * list), or any pads ticked by hand.
+ */
+function PadChooser({ pads, groups, chosen, onChange }: { pads: Seed[]; groups: PadGroup[]; chosen: Set<string>; onChange(next: Set<string>): void }) {
+  const themeId = useThemeId();
+  const pad = spriteLabel('lilypad', themeId).toLowerCase();
+  const pickedGroup = groups.find((g) => g.pads.length === chosen.size && g.pads.every((p) => chosen.has(p.id)));
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-semibold">
+          {chosen.size} of {pads.length} {pad}s chosen
+        </span>
+        <button className={button} onClick={() => onChange(new Set(pads.map((p) => p.id)))}>Select all {pad}s</button>
+        {groups.length > 0 && (
+          <Dropdown
+            ariaLabel={`${pad} groups`}
+            className="w-64"
+            placeholder="Choose a group…"
+            value={pickedGroup?.id ?? ''}
+            options={groups.map((g) => ({ value: g.id, label: groupName(g, themeId) }))}
+            onChange={(id) => {
+              const g = groups.find((x) => x.id === id);
+              if (g) onChange(new Set(g.pads.map((p) => p.id)));
+            }}
+          />
+        )}
+      </div>
+      <ul className="max-h-56 space-y-1 overflow-y-auto rounded-lg border border-edge bg-surface-alt p-2">
+        {pads.map((p) => (
+          <li key={p.id}>
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="accent-primary"
+                checked={chosen.has(p.id)}
+                onChange={(e) => {
+                  const next = new Set(chosen);
+                  if (e.target.checked) next.add(p.id);
+                  else next.delete(p.id);
+                  onChange(next);
+                }}
+              />
+              <span className="min-w-0 flex-1 truncate">{seedLabel(p, themeId)}</span>
+              {p.pageTitle && <span className="max-w-[40%] truncate text-xs text-ink-muted">{p.pageTitle}</span>}
+            </label>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** The start screen: which lily pads, how to make the quiz, with the notice that the Gemini option sends text to Google. */
+function MakeQuiz({ pads, groups, initialGroup, hasGeminiKey, hasCerebrasKey, making, onMake, initialSetup }: { pads: Seed[]; groups: PadGroup[]; initialGroup?: string; hasGeminiKey: boolean; hasCerebrasKey: boolean; making: QuizMaker | null; onMake(m: QuizMaker, mix: QuizMix | undefined, padIds: string[]): void; initialSetup: AiProvider | null }) {
   const themeId = useThemeId();
   const pad = spriteLabel('lilypad', themeId).toLowerCase(); // "lily pad", or the theme's own name for it
   const words = getWords(themeId);
   // The AI options first ask how many questions of each style; this is the provider whose setup is open.
   const [setup, setSetup] = useState<AiProvider | null>(initialSetup);
-  if (setup) return <QuizSetup provider={setup} padCount={count} making={making} onCreate={(mix) => onMake(setup, mix)} onBack={() => setSetup(null)} />;
+  // Every lily pad to start with, or the group the address asks for ("Quiz this group" in the graph).
+  const [chosen, setChosen] = useState<Set<string>>(() => new Set((groups.find((g) => g.id === initialGroup)?.pads ?? pads).map((p) => p.id)));
+  const padIds = pads.filter((p) => chosen.has(p.id)).map((p) => p.id);
+  const count = padIds.length;
+  if (setup) return <QuizSetup provider={setup} padCount={count} making={making} onCreate={(mix) => onMake(setup, mix, padIds)} onBack={() => setSetup(null)} />;
   return (
     <section className="space-y-4 rounded-xl border-2 border-edge bg-surface p-5">
+      <PadChooser pads={pads} groups={groups} chosen={chosen} onChange={setChosen} />
       <p>
-        {count} {count === 1 ? pad : `${pad}s`} in this {words.forest}. Without AI each one becomes a question (up to 10); with AI you choose how many questions and which styles.
+        {count} {count === 1 ? pad : `${pad}s`} chosen in this {words.forest}. Without AI each one becomes a question (up to 10); with AI you choose how many questions and which styles.
       </p>
       <div className="flex flex-wrap gap-2">
-        <button className={mainButton} disabled={!hasGeminiKey || making !== null} onClick={() => setSetup('gemini')}>
+        <button className={mainButton} disabled={!hasGeminiKey || making !== null || count === 0} onClick={() => setSetup('gemini')}>
           Make the quiz with Gemini
         </button>
-        <button className={button} disabled={!hasCerebrasKey || making !== null} onClick={() => setSetup('cerebras')}>
+        <button className={button} disabled={!hasCerebrasKey || making !== null || count === 0} onClick={() => setSetup('cerebras')}>
           Make the quiz with Cerebras
         </button>
-        <button className={button} disabled={making !== null} onClick={() => onMake('fill-blank')}>
+        <button className={button} disabled={making !== null || count === 0} onClick={() => onMake('fill-blank', undefined, padIds)}>
           {making === 'fill-blank' ? 'Making…' : 'Make it without AI (fill in the blank)'}
         </button>
       </div>
@@ -389,15 +478,15 @@ function MatchingAnswer({ question, given, onCheck }: { question: Question; give
         return (
           <div key={i} className={`flex flex-wrap items-center gap-2 rounded-lg border bg-surface-alt px-3 py-2 ${checked ? (right ? 'border-primary border-2' : 'border-danger-soft border-2') : 'border-edge'}`}>
             <span className="min-w-0 flex-1">{checked ? (right ? '✓ ' : '✗ ') : ''}{pair.left}</span>
-            <select
+            <Dropdown
+              ariaLabel={pair.left}
+              className="max-w-full"
               disabled={checked}
-              className="max-w-full rounded-lg border border-edge bg-surface px-2 py-1"
+              placeholder="Choose…"
               value={picks[i] ?? ''}
-              onChange={(e) => setPicks((p) => p.map((v, j) => (j === i ? e.target.value : v)))}
-            >
-              <option value="">Choose…</option>
-              {question.choices.map((choice) => <option key={choice} value={choice}>{choice}</option>)}
-            </select>
+              options={question.choices.map((choice) => ({ value: choice, label: choice }))}
+              onChange={(value) => setPicks((p) => p.map((v, j) => (j === i ? value : v)))}
+            />
             {checked && !right && <span className="w-full text-sm text-ink-muted">Correct: <span className="font-semibold text-primary">{pair.right}</span></span>}
           </div>
         );

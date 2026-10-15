@@ -1,14 +1,14 @@
 import { useEffect, useRef, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 import type { Tool } from '@/lib/engine';
 import type { SpriteType } from '@/lib/storage';
-import { HOTBAR, hotbarKey } from './hotbar';
+import { hotbarKey } from './hotbar';
 
 /** One thing the user did that Ctrl+Z can take back and Ctrl+Shift+Z can do again. */
 export type UndoableAction = { undo(): Promise<void>; redo(): Promise<void> };
 
 /**
  * Keyboard shortcuts, only while the toolbar is open:
- *   1-9 and 0   pick the hotbar sprite in that slot (see HOTBAR)
+ *   1-9 and 0   pick the hotbar sprite in that slot (the chosen loadout, see hotbar.ts)
  *   Ctrl/Cmd+Z  undo,  Ctrl/Cmd+Shift+Z  redo
  *   Esc         put the tool down
  *   -  and  +   make the sprite about to be planted smaller / larger (planted ones keep their size)
@@ -16,6 +16,7 @@ export type UndoableAction = { undo(): Promise<void>; redo(): Promise<void> };
  */
 export function useKeybinds(props: {
   enabled: boolean; // the toolbar is open
+  hotbar: SpriteType[]; // the sprites of the loadout in use, in key order
   tool: Tool;
   setSpriteType: (type: SpriteType) => void;
   setTool: (tool: Tool) => void;
@@ -31,7 +32,7 @@ export function useKeybinds(props: {
     if (!props.enabled) return; // toolbar closed: no listener at all, every key belongs to the site
     const onKey = (e: KeyboardEvent) => {
       if (isTypingInPage(e)) return;
-      const { tool, setSpriteType, setTool, setPlantScale, history, undone } = latest.current;
+      const { tool, hotbar, setSpriteType, setTool, setPlantScale, history, undone } = latest.current;
 
       // Undo and redo. Only take the key when there is really something to undo or redo; otherwise the site gets it.
       if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'z') {
@@ -49,7 +50,7 @@ export function useKeybinds(props: {
 
       // Number keys pick a sprite. e.key is the typed character, so it also works on the numpad and on other keyboard layouts.
       if (/^[0-9]$/.test(e.key)) {
-        const type = HOTBAR.find((_, index) => hotbarKey(index) === e.key);
+        const type = hotbar.find((_, index) => hotbarKey(index) === e.key);
         if (!type || e.repeat) return; // no sprite on that slot, or the key is just being held down
         e.preventDefault();
         setSpriteType(type);

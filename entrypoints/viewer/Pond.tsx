@@ -5,8 +5,12 @@ import { SpriteIcon } from '@/lib/theme/SpriteIcon';
 
 const FROG_SITTING = artUrl('frogsit.png');
 const FROG_JUMPING = artUrl('frogjump.png');
-/** Each pad's fixed width in px, so many questions scroll instead of squashing. */
-const PAD_W = 72;
+/** The narrowest a pad's space gets, in px: past that, many questions scroll instead of squashing. */
+const MIN_PAD_W = 72;
+/** The widest a pad's space gets, so a short quiz is spread out but its pads still look like one row. */
+const MAX_PAD_W = 200;
+/** How much of the pond's width a short quiz's row may use, so its pads never sit at the very edges. */
+const ROW_SHARE = 0.7;
 
 interface PondProps {
   /** How many lily pads (one per question). */
@@ -36,14 +40,20 @@ export function Pond({ count, color, at, results, furthest = 0, onPick }: PondPr
   // Only the very first pad on the first load has no hop; going back to it later hops like any other move.
   const firstLoad = useRef(true);
   const [overflowing, setOverflowing] = useState(false);
+  const [pondWidth, setPondWidth] = useState(0);
+  // Few questions: the pads spread out over most of the pond. Many: each gets MIN_PAD_W and the row scrolls.
+  const PAD_W = Math.round(Math.min(MAX_PAD_W, Math.max(MIN_PAD_W, (pondWidth * ROW_SHARE) / Math.max(1, count))));
 
   useEffect(() => {
     const el = scroller.current;
     if (!el) return;
-    const observer = new ResizeObserver(() => setOverflowing(el.scrollWidth > el.clientWidth + 1));
+    const observer = new ResizeObserver(() => {
+      setPondWidth(el.clientWidth);
+      setOverflowing(el.scrollWidth > el.clientWidth + 1);
+    });
     observer.observe(el);
     return () => observer.disconnect();
-  }, [count]);
+  }, [count, PAD_W]);
 
   useEffect(() => {
     if (at !== 0) firstLoad.current = false;

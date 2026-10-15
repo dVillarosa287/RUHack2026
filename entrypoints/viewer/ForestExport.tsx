@@ -3,6 +3,7 @@ import { Document, HeadingLevel, Packer, Paragraph } from 'docx';
 import { jsPDF } from 'jspdf';
 import { aiForestSummary, type AiProvider } from '@/lib/ai';
 import { getSettings, type Forest, type Seed } from '@/lib/storage';
+import { Dropdown } from './Dropdown';
 
 /** Raw HTML fragments were accidentally saved by a few page integrations; keep them out of AI and exports. */
 export function isGarbageSeed(seed: Seed): boolean {
@@ -148,10 +149,10 @@ export function ForestExport({ forest, seeds }: { forest: Forest; seeds: Seed[] 
         <div className="mt-2 space-y-2 px-1">
           <p className="text-xs text-ink-muted">{usableSeeds.length} usable {usableSeeds.length === 1 ? 'node' : 'nodes'}; raw HTML nodes are skipped.</p>
           <div className="flex gap-2">
-            <select className="rounded-lg border border-edge bg-surface-alt px-2 py-1.5 text-xs" value={provider} disabled={busy} onChange={(event) => setProvider(event.target.value as AiProvider)}>
-              <option value="gemini" disabled={!keys.gemini}>Gemini</option>
-              <option value="cerebras" disabled={!keys.cerebras}>Cerebras</option>
-            </select>
+            <Dropdown size="sm" ariaLabel="AI provider" className="w-28" value={provider} disabled={busy} onChange={(value) => setProvider(value as AiProvider)} options={[
+                { value: 'gemini', label: 'Gemini', disabled: !keys.gemini },
+                { value: 'cerebras', label: 'Cerebras', disabled: !keys.cerebras },
+              ]} />
             <button className="min-w-0 flex-1 rounded-lg bg-primary px-2 py-1.5 text-sm font-semibold text-primary-ink hover:bg-primary-strong disabled:opacity-60" disabled={busy || usableSeeds.length === 0 || !keys[provider]} onClick={() => void summarize()}>
               {busy ? `Asking ${provider === 'cerebras' ? 'Cerebras' : 'Gemini'}…` : summary ? 'Regenerate summary' : `Summarize with ${provider === 'cerebras' ? 'Cerebras' : 'Gemini'}`}
             </button>

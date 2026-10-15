@@ -383,6 +383,30 @@
     outline: 2px solid var(--fo-primary);
 }
 
+/* The loadout drop-down under the sprite buttons (Picker.tsx, small). */
+.fo-loadout-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.fo-loadout-label {
+    flex: none;
+    font-size: 12px;
+    color: var(--fo-ink-muted);
+}
+
+.fo-picker-small .fo-picker-button {
+    height: 26px;
+    font-size: 12px;
+}
+
+.fo-picker-small .fo-picker-option {
+    min-height: 26px;
+    font-size: 12px;
+}
+
 .fo-status {
     font-size: 12px;
     font-weight: 600;
@@ -409,7 +433,6 @@
     cursor: grab;
     user-select: none;
     touch-action: none;
-    will-change: transform;
     font-family: "Crafty Girls", sans-serif;
 }
 
@@ -432,7 +455,7 @@
 
 /* The frog that jumps onto lily pads now and then (PondFrog.tsx), and the owl that flies onto buttons and text (PageOwl.tsx).
    Like a marker each is placed inside the host (`absolute`), and its bottom middle sits on the spot its component sets with
-   `transform` on every frame. They ignore the mouse, so whatever is under them still works. */
+   `transform` on every frame. */
 .fo-pond-frog,
 .fo-page-owl {
   position: absolute;
@@ -440,8 +463,22 @@
   left: 0;
   translate: -50% -100%;
   filter: drop-shadow(0 2px 3px var(--fo-shadow));
+  /* No `will-change` here or on .fo-marker: with the line boil's SVG filter it gave each one its own GPU layer, about
+     65 MB of GPU memory per open tab. */
+  /* The user can drag a creature somewhere else, or dig it up with the shovel (creatureGrab.ts). */
+  cursor: grab;
+  touch-action: none;
+}
+
+.fo-pond-frog.fo-dig,
+.fo-page-owl.fo-dig {
+  cursor: pointer;
+}
+
+/* While carried it ignores the mouse, so the page under it can be found where it is dropped. */
+.fo-creature-dragging {
   pointer-events: none;
-  will-change: transform;
+  cursor: grabbing;
 }
 .fo-pond-frog img,
 .fo-page-owl img {
@@ -450,17 +487,16 @@
   height: auto;
 }
 
-/* A copy of the chosen sprite that follows the mouse, a little to the top right of it and see-through, so the
-   spot you are about to click stays visible. It ignores the mouse, so clicks reach the page. CursorSprite
-   moves it on every mouse move. Its bottom left corner stays 8px right of and 8px above the mouse at every size:
-   the box takes the sprite's size and `translate` lifts it by its own height. */
+/* A see-through copy of the chosen sprite that follows the mouse. It ignores the mouse, so clicks reach the page.
+   CursorSprite moves it on every mouse move. Its bottom middle sits on the mouse, exactly like a planted .fo-marker,
+   so the sprite lands where it is shown at every size (it used to sit to the top right, and that gap grew with - and +,
+   so bigger sprites landed off center). */
 .fo-cursor-sprite {
   position: fixed;
   top: 0;
   left: 0;
   display: flex;
-  margin: -8px 0 0 8px;
-  translate: 0 -100%;
+  translate: -50% -100%;
   opacity: 0.6;
   filter: drop-shadow(0 4px 6px var(--fo-shadow));
   pointer-events: none;
@@ -757,6 +793,46 @@
   margin-top: 4px;
   font-size: 11px;
   color: var(--fo-ink-muted);
+}
+
+/* The lily pad's group picker (PadGroupPicker.tsx), in a note card under the highlighted text. */
+.fo-group-title {
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.fo-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.fo-group-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fo-ink);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fo-group-option:hover,
+.fo-group-option:focus-visible {
+  background: var(--fo-primary-soft);
+  filter: brightness(1.15);
+}
+
+.fo-group-option[aria-pressed='true'] {
+  background: var(--fo-surface);
 }
 
 /* The dashed box dragged over a part of the page that has no text, to screenshot it (lib/engine/screenshot.ts). */

@@ -15,8 +15,8 @@ interface CursorSpriteProps {
 const SIZE = 38;
 
 /**
- * A copy of the chosen sprite that follows the mouse, a little to its top right and see-through (see
- * `.fo-cursor-sprite` in toolbar.css), so it looks like the user is carrying it onto the page without hiding the spot. It ignores the mouse, so clicks go straight through to the page. It follows with a direct style change
+ * A see-through copy of the chosen sprite that follows the mouse (see `.fo-cursor-sprite` in toolbar.css), drawn
+ * exactly where a click will plant it: its bottom middle on the mouse, at the size it will be planted. It ignores the mouse, so clicks go straight through to the page. It follows with a direct style change
  * instead of React state, so it does not redraw on every mouse move. Unlike the markers it stays in window
  * coordinates (`position: fixed`): it belongs to the mouse, which stays still on the screen while the page scrolls.
  */

@@ -30,11 +30,12 @@ export default defineBackground(() => {
   });
 
   browser.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
-    const { type, forestId } = (message ?? {}) as { type?: string; forestId?: string };
+    const { type, forestId, page } = (message ?? {}) as { type?: string; forestId?: string; page?: 'settings' };
 
     // Content scripts cannot open extension pages themselves, so they ask us to.
     if (type === 'forest:open-viewer') {
-      const hash = forestId ? `#/forest/${forestId}` : '';
+      // `page: 'settings'` opens the Settings page (the toolbar's "+ Make or edit loadouts").
+      const hash = page === 'settings' ? '#/settings' : forestId ? `#/forest/${forestId}` : '';
       void browser.tabs.create({ url: browser.runtime.getURL('/viewer.html' as never) + hash });
       return false;
     }

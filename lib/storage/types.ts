@@ -111,6 +111,37 @@ export interface ToolbarState {
   scale: number;
 }
 
+/**
+ * Advanced settings: things a user may want to tune or turn off (Settings page, "Advanced settings"). Kept in their
+ * own record, like ToolbarState, so the shared Settings shape does not change. Every new tunable goes here (CLAUDE.md).
+ */
+export interface AdvancedSettings {
+  /** How often the owl visits a page while the toolbar is open: 0 is never, 1 is normal, 2 is twice as often. */
+  owlRate: number;
+  /** The owl's size, 1 is normal. */
+  owlScale: number;
+  /** How often a frog jumps onto a lily pad: 0 is never, 1 is normal. */
+  frogRate: number;
+  /** The frog's size next to its lily pad, 1 is normal. */
+  frogScale: number;
+  /** The size new sprites are planted at (- and + still change it on the page), 1 is normal, 0.5 to 2. */
+  plantScale: number;
+}
+
+/** A named set of sprites for the toolbar, in order. The first ten get the keys 1 to 9 and 0. */
+export interface Loadout {
+  id: string;
+  name: string;
+  sprites: SpriteType[];
+}
+
+/** The user's own loadouts and which one the toolbar shows. Interface state, in its own record. The default loadout is not saved here (lib/onpage-ui/hotbar.ts). */
+export interface LoadoutState {
+  /** 'default', or the id of one of `custom`. */
+  currentId: string;
+  custom: Loadout[];
+}
+
 export interface Settings {
   currentForestId: string | null;
   /** The three most recently used sprites, newest first. */

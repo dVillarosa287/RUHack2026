@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
+import { getHighlightRange } from '@/lib/engine';
 import type { Seed } from '@/lib/storage';
 
 const GAP_PX = 6;
@@ -7,8 +8,9 @@ const EDGE_PX = 8;
 /**
  * Keeps a card just under its seed's sprite. The card is never placed from a saved screen spot: on every frame it
  * finds the sprite MarkerLayer drew for the seed (which follows the seed's anchor) and sits next to it. `onShown` runs the first time the card becomes visible.
+ * `underText` puts a highlight's card just under its highlighted text instead (the lily pad's group picker).
  */
-function useFollowMarker(card: RefObject<HTMLDivElement | null>, seedId: string, onShown?: () => void) {
+export function useFollowMarker(card: RefObject<HTMLDivElement | null>, seedId: string, onShown?: () => void, underText = false) {
   const shownOnce = useRef(false);
   useEffect(() => {
     let frame = 0;
@@ -27,7 +29,9 @@ function useFollowMarker(card: RefObject<HTMLDivElement | null>, seedId: string,
         const below = spot.bottom + GAP_PX;
         const onText = marker.classList.contains('fo-on-text');
         let y = onText ? above : below;
-        if (onText && y < EDGE_PX) y = below;
+        const textBottom = underText && onText ? getHighlightRange(seedId)?.getBoundingClientRect().bottom : undefined;
+        if (textBottom !== undefined) y = textBottom + GAP_PX + height > window.innerHeight - EDGE_PX ? above : textBottom + GAP_PX;
+        else if (onText && y < EDGE_PX) y = below;
         else if (!onText && y + height > window.innerHeight - EDGE_PX) y = above;
         // x and y are window coordinates; the card is placed in page coordinates (like the markers, see .fo-note in
         // toolbar.css), so it scrolls with its sprite without waiting for the next frame. Only write what changed.
@@ -48,7 +52,7 @@ function useFollowMarker(card: RefObject<HTMLDivElement | null>, seedId: string,
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [card, seedId, onShown]);
+  }, [card, seedId, onShown, underText]);
 }
 
 /**

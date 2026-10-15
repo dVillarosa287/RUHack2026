@@ -5,15 +5,18 @@
 import { browser } from 'wxt/browser';
 import { DEFAULT_THEME_ID } from '@/lib/theme/themes';
 import { cleanUrl } from './url';
-import type { Folder, Forest, Fruit, Root, Seed, SeedInput, Settings, ToolbarState } from './types';
+import type { AdvancedSettings, Folder, Forest, Fruit, LoadoutState, Root, Seed, SeedInput, Settings, ToolbarState } from './types';
 
 export * from './types';
 export { cleanUrl } from './url';
+export { padGroups, type PadGroup } from './padGroups';
 
 const PREFIX = { forest: 'forest:', folder: 'folder:', seed: 'seed:', root: 'root:', fruit: 'fruit:', shot: 'shot:' } as const;
 const SETTINGS_KEY = 'settings';
 const PENDING_JUMP_KEY = 'pendingJump';
 const TOOLBAR_KEY = 'toolbar';
+const ADVANCED_KEY = 'advanced';
+const LOADOUTS_KEY = 'loadouts';
 const DEFAULT_FOREST_ID = 'forest-default';
 const PENDING_JUMP_MAX_AGE_MS = 60_000;
 
@@ -35,8 +38,12 @@ function newId(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Reads only the records whose key starts with `prefix`. It lists the key names first (getKeys, Chrome 130+) and
+// fetches just those, instead of copying the whole database (screenshots included) into every tab each time.
+// That copy happened several times per page load in every open tab and pushed tabs past 100 MB with a big forest.
 async function listRecords<T>(prefix: string): Promise<T[]> {
-  const all = await browser.storage.local.get(null);
+  const local = browser.storage.local;
+  const all = typeof local.getKeys === 'function' ? await local.get((await local.getKeys()).filter((key) => key.startsWith(prefix))) : await local.get(null);
   return Object.entries(all)
     .filter(([key]) => key.startsWith(prefix))
     .map(([, value]) => value as T);
@@ -225,8 +232,8 @@ export async function saveFruit(input: Omit<Fruit, 'id' | 'createdAt' | 'name'>)
   return fruit;
 }
 
-/** Changes a quiz's name or icon. */
-export async function updateFruit(id: string, patch: Partial<Pick<Fruit, 'name' | 'icon'>>): Promise<void> {
+/** Changes a quiz's name or icon, or its questions (when new lily pads are added to it). */
+export async function updateFruit(id: string, patch: Partial<Pick<Fruit, 'name' | 'icon' | 'questions'>>): Promise<void> {
   const current = await readRecord<Fruit>(PREFIX.fruit + id);
   if (!current) return;
   await writeRecord(PREFIX.fruit + id, { ...current, ...patch });
@@ -271,6 +278,33 @@ export async function updateToolbarState(patch: Partial<ToolbarState>): Promise<
   await writeRecord(TOOLBAR_KEY, updated);
   return updated;
 }
+
+export const DEFAULT_ADVANCED: AdvancedSettings = { owlRate: 1, owlScale: 1, frogRate: 1, frogScale: 1, plantScale: 1 };
+
+/** The advanced settings (owl and frog, default sprite size). Missing values are the defaults. */
+export async function getAdvancedSettings(): Promise<AdvancedSettings> {
+  return { ...DEFAULT_ADVANCED, ...(await readRecord<Partial<AdvancedSettings>>(ADVANCED_KEY)) };
+}
+
+export async function updateAdvancedSettings(patch: Partial<AdvancedSettings>): Promise<AdvancedSettings> {
+  const updated = { ...(await getAdvancedSettings()), ...patch };
+  await writeRecord(ADVANCED_KEY, updated);
+  return updated;
+}
+
+/** The user's own toolbar loadouts, and which one is in use ('default' until they pick another). */
+export async function getLoadouts(): Promise<LoadoutState> {
+  return { currentId: 'default', custom: [], ...(await readRecord<Partial<LoadoutState>>(LOADOUTS_KEY)) };
+}
+
+export async function updateLoadouts(patch: Partial<LoadoutState>): Promise<LoadoutState> {
+  const updated = { ...(await getLoadouts()), ...patch };
+  await writeRecord(LOADOUTS_KEY, updated);
+  return updated;
+}
+
+/** A new id for a loadout. */
+export const newLoadoutId = newId;
 
 /** Calls `callback` whenever anything in storage changes, in any tab or page. Returns a function that stops listening. */
 export function onDataChanged(callback: () => void): () => void {

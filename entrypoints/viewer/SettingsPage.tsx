@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { CEREBRAS_MODEL, GEMINI_MODEL, testAiKey, type AiProvider } from "@/lib/ai";
 import { getSettings, updateSettings } from "@/lib/storage";
 import { DEFAULT_THEME_ID, THEMES, useWords } from "@/lib/theme";
+import { AdvancedSettings } from "./AdvancedSettings";
+import { Dropdown } from "./Dropdown";
+import { LoadoutEditor } from "./LoadoutEditor";
 
 /** The public copy of docs/PRIVACY_POLICY.md. The same link goes on the Chrome Web Store listing. */
 const PRIVACY_POLICY_URL = "https://github.com/dVillarosa287/RUHack2026/blob/main/docs/PRIVACY_POLICY.md";
@@ -215,17 +218,13 @@ export function SettingsPage() {
           Choose your preferred color scheme and visual appearance for the app.
         </p>
         <div className="flex items-center gap-3">
-          <select
-            className="rounded-lg border border-edge bg-surface-alt px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary"
+          <Dropdown
+            ariaLabel="Theme"
+            className="w-56"
             value={theme}
-            onChange={(e) => handleThemeChange(e.target.value)}
-          >
-            {Object.values(THEMES).map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+            options={Object.values(THEMES).map((t) => ({ value: t.id, label: t.name }))}
+            onChange={handleThemeChange}
+          />
         </div>
       </section>
 
@@ -236,22 +235,26 @@ export function SettingsPage() {
         <p className="text-sm text-ink-muted">
           {words.recallHelp}
         </p>
-        <select
-          className="rounded-lg border border-edge bg-surface-alt px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary"
-          value={reviewMinutes}
-          onChange={(e) => {
-            const minutes = Number(e.target.value);
+        <Dropdown
+          ariaLabel="Active recall time"
+          className="w-56"
+          value={String(reviewMinutes)}
+          options={REVIEW_CHOICES.map(([minutes, label]) => ({ value: String(minutes), label }))}
+          onChange={(value) => {
+            const minutes = Number(value);
             setReviewMinutes(minutes);
             void updateSettings({ reviewMinutes: minutes });
           }}
-        >
-          {REVIEW_CHOICES.map(([minutes, label]) => (
-            <option key={minutes} value={minutes}>
-              {label}
-            </option>
-          ))}
-        </select>
+        />
       </section>
+
+      <br />
+
+      <LoadoutEditor />
+
+      <br />
+
+      <AdvancedSettings />
     </>
   );
 }

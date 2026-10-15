@@ -99,6 +99,16 @@ Entry format:
 
 ### On-page UI and art notes
 
+- [Oct 15, memory + cursor] (Teobobeo99)
+  - Did: (1) RAM: removed `will-change: transform` from `.fo-marker`, `.fo-pond-frog` and `.fo-page-owl` (`toolbar.css`); with the line boil's SVG filter it cost ~65 MB of GPU memory per open tab (5 tabs: GPU process 375 MB went to 127 MB, same as no extension). `listRecords` (`lib/storage/index.ts`) now reads only matching keys with `storage.local.getKeys()` instead of the whole database (big forest: 112-136 MB per tab went to 61-94). (2) The sprite on the mouse now sits bottom-middle on the cursor, exactly where it will be planted (`.fo-cursor-sprite`, `CursorSprite.tsx`); its old top-right offset grew with - and +, so big sprites landed off center.
+  - Others can use / need to know: don't put `will-change` on anything that has the line boil. What's left is in `BACKLOG.md` F13: with the in-progress creature changes the GPU process sits at ~180-220 MB again. The measuring script was a scratch file (Playwright + `top` memory footprint), not committed.
+  - Need from someone else: whoever is working on owl/frog/loadouts: check `toolbar.css` still has all your edits (one restore around 02:28 may have overlapped a write), and see F13 (1).
+
+- [Oct 15] (Teobobeo99)
+  - Did: loadouts on the toolbar (`hotbar.ts` `DEFAULT_LOADOUT`, `toolbarLayout`, a "Loadout" drop-down; `Picker.tsx` is now the shared drop-down, `ForestPicker` uses it); owl and frog can be dragged or dug up (`creatureGrab.ts`), with rates and sizes from Advanced settings; clicking a lily pad opens `PadGroupPicker` under its text; the default plant size comes from Advanced settings.
+  - Others can use / need to know: any new creature should use `grabCreature`. `useFollowMarker` (`SeedNote.tsx`) is exported, with `underText`. The background's `forest:open-viewer` message takes `page: 'settings'`. Tested with a Playwright script in Chromium (all checks pass); creatures now take the mouse, so they can cover a click target under them.
+  - Need from someone else: a person to try it in Chrome.
+
 - [Oct 11] (Teobobeo99)
   - Did: an owl on the page (`lib/onpage-ui/PageOwl.tsx`, `.fo-page-owl` in `toolbar.css`, one line in `App.tsx`). While the toolbar is open, now and then an owl dives down from above the window and sits on top of a button or on the first line of a paragraph, heading or list item; it may fly to another perch or away. Flying uses `owlfly.png` turned to face its way, sitting uses `owl.png`. Art per theme from `owlArt(themeId)` (`lib/theme/index.ts`): Jungle uses `jungle-images/`, every other theme (Minimal too) `forest-images/`; `wxt.config.ts` now publishes those folders as `sprites/forest/` and `sprites/jungle/`.
   - Others can use / need to know: chances are constants at the top of `PageOwl.tsx` (raise `ARRIVE_CHANCE` for a demo). Off with reduced motion and when the toolbar is closed. Tested in Chromium with chances at 100% in Jungle, Night Forest and Minimal (arrives, sits on text and on a button, hops, leaves, comes back, goes when the toolbar closes). `compile`, `build` and `check:theme` pass.
@@ -276,6 +286,21 @@ Entry format:
 
 ### Viewer notes
 
+- [Oct 15, later] (Teobobeo99)
+  - Did: `Pond.tsx` spreads the lily pads over about 70% of the pond's width for short quizzes (each pad's space 72 to 200px, from the pond's measured width); long quizzes still scroll at 72px.
+  - Others can use / need to know: constants `MIN_PAD_W`, `MAX_PAD_W`, `ROW_SHARE` at the top of `Pond.tsx`. Compile and build pass; not yet checked in Chrome.
+  - Need from someone else: nothing
+
+- [Oct 15, dropdowns] (Teobobeo99)
+  - Did: every native `<select>` in the viewer is replaced by `Dropdown.tsx` (themed list like the toolbar's forest picker: arrow keys, Home/End, Esc, click outside closes, opens upward near the bottom): Settings (theme, active recall time), NodeDetail (folder), QuizView (matching), ForestExport and GrowFromLink (AI provider). Removed the `select option` rule from `style.css`.
+  - Others can use / need to know: use `<Dropdown value options onChange />` (options are `{ value, label, disabled? }`, `size="sm"` for the small AI-panel fields) instead of `<select>`. Tested in Chromium: settings page has 0 selects, theme and recall time pick and save, closes on outside click.
+  - Need from someone else: nothing.
+
+- [Oct 15] (Teobobeo99)
+  - Did: `seedLabel` falls back to `note`; "Change sprite" and a lily pad "Group" section with "Quiz this group" in `NodeDetail.tsx`; the new-quiz page chooses pads (`PadChooser`, `?group=<padId>` in `route.ts`); `QuizChangesNotice` + `addNewPads` (`useQuiz.ts`) add questions for new pads only; Settings has `LoadoutEditor.tsx` and `AdvancedSettings.tsx`.
+  - Others can use / need to know: `make(maker, mix, padIds)` takes the chosen pads. `updateFruit` can now patch `questions`. Groups come from `padGroups(seeds, roots)` in `@/lib/storage`. Not tested with a real AI key.
+  - Need from someone else: a person to try it in Chrome, with a Gemini key.
+
 - [Oct 15, evening] (roshan714)
   - Did: `QuizSetup` (`QuizView.tsx`): counts start at 0, each capped at total minus the others, `fit()` lowers them when the total drops, "Random questions: N" replaces "x of N chosen", and random ones get a random style in `create` before `onCreate`. `Pond.tsx`: 72px pads in a scrolling row (`.fo-pond-scroll` in `quiz.css`), ‹ › buttons when it overflows, follows the frog, `furthest`/`onPick` make earlier pads clickable. `PlayQuiz`: answers stored at index `at`, `reached` state, "Next" on an earlier answered question.
   - Others can use / need to know: the pond box is now `h-44` (was `h-36`), because the scrolling row clips the frog's hop otherwise. `fo-still` only on the very first load. Not yet tested in Chrome.
@@ -446,6 +471,11 @@ Entry format:
   - Need from someone else: nothing
 
 ### Data, AI and integration notes
+
+- [Oct 15] (Teobobeo99)
+  - Did: interviewed the user about missing features and wrote down the answers in `docs/SPEC.md`, `PROGRESS.md` ("Release additions" under Stage 3), `BACKLOG.md` (D9) and `docs/DIVIDING_WORK.md`. No code changed.
+  - Others can use / need to know: for release, JSON export/import (one forest per file), search inside a forest, quiz delete, a welcome tab and apple spaced repetition are wanted. Frog summaries/voice, AI-suggested roots and Markdown export are now Future. Sprout and mushroom are plain note sprites.
+  - Need from someone else: the team's OK on D9 before spaced repetition is built.
 
 - [Oct 15, later] (roshan714)
   - Did: `Fruit.icon` (optional, approved) and `updateFruit(id, { name, icon })`. `quizQuestions(key, sources, provider, mix?)`: with `QuizMix` ({ multipleChoice, typeIn, matching }) it asks for exactly that mix in one request (`MIX_QUIZ_SCHEMA`: `matching` is groups of `{ rows }`), allows several questions per note (deduped by prompt), cuts extras and uses up to 20 notes. Without `mix` nothing changed. Passed through `aiQuizQuestions` and the `forest:ai-quiz` message.
@@ -716,14 +746,14 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 
 ### Priority 4: Connections
 
-- [ ] [Data] AI-suggested roots: send one forest's nodes to Gemini, get pairs with a reason each
-- [ ] [Viewer] Suggested roots shown in the graph for the user to accept or reject
+- [ ] [Data] AI-suggested roots: send one forest's nodes to Gemini, get pairs with a reason each (moved to Future 2026-10-15, user's request)
+- [ ] [Viewer] Suggested roots shown in the graph for the user to accept or reject (moved to Future 2026-10-15)
 - [ ] [Viewer] [Data] "Grow from link": paste a link, Gemini reads the page, plants its key ideas and grows roots to related seeds (user's request, 2026-10-11) (in progress: built and tested by the agent in Chromium with a stand-in page and a stand-in Gemini answer; needs a check in Chrome on a real page with a real key)
 - [ ] [Data] Better "Grow from link": ideas a student would review, a note on each seed, quotes that anchor more often, no duplicates on a second run (user's request, 2026-10-14) (in progress: built, compile passes, quote matching checked with a script; needs a check in Chrome on a Wikipedia article with a real key)
 - [ ] [Viewer] Automatic paths between nodes from the same page or site, drawn dashed
 - [ ] [Viewer] Switch to turn automatic paths off
 
-### Priority 5: Frog summaries
+### Priority 5: Frog summaries (moved to Future 2026-10-15, user's request: not for release)
 
 - [ ] [Engine] Frog summary bubble on a highlight, when the user asks for it
 - [ ] [Data] Summary request to Gemini
@@ -732,9 +762,16 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 
 ### Priority 6: Export
 
-- [ ] [Data] Save a forest as a JSON file
-- [ ] [Data] Load a forest back in from a JSON file
-- [ ] [Data] Markdown export
+- [ ] [Data] Save a forest as a JSON file (one forest per file, from the forest page, no settings or keys)
+- [ ] [Data] Load a forest back in from a JSON file (always adds a new forest with new ids)
+- [ ] [Data] Markdown export (moved to Future 2026-10-15)
+
+### Release additions (decided 2026-10-15, user's request; details in `docs/SPEC.md`)
+
+- [ ] [Viewer] Search inside one forest: filter box on the list and graph view (text, note, page title, URL)
+- [ ] [Viewer] Delete a quiz from the quizzes grid, with a confirm
+- [ ] [Data] Welcome tab opens once on install
+- [ ] [Data] [Engine] Spaced repetition for the apple: asks again at 1, 3, 7 days; wrong answer restarts; Advanced settings on/off and Shorter/Normal/Longer (waits on D9 in `BACKLOG.md`)
 
 ### Art from the artist (waiting)
 
@@ -752,6 +789,13 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 - [ ] [Viewer] Delete a forest from the forest grid, with a confirm (`ForestGrid.tsx`) (in progress: built, compile passes, still needs a check in Chrome by a person)
 - [ ] [Viewer] Recenter webs in the graph: "Recenter All Webs" button and right-click "Recenter This Web" on a large tree (`graphLayout.ts` `circleAround`, `GraphView.tsx`) (in progress: built, compile passes, layout math checked with a script, still needs a check in Chrome by a person)
 - [ ] [Viewer] "+ New forest" button and inline form under the forests grid (`ForestGrid.tsx`) (in progress: built, compile passes, still needs a check in Chrome by a person)
+
+- [ ] [Viewer] Display text falls back to the seed's own note (`seedLabel` in `GraphNodes.tsx`) (in progress: tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [UI] Drag the owl and frog, and send them away with the shovel (`creatureGrab.ts`) (in progress: tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [All] Advanced settings: owl and frog visits and size, default sprite size (`AdvancedSettings.tsx`, `getAdvancedSettings`) (in progress: tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [Viewer] Change a seed's sprite in the graph's detail panel (`NodeDetail.tsx`) (in progress: tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [All] Toolbar loadouts: default plus the user's own, picked on the toolbar or in Settings (`hotbar.ts`, `LoadoutEditor.tsx`) (in progress: tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [All] Lily pad groups from roots, group picker on the page, choosing pads or a group for a quiz, adding new pads to a saved quiz (`padGroups.ts`, `PadGroupPicker.tsx`, `QuizView.tsx`, `useQuiz.ts`) (in progress: tested by the agent in Chromium without AI, still needs a check in Chrome by a person and with an AI key)
 
 **Done when:** the full demo script runs twice in a row without a failure.
 

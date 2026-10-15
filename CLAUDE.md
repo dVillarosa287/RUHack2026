@@ -30,16 +30,18 @@ A Chrome extension (Manifest V3) for annotating web pages for later reference an
 ## Vocabulary (use these exact names in code and UI)
 
 - **Seed:** one saved annotation or node. Every annotation starts as a seed.
-- **Sprite:** the icon a seed is shown as. Types: `flower`, `cat`, `grass`, `owl`, `rock`, `house`, `lilypad` ("quiz me on this", "Quiz generation": only goes on text, by dragging over it) and `fruitsprout` (the apple, "Active Recall": only goes on text, see below). `sprout` and `mushroom` have art but no decided purpose yet. The art in `images/` is colored already; every tree is `tree.png` (the apple tree is `appletree.png`). Every highlight shows its sprite centered above it. Sprite art, names and highlight colors depend on the theme (the Minimal theme uses shapes from `minimal-images/`), see `docs/THEME.md`.
+- **Sprite:** the icon a seed is shown as. Types: `flower`, `cat`, `grass`, `owl`, `rock`, `house`, `lilypad` ("quiz me on this", "Quiz generation": only goes on text, by dragging over it) and `fruitsprout` (the apple, "Active Recall": only goes on text, see below). `sprout` and `mushroom` are plain note sprites, like `cat` and `grass`. The art in `images/` is colored already; every tree is `tree.png` (the apple tree is `appletree.png`). Every highlight shows its sprite centered above it. Sprite art, names and highlight colors depend on the theme (the Minimal theme uses shapes from `minimal-images/`), see `docs/THEME.md`.
 - **Growth:** two stages, `sprout` then `tree`. A sprout becomes a tree when the user reloads the page. Only the sprout and the fruit sprout grow; the lily pad, mushroom and flower never change. Correct quiz answers never change a seed.
 - **Fruit sprout / apple / apple tree:** `fruitsprout`, shown as the apple. The user plants it over text. After the active recall time (Settings, 5 minutes by default) a `chrome.alarms` alarm grows it into an apple tree and a pop-up in the top left of the page asks one fill-in-the-blank question: the paragraph it was planted in with the highlight blanked out, made and saved when it is planted (`lib/engine/recall.ts`), no Gemini. The tree stays after the question. It is separate from the lily pad quiz.
 - **Color:** each sprite has its own fixed color (`SPRITES[type].color` in `lib/theme/index.ts`), used for its text highlight. Sprites on the page do not glow (only the scroll rail's sprites have a faint white glow). There is no color picker. `Seed.color` is still saved (the sprite's color key) but nothing reads it.
 - **Forest:** a collection of seeds for one project. A forest is a folder. Forests can contain folders.
 - **Root:** a connection the user draws by hand between two nodes. **Path:** an automatic same-page or same-site connection, drawn dashed.
 - **Fruit:** a quiz the forest produces from lily pads of one color. The apple tree's single-question review is a separate thing.
-- **Frog:** the teacher. Hops between lily pads in a quiz and speaks AI summaries. On web pages a frog now and then jumps onto a lily pad and sits there (`lib/onpage-ui/PondFrog.tsx`).
+- **Frog:** the teacher. Hops between lily pads in a quiz (AI summaries spoken by the frog are Future). On web pages a frog now and then jumps onto a lily pad and sits there (`lib/onpage-ui/PondFrog.tsx`).
 - **Owl (on the page):** while the toolbar is open, an owl now and then flies down from above and sits on a button or the top of a block of text (`lib/onpage-ui/PageOwl.tsx`). Its art comes from `owlArt(themeId)`; it is not the `owl` sprite.
 - **Animal:** the marker on the scroll rail for where you were before you jumped.
+- **Lily pad group:** lily pads joined to each other by roots (directly or through other lily pads). Never saved: worked out by `padGroups` (`lib/storage/padGroups.ts`). Joining a group adds a root; a pad on its own is not a group. A quiz can be made from one group.
+- **Loadout:** the set of sprites the toolbar shows, in order (keys 1 to 9 and 0). `DEFAULT_LOADOUT` is fixed (`lib/onpage-ui/hotbar.ts`); the user's own are saved with `getLoadouts`/`updateLoadouts` and edited on the Settings page.
 - **Large tree:** in the graph view, a bigger tree node for each web page that has 2 or more seeds in the forest. It sits near those seeds and is joined to them by very subtle lines. It is worked out from the seeds, never saved, and is not a seed.
 
 ## Stack
@@ -69,6 +71,10 @@ Reasons for each choice: `docs/SPEC.md` section 2.
 - Sprites and colors are loaded from the theme (`lib/theme/`). Do not hard-code sprite paths or colors in components.
 - Every color and style follows `docs/THEME.md`: only the palette's exact colors (each has a normal, lighter and darker tone), always through theme tokens (`var(--fo-...)`). No gradients. Backgrounds use only the Background colors and text only the Foreground colors, never mixed with other colors. A color outside the palette may only be made with a CSS filter. No hex codes, `rgb()` or stock Tailwind color classes outside `lib/theme/themes.ts`. Run `npm run check:theme` before you finish; it must pass.
 - Use placeholder art (colored circles) when a sprite is not ready. Art never blocks code.
+- No native `<select>`: the browser draws its open list in its own colors. Use `entrypoints/viewer/Dropdown.tsx` in the viewer and `lib/onpage-ui/Picker.tsx` on pages.
+- Never put `will-change` on an element that has the line boil filter (`lib/engine/lineBoil.ts`): together they cost about 65 MB of GPU memory per open tab.
+- Advanced settings: whenever you add something a user might reasonably want to tune or turn off (how often something appears, a size, a timing), put it in `AdvancedSettings` (`lib/storage/types.ts`, read with `getAdvancedSettings`), add a row to `entrypoints/viewer/AdvancedSettings.tsx`, and list it below. Keep it reasonable: no setting for every constant. Now in Advanced settings: owl visits and size, frog visits and size, default sprite size.
+- Every creature that visits a page (owl, frog, and any added later) can be dragged somewhere else and removed with the shovel: use `grabCreature` (`lib/onpage-ui/creatureGrab.ts`).
 
 ## Data model
 
@@ -80,7 +86,7 @@ Reasons for each choice: `docs/SPEC.md` section 2.
 - **Fruit:** id, forestId, color, questions (seedId, type (`multiple-choice`, `fill-blank`, `type-in` or `matching`), prompt, choices, answer, and for matching only `pairs` of { left, right }), optional name ("Quiz 1"; missing on quizzes saved before names existed), optional icon (an art id like Forest.icon; missing means `FOREST_ICONS[0]`), createdAt.
 - **Settings:** currentForestId, the three most recent sprites, theme, Gemini API key, auto-connections on or off, reviewMinutes (the active recall time).
 
-Whether the on-page toolbar is open and where it sits is interface state, not part of this model. It has its own record in the storage module (`getToolbarState`, `updateToolbarState`) and is shared by every tab.
+Whether the on-page toolbar is open and where it sits is interface state, not part of this model. It has its own record in the storage module (`getToolbarState`, `updateToolbarState`) and is shared by every tab. Advanced settings (`getAdvancedSettings`) and toolbar loadouts (`getLoadouts`) have their own records the same way.
 
 Changing these shapes affects everyone. Do not change them without the user confirming with the team; add a note to `BACKLOG.md` instead.
 
@@ -89,8 +95,8 @@ Changing these shapes affects everyone. Do not change them without the user conf
 These are not owned by particular people. They show which folders a job touches, so two jobs at the same time stay out of each other's way.
 
 - Page engine: `lib/engine/`, including its hooks `useSeedsOnPage` (draws highlights, jumps to a seed) and `usePlanting` (turns mouse activity into seeds)
-- On-page UI and art: `lib/onpage-ui/` (`App.tsx` only puts the pieces together; `usePageData`, `Toolbar`, `ForestPicker` (the toolbar's themed forest drop-down) and `MarkerLayer` are separate files), `images/` (all sprite and frog art), `minimal-images/` (the Minimal theme's shapes), `forest-images/` and `jungle-images/` (each theme's own copy of the art; so far only the page owl uses them). The toolbar layout and hotbar are in `hotbar.ts`, the keyboard shortcuts in `useKeybinds.ts`
-- Viewer: `entrypoints/viewer/` (`route.ts` lists the pages; `ForestView`, `ForestHeader`, `ForestList`, `GraphView`, `SettingsPage`, `ForestGrid`, `GrowFromLink` (reads a pasted link with Gemini, `lib/ai/readPage.ts`) and the quiz (`QuizBar`, `QuizView`, `QuizGrid` (the saved quizzes as tiles), `Pond`) are separate files)
+- On-page UI and art: `lib/onpage-ui/` (`App.tsx` only puts the pieces together; `usePageData`, `Toolbar`, `ForestPicker` (the toolbar's themed forest drop-down) and `MarkerLayer` are separate files), `images/` (all sprite and frog art), `minimal-images/` (the Minimal theme's shapes), `forest-images/` and `jungle-images/` (each theme's own copy of the art; so far only the page owl uses them). The toolbar layout, hotbar and default loadout are in `hotbar.ts`, the keyboard shortcuts in `useKeybinds.ts`, the toolbar's drop-downs in `Picker.tsx`, a lily pad's group picker in `PadGroupPicker.tsx`, dragging and digging up creatures in `creatureGrab.ts`
+- Viewer: `entrypoints/viewer/` (`route.ts` lists the pages; `ForestView`, `ForestHeader`, `ForestList`, `GraphView`, `SettingsPage` (with `AdvancedSettings` and `LoadoutEditor`), `ForestGrid`, `GrowFromLink` (reads a pasted link with Gemini, `lib/ai/readPage.ts`) and the quiz (`QuizBar`, `QuizView`, `QuizGrid` (the saved quizzes as tiles), `Pond`) are separate files)
 - Data, AI and integration: `lib/storage/`, `lib/ai/`, `lib/theme/`, `entrypoints/background.ts`, project config (`wxt.config.ts`, `package.json`, `tsconfig.json`, `.gitignore`), `scripts/`, `docs/THEME.md`
 - Shared glue, keep it tiny: `entrypoints/content/`
 - PDF page: `entrypoints/pdf/` (renders a PDF with a text layer and mounts the same on-page UI). Code that needs the page's address uses `pageUrl()` (`lib/engine/pageUrl.ts`), never `window.location.href`, so PDF seeds are saved under the PDF's own address.

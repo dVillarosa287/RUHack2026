@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { growFromLink, type AiProvider } from '@/lib/ai';
 import { getSettings, type Seed } from '@/lib/storage';
 import { countOf, useWords } from '@/lib/theme';
+import { Dropdown } from './Dropdown';
 import { graphHref } from './route';
 
 /**
@@ -70,10 +71,10 @@ export function GrowFromLink({ forestId, seeds, showGraphLink }: { forestId: str
             onKeyDown={(event) => event.key === 'Escape' && setOpen(false)}
           />
           <div className="flex gap-2">
-            <select className="min-w-0 flex-1 rounded-lg border border-edge bg-surface-alt px-2 py-1.5 text-xs" value={provider} disabled={!!step} onChange={(event) => setProvider(event.target.value as AiProvider)}>
-              <option value="gemini" disabled={!keys.gemini}>Gemini</option>
-              <option value="cerebras" disabled={!keys.cerebras}>Cerebras</option>
-            </select>
+            <Dropdown size="sm" ariaLabel="AI provider" className="min-w-0 flex-1" value={provider} disabled={!!step} onChange={(value) => setProvider(value as AiProvider)} options={[
+                { value: 'gemini', label: 'Gemini', disabled: !keys.gemini },
+                { value: 'cerebras', label: 'Cerebras', disabled: !keys.cerebras },
+              ]} />
             <button
               type="submit"
               className="flex-1 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink hover:bg-primary-strong disabled:opacity-60"

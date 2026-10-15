@@ -14,7 +14,7 @@ When you plant a note, Wildernotes saves it in your browser's extension storage 
 - the text you highlighted and a few words around it, so it can find the spot again;
 - the address and title of the page;
 - notes you type, screenshots you take, your forests, folders, links and quiz results;
-- your settings, including any AI API key you enter.
+- your settings (including advanced settings and toolbar loadouts), including any AI API key you enter.
 
 We do not run a server. We (the developers) never receive, see or store your notes, browsing history or keys. There are no accounts, analytics, ads or trackers.
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
 import { buildMarkerAnchor, nearbyText, useDropSprite, usePlanting, useSeedsOnPage, type Tool } from '@/lib/engine';
-import { createForest, deleteSeed, getSeed, restoreSeed, updateSeed, updateSettings, updateToolbarState, type Seed, type SpriteType } from '@/lib/storage';
+import { createForest, deleteSeed, getSeed, restoreSeed, updateLoadouts, updateSeed, updateSettings, updateToolbarState, type Seed, type SpriteType } from '@/lib/storage';
 import { CursorSprite } from './CursorSprite';
 import { FOREST_ICONS, TEXT_ONLY_SPRITES, spriteLabel, spriteTakesNote, useThemeId } from '@/lib/theme';
 import { ReviewPopup } from './ReviewPopup';
@@ -10,6 +10,8 @@ import { PageOwl } from './PageOwl';
 import { PondFrog } from './PondFrog';
 import { ScrollRail } from './ScrollRail';
 import { NoteEditor, NoteTooltip } from './SeedNote';
+import { PadGroupPicker } from './PadGroupPicker';
+import { allLoadouts, currentLoadout, hotbarOf } from './hotbar';
 import { Toolbar } from './Toolbar';
 import { useKeybinds } from './useKeybinds';
 import { usePageData } from './usePageData';
@@ -23,18 +25,27 @@ import { useSpriteDrag } from './useSpriteDrag';
  *  - useDropSprite   saves a sprite dropped from the toolbar (lib/engine), useSpriteDrag carries it (this folder)
  *  - MarkerLayer, CursorSprite, Toolbar and ScrollRail draw the markers, the sprite on the mouse, the toolbar and the rail (this folder)
  *  - NoteEditor and NoteTooltip let the user write their own note on a seed and show it on hover (SeedNote.tsx)
+ *  - PadGroupPicker chooses a clicked lily pad's group; PageOwl and PondFrog are the visiting creatures
  */
 export function App({ shadowHost }: { shadowHost: HTMLElement }) {
-  const { toolbar, forests, currentForestId, seeds } = usePageData();
+  const { toolbar, forests, currentForestId, seeds, advanced, loadouts } = usePageData();
+  const loadout = currentLoadout(loadouts);
+  const hotbar = hotbarOf(loadout);
   const [tool, setTool] = useState<Tool>('none');
   const [spriteType, setSpriteType] = useState<SpriteType>('sprout');
   const [status, setStatus] = useState('');
   const themeId = useThemeId(); // for the sprite names in messages (the Minimal theme calls them Star, Triangle, ...)
   // The size the next sprite is planted at (1 is normal). - and + change it; sprites already planted keep their own size.
   const [plantScale, setPlantScale] = useState(1);
+  // It starts at the default size from Advanced settings, once those are read.
+  const defaultScale = advanced?.plantScale ?? 1;
+  useEffect(() => setPlantScale(defaultScale), [defaultScale]);
   // The seed whose note box is open (right after planting it, or after clicking its sprite), and the one under the mouse.
   const [noteSeedId, setNoteSeedId] = useState<string | null>(null);
   const [hoverSeedId, setHoverSeedId] = useState<string | null>(null);
+  // The lily pad whose group picker is open.
+  const [groupSeedId, setGroupSeedId] = useState<string | null>(null);
+  const closeGroupPicker = useCallback(() => setGroupSeedId(null), []);
   const history = useRef<Array<{ undo(): Promise<void>; redo(): Promise<void> }>>([]);
   const undone = useRef<Array<{ undo(): Promise<void>; redo(): Promise<void> }>>([]);
 
@@ -93,7 +104,7 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
   useEffect(() => {
     if (!visible) setTool('none');
   }, [visible]);
-  useKeybinds({ enabled: visible, tool, setSpriteType, setTool, setPlantScale, history, undone });
+  useKeybinds({ enabled: visible, tool, hotbar, setSpriteType, setTool, setPlantScale, history, undone });
   // Tell the user the new size when - or + changes it (not on the first render).
   const firstScale = useRef(true);
   useEffect(() => {
@@ -107,6 +118,7 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
   // The new seed reaches `seeds` from storage a moment after it is planted; until then its note box waits.
   const noteSeed = seeds.find((seed) => seed.id === noteSeedId) ?? null;
   const hoverSeed = seeds.find((seed) => seed.id === hoverSeedId) ?? null;
+  const groupSeed = seeds.find((seed) => seed.id === groupSeedId) ?? null;
 
   const openViewer = (forestId?: string) => void browser.runtime.sendMessage({ type: 'forest:open-viewer', forestId });
 
@@ -119,6 +131,7 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
         onDig={(id) => void removeSeed(id)}
         onHover={setHoverSeedId}
         onEditNote={setNoteSeedId}
+        onPickPadGroup={setGroupSeedId}
         onMove={async (id, x, y, target) => {
           const previous = seeds.find((seed) => seed.id === id);
           if (!previous) return;
@@ -127,9 +140,11 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
         }}
       />
       {/* Now and then a frog jumps onto a lily pad. Drawn after the markers so it sits on top of the pad. */}
-      <PondFrog seeds={seeds} />
+      {/* Both can be dragged, or dug up with the shovel. How often they come and their size are in Advanced settings. */}
+      <PondFrog seeds={seeds} digging={tool === 'dig'} rate={advanced?.frogRate ?? 0} scale={advanced?.frogScale ?? 1} />
       {/* Now and then an owl flies down onto a button or a block of text, while the toolbar is open. */}
-      {visible && <PageOwl />}
+      {visible && <PageOwl digging={tool === 'dig'} rate={advanced?.owlRate ?? 0} scale={advanced?.owlScale ?? 1} />}
+      {groupSeed && <PadGroupPicker key={groupSeed.id} seed={groupSeed} onClose={closeGroupPicker} />}
       {noteSeed && <NoteEditor key={noteSeed.id} seed={noteSeed} onSave={(note) => void saveNote(noteSeed.id, note)} onClose={() => setNoteSeedId((id) => (id === noteSeed.id ? null : id))} />}
       {hoverSeed?.note && hoverSeed.id !== noteSeed?.id && <NoteTooltip key={hoverSeed.id} seed={hoverSeed} />}
       <CursorSprite type={visible ? spriteOnMouse : null} showOverUi={dragging !== null} scale={plantScale} isInsideUi={isInsideUi} />
@@ -161,6 +176,10 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
             say(`Created ${name}`);
           }}
           onOpenCurrentForest={() => openViewer(currentForestId ?? undefined)}
+          loadouts={allLoadouts(loadouts)}
+          loadout={loadout}
+          onSwitchLoadout={(id) => void updateLoadouts({ currentId: id })}
+          onEditLoadouts={() => void browser.runtime.sendMessage({ type: 'forest:open-viewer', page: 'settings' })}
         />
       )}
       {visible && <ScrollRail seeds={seeds} onJump={jumpToSeed} />}

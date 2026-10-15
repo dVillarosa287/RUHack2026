@@ -466,7 +466,7 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
           </div>
         )}
       </div>
-      {selected && <NodeDetail seed={selected} roots={roots} seedsById={seedsById} folders={folders} onClose={closeDetail} />}
+      {selected && <NodeDetail seed={selected} roots={roots} seedsById={seedsById} folders={folders} onClose={closeDetail} onSelectSeed={(id) => setFlowNodes((nds) => nds.map((n) => (n.selected !== (n.id === id) ? { ...n, selected: n.id === id } : n)))} />}
     </div>
   );
 }

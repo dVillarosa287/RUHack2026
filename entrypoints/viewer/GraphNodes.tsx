@@ -10,11 +10,14 @@ export type GraphNode = SeedNodeType | LargeTreeNodeType;
 export const SEED_SPRITE_SIZE = 56;
 const LARGE_TREE_SIZE = 120;
 
-/** A short label for a seed: its text, or what kind of seed it is (named in the theme `themeId`). */
+/**
+ * A short label for a seed: its display text, else the user's own note (typed when planting it), else its text,
+ * else what kind of seed it is (named in the theme `themeId`).
+ */
 export function seedLabel(seed: Seed, themeId?: string): string {
   const displayText = seed.displayText?.trim();
   if (displayText) return displayText;
-  const text = seed.text.trim();
+  const text = seed.note?.trim() || seed.text.trim();
   if (!text) return spriteLabel(seed.spriteType, themeId);
   return text.length > 40 ? text.slice(0, 38) + '…' : text;
 }
