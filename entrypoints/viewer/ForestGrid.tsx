@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
-import { getForests, getSeedsForForest, updateForest, type Forest } from '@/lib/storage';
+import { deleteForest, getForests, getSeedsForForest, updateForest, type Forest } from '@/lib/storage';
 import { FOREST_ICONS, countOf, useWords } from '@/lib/theme';
 import { ForestIcon } from '@/lib/theme/SpriteIcon';
 import { forestHref } from './route';
@@ -78,7 +78,15 @@ export function ForestGrid() {
     return { x: clampX(spot.x), y: spot.y };
   };
   const height = Math.max(TILE_H, ...forests.map(({ forest }) => spotOf(forest.id).y + TILE_H));
-  const selected = forests.find((f) => f.forest.id === selectedId)?.forest;
+  const selectedEntry = forests.find((f) => f.forest.id === selectedId);
+  const selected = selectedEntry?.forest;
+
+  // Deletes the forest and everything in it (deleteForest). The grid reloads by itself through useStored.
+  async function remove(forest: Forest, seedCount: number) {
+    if (!window.confirm(`Delete the ${words.forest} "${forest.name}" and its ${countOf(seedCount, words.seed, words.seeds)}? This cannot be undone.`)) return;
+    await deleteForest(forest.id);
+    setSelectedId(null);
+  }
 
   function onPointerDown(e: PointerEvent, forest: Forest) {
     if (e.button !== 0) return;
@@ -124,7 +132,10 @@ export function ForestGrid() {
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
                 onDoubleClick={() => open(forest)}
-                onKeyDown={(e) => e.key === 'Enter' && open(forest)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') open(forest);
+                  if (e.key === 'Delete' || e.key === 'Backspace') void remove(forest, seedCount);
+                }}
                 className={`absolute flex touch-none select-none flex-col items-center rounded-xl border-2 p-3 text-center ${isSelected ? 'border-primary bg-primary-soft' : 'border-edge/40 bg-surface hover:border-primary'} ${drag?.id === forest.id ? 'z-10 cursor-grabbing shadow-lg shadow-drop' : 'cursor-grab shadow-sm shadow-drop'}`}
                 style={{ left: spot.x, top: spot.y, width: TILE_W, height: TILE_H }}
               >
@@ -137,7 +148,7 @@ export function ForestGrid() {
         </div>
       </div>
 
-      {selected ? (
+      {selected && selectedEntry ? (
         <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border-2 border-edge bg-surface p-3">
           <span className="font-semibold">{selected.name}</span>
           <span className="text-sm text-ink-muted">Icon:</span>
@@ -154,11 +165,12 @@ export function ForestGrid() {
               </button>
             ))}
           </div>
-          <button className="ml-auto rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink hover:bg-primary-strong" onClick={() => open(selected)}>Open</button>
+          <button className="ml-auto rounded-lg border border-edge px-3 py-1.5 text-sm hover:bg-danger-soft" onClick={() => void remove(selected, selectedEntry.seedCount)}>Delete</button>
+          <button className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink hover:bg-primary-strong" onClick={() => open(selected)}>Open</button>
         </div>
       ) : (
         <p className="mt-4 text-sm text-ink-muted">
-          Drag {words.forests} to arrange them. Click one to choose its icon, double-click to open it. Create a new {words.forest} from the toolbar on any web page.
+          Drag {words.forests} to arrange them. Click one to choose its icon or delete it, double-click to open it. Create a new {words.forest} from the toolbar on any web page.
         </p>
       )}
     </>

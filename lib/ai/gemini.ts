@@ -19,7 +19,7 @@ type Part = { text: string };
 
 /** A failure the user can act on, with a message to show them. */
 export class GeminiError extends Error {}
-
+  
 /** The shape Gemini must answer in. Gemini checks its own output against this, so the JSON always parses. */
 const QUIZ_SCHEMA = {
   type: 'OBJECT',

@@ -276,6 +276,11 @@ Entry format:
 
 ### Viewer notes
 
+- [Oct 14] (roshan714)
+  - Did: "Delete" button in the bar under the forest grid, plus Delete/Backspace on a focused tile (`ForestGrid.tsx`). It confirms with `useWords()` text, then calls `deleteForest` as it is. The Help panel line for the grid mentions it.
+  - Others can use / need to know: ForestView and GraphView already say "no longer exists" for a deleted forest, and the background apple alarm skips a missing seed quietly, so neither needed changes. `npm run compile` passes. `check:theme` fails only on `lib/theme/themes.ts` because of the Windows path bug (BACKLOG F5), not this change.
+  - Need from someone else: a person to run the "Done when" steps in Chrome (two forests, cancel/OK, reload the page, delete the last forest, Minimal theme).
+
 - [Oct 11] (GitHub Copilot)
   - Did: renamed the application branding to Wildernotes in the extension manifest/action, viewer and PDF document titles, and theme app-name labels.
   - Others can use / need to know: forest remains the domain term for annotation collections; build and theme checks pass.
@@ -689,6 +694,7 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 - [ ] [Viewer] Line boil on the graph's sprites, the same as on pages (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [Viewer] Help button (question mark, top right) with text explaining every user action (in progress: built, compile/theme check/build pass, still needs a check in Chrome by a person)
 - [ ] [UI] Themed forest drop-down on the toolbar (`ForestPicker.tsx`), replacing the browser's `<select>` list (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [Viewer] Delete a forest from the forest grid, with a confirm (`ForestGrid.tsx`) (in progress: built, compile passes, still needs a check in Chrome by a person)
 
 **Done when:** the full demo script runs twice in a row without a failure.
 

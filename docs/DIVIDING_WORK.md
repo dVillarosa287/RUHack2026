@@ -74,6 +74,7 @@ Done already, waiting for a check in Chrome: sprites as real art tinted with pal
 | Owl on the page: now and then an owl flies down from above and sits on a button or the top of a block of text | `lib/onpage-ui/`, `lib/theme/`, `wxt.config.ts` | the owl art (in `forest-images/`, `jungle-images/`) | S | Sonnet | Done: Teobobeo99 (`PageOwl.tsx`; needs a check in Chrome) |
 | Frog summary bubble, read aloud | `lib/engine/`, `lib/onpage-ui/`, `lib/ai/` | Gemini, the frog talking art | M | Sonnet | |
 | Export a forest as JSON and Markdown, and import JSON | new `lib/export/` | nothing | M | Sonnet | |
+| Delete a forest from the viewer grid (Delete button and Delete/Backspace key, with a confirm) | `entrypoints/viewer/ForestGrid.tsx` | nothing (`deleteForest` exists) | S | Sonnet | Done: roshan714 (needs a check in Chrome) |
 
 ## Two sessions at once
 

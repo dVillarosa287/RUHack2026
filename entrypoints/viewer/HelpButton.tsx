@@ -63,7 +63,7 @@ function helpSections(themeId: string): Section[] {
     {
       title: `All ${words.forests}`,
       lines: [
-        `This is the first page. Each ${words.forest} is an icon, like folders in Finder. Drag them to arrange them, click one to pick its icon, and double-click one to open it.`,
+        `This is the first page. Each ${words.forest} is an icon, like folders in Finder. Drag them to arrange them, click one to pick its icon, and double-click one to open it. To delete a ${words.forest} and everything in it, click it, then click Delete below the grid or press the Delete key. It asks first, and it cannot be undone.`,
         `New ${words.forests} are made from the toolbar on a web page.`,
         `Only the current ${words.forest}'s ${words.seeds} show on a page. If a ${words.seed} is missing, switch to its ${words.forest} in the toolbar. "Open on page" does this for you.`,
       ],
