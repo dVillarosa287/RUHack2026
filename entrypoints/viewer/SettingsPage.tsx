@@ -4,7 +4,7 @@ import { getSettings, updateSettings } from "@/lib/storage";
 import { DEFAULT_THEME_ID, THEMES, useWords } from "@/lib/theme";
 import { AdvancedSettings } from "./AdvancedSettings";
 import { Dropdown } from "./Dropdown";
-import { LoadoutEditor } from "./LoadoutEditor";
+import { StashEditor } from "./StashEditor";
 
 /** The public copy of docs/PRIVACY_POLICY.md. The same link goes on the Chrome Web Store listing. */
 const PRIVACY_POLICY_URL = "https://github.com/dVillarosa287/RUHack2026/blob/main/docs/PRIVACY_POLICY.md";
@@ -250,7 +250,7 @@ export function SettingsPage() {
 
       <br />
 
-      <LoadoutEditor />
+      <StashEditor />
 
       <br />
 

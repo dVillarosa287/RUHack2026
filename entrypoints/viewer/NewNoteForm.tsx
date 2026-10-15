@@ -7,7 +7,7 @@ import { SpritePicker } from './Pickers';
 export function NewNoteForm({ onPlant, onCancel }: { onPlant: (note: { spriteType: SpriteType; color: string; text: string }) => void; onCancel: () => void }) {
   const [text, setText] = useState('');
   const [spriteType, setSpriteType] = useState<SpriteType>('sprout');
-  const words = useWords(); // "Plant note" or "Add note", by theme
+  const words = useWords(); // "Add note" in every theme
 
   return (
     <form

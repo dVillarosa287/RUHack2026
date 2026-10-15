@@ -16,7 +16,7 @@ interface PickerProps {
   placeholder: string;
   /** An extra last row, such as "+ Create new forest". */
   extra?: { label: string; onClick(): void };
-  /** A smaller button, for the loadout row. */
+  /** A smaller button, for the stash row. */
   small?: boolean;
 }
 
@@ -24,7 +24,7 @@ interface PickerProps {
 const LIST_MAX_HEIGHT = 240;
 
 /**
- * The toolbar's drop-down (the forest and the loadout). It is our own list instead of a native <select>, because the
+ * The toolbar's drop-down (the forest and the stash). It is our own list instead of a native <select>, because the
  * browser draws a <select>'s open list itself, in its own colors, which ignore the theme. Every color here comes
  * from the theme tokens in toolbar.css, so the list follows whichever theme is chosen.
  */

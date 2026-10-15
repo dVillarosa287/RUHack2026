@@ -143,7 +143,7 @@ export function ForestExport({ forest, seeds }: { forest: Forest; seeds: Seed[] 
   return (
     <div ref={exportRef} className="w-full max-w-md border-t border-edge pt-3">
       <button className="w-full rounded-lg bg-primary px-4 py-2 text-left text-base font-semibold text-primary-ink shadow-md shadow-drop hover:bg-primary-strong" onClick={() => setOpen((value) => !value)}>
-        {open ? 'Hide summary tools' : 'Summarize & export'}
+        {open ? 'Hide summary tools' : 'Export'}
       </button>
       {open && (
         <div className="mt-2 space-y-2 px-1">

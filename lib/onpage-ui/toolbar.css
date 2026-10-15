@@ -383,15 +383,15 @@
     outline: 2px solid var(--fo-primary);
 }
 
-/* The loadout drop-down under the sprite buttons (Picker.tsx, small). */
-.fo-loadout-row {
+/* The stash drop-down under the sprite buttons (Picker.tsx, small). */
+.fo-stash-row {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-top: 8px;
 }
 
-.fo-loadout-label {
+.fo-stash-label {
     flex: none;
     font-size: 12px;
     color: var(--fo-ink-muted);

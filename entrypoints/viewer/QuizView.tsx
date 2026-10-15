@@ -13,30 +13,30 @@ const button = 'rounded-lg border border-edge px-3 py-1.5 text-sm hover:bg-prima
 const mainButton = 'rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-ink hover:bg-primary-strong disabled:opacity-50';
 
 /**
- * The quizzes (fruits) made from the forest's lily pads. Without `fruitId` it is the grid of saved quizzes; with
+ * The quizzes (quizzes) made from the forest's lily pads. Without `quizId` it is the grid of saved quizzes; with
  * NEW_QUIZ it is the "new quiz" setup; with a quiz's id it plays that quiz: the pads sit in a row and the frog hops to
  * the next one with each question. Making a quiz is a separate step the user starts, because the AI options send the
  * lily pads' text to the provider; a saved quiz is reused after that.
  */
-export function QuizView({ forestId, color, fruitId, group }: { forestId: string; color: string; fruitId?: string; group?: string }) {
-  const { data, fruits, make, addNewPads, making, notice } = useQuiz(forestId, color);
+export function QuizView({ forestId, color, quizId, group }: { forestId: string; color: string; quizId?: string; group?: string }) {
+  const { data, quizzes, make, addNewPads, making, notice } = useQuiz(forestId, color);
   const themeId = useThemeId();
   const pad = spriteLabel('lilypad', themeId); // "Lily pad", or the theme's own name for it
   const words = getWords(themeId); // "forest" or "folder", by theme
   // "Make a new quiz with Gemini/Cerebras" under a quiz opens the new quiz page with that provider's setup already open.
   const [setupFor, setSetupFor] = useState<AiProvider | null>(null);
   useEffect(() => {
-    if (fruitId !== NEW_QUIZ) setSetupFor(null);
-  }, [fruitId]);
+    if (quizId !== NEW_QUIZ) setSetupFor(null);
+  }, [quizId]);
 
   if (!data) return <p>Loading…</p>;
 
   // Makes the quiz, then plays it straight away.
   const create = async (maker: QuizMaker, mix?: QuizMix, padIds?: string[]) => {
-    const fruit = await make(maker, mix, padIds);
-    if (fruit) window.location.hash = playQuizHref(forestId, color, fruit.id);
+    const quiz = await make(maker, mix, padIds);
+    if (quiz) window.location.hash = playQuizHref(forestId, color, quiz.id);
   };
-  const playing = fruitId && fruitId !== NEW_QUIZ ? fruits.find((f) => f.id === fruitId) : undefined;
+  const playing = quizId && quizId !== NEW_QUIZ ? quizzes.find((f) => f.id === quizId) : undefined;
   const changes = playing ? data.changes[playing.id] : undefined;
 
   return (
@@ -44,7 +44,7 @@ export function QuizView({ forestId, color, fruitId, group }: { forestId: string
       <div className="mb-4 flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">{playing?.name ?? words.quizName(pad)}</h1>
         <div className="flex gap-2">
-          {fruitId && <a href={quizHref(forestId, color)} className={button}>Back to quizzes</a>}
+          {quizId && <a href={quizHref(forestId, color)} className={button}>Back to quizzes</a>}
           <a href={forestHref(forestId)} className={button}>Back to the {words.forest}</a>
         </div>
       </div>
@@ -52,9 +52,9 @@ export function QuizView({ forestId, color, fruitId, group }: { forestId: string
 
       {data.pads.length === 0 ? (
         <p className="rounded-xl bg-surface p-6 text-ink-muted">There are no {pad.toLowerCase()}s in this {words.forest} yet.</p>
-      ) : !fruitId ? (
-        <QuizGrid forestId={forestId} color={color} fruits={fruits} />
-      ) : fruitId === NEW_QUIZ ? (
+      ) : !quizId ? (
+        <QuizGrid forestId={forestId} color={color} quizzes={quizzes} />
+      ) : quizId === NEW_QUIZ ? (
         <MakeQuiz pads={data.pads} groups={data.groups} initialGroup={group} hasGeminiKey={data.hasGeminiKey} hasCerebrasKey={data.hasCerebrasKey} making={making} onMake={(maker, mix, padIds) => void create(maker, mix, padIds)} initialSetup={setupFor} />
       ) : playing ? (
         <>

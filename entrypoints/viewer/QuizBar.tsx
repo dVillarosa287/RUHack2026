@@ -3,10 +3,10 @@ import { getWords, spriteLabel, useThemeId } from '@/lib/theme';
 import { SpriteIcon } from '@/lib/theme/SpriteIcon';
 import { quizHref } from './route';
 
-/** The name the forest's lily pad quiz is saved under (Fruit.color). Every lily pad has the same color now. */
+/** The name the forest's lily pad quiz is saved under (Quiz.color). Every lily pad has the same color now. */
 export const LILYPAD_QUIZ = 'lilypad';
 
-/** All the lily pads in a forest form its quiz (a fruit), in planting order. */
+/** All the lily pads in a forest form its quiz (a quiz), in planting order. */
 export const quizPads = (seeds: Seed[]) => seeds.filter((s) => s.spriteType === 'lilypad');
 
 /** The "Lily pad quiz" button, shown under the forest's header. */

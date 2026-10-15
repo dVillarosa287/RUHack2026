@@ -14,7 +14,7 @@ When you plant a note, Wildernotes saves it in your browser's extension storage 
 - the text you highlighted and a few words around it, so it can find the spot again;
 - the address and title of the page;
 - notes you type, screenshots you take, your forests, folders, links and quiz results;
-- your settings (including advanced settings and toolbar loadouts), including any AI API key you enter.
+- your settings (including advanced settings and toolbar stashes), including any AI API key you enter.
 
 We do not run a server. We (the developers) never receive, see or store your notes, browsing history or keys. There are no accounts, analytics, ads or trackers.
 
@@ -35,7 +35,7 @@ Your API key is stored in this browser's extension storage, not encrypted (the s
 
 ## Fetching pages
 
-"Grow from link" downloads the page you paste, without your cookies or logins. A screenshot note takes a picture of the visible tab only when you drag one, and keeps it on your computer.
+"Grow from link" downloads the page you paste, without your cookies or logins. A screenshot note takes a picture of the visible tab only when you drag one, and keeps it on your computer. "Save backup" writes one forest (its notes, quizzes and screenshots, never your settings or API keys) to a file in your downloads; that file is yours, and Wildernotes never sends it anywhere.
 
 ## Sharing and selling
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { aiQuizQuestions, fillBlankQuestions, type AiProvider, type QuizMix } from '@/lib/ai';
-import { getFruits, getRoots, getSeedsForForest, getSettings, padGroups, saveFruit, updateFruit, type Fruit, type PadGroup, type Question, type Seed } from '@/lib/storage';
+import { getQuizzes, getRoots, getSeedsForForest, getSettings, padGroups, saveQuiz, updateQuiz, type Quiz, type PadGroup, type Question, type Seed } from '@/lib/storage';
 import { spriteLabel, useThemeId } from '@/lib/theme';
 import { quizPads } from './QuizBar';
 import { useStored } from './useStored';
@@ -30,13 +30,13 @@ export interface QuizData {
    * Every saved quiz, oldest first, each with questions about pads that were removed since taken out (a quiz left with
    * none is left out). A quiz saved before names existed is named "Quiz <its position>".
    */
-  fruits: Fruit[];
+  quizzes: Quiz[];
   hasGeminiKey: boolean;
   hasCerebrasKey: boolean;
 }
 
 /**
- * Everything the quiz page needs: the lily pads, the saved quiz (a Fruit), and `make` to write a new one.
+ * Everything the quiz page needs: the lily pads, the saved quiz (a Quiz), and `make` to write a new one.
  * Gemini is only called from `make`, which runs when the user presses a button, never on its own.
  */
 export function useQuiz(forestId: string, color: string) {
@@ -45,17 +45,17 @@ export function useQuiz(forestId: string, color: string) {
     const pads = quizPads(await getSeedsForForest(forestId));
     const groups = padGroups(pads, await getRoots(forestId));
     const ids = new Set(pads.map((p) => p.id));
-    const saved = (await getFruits(forestId)).filter((f) => f.color === color);
+    const saved = (await getQuizzes(forestId)).filter((f) => f.color === color);
     const changes: Record<string, QuizChanges> = {};
     for (const f of saved) changes[f.id] = quizChanges(f, pads, groups);
-    const fruits = saved
+    const quizzes = saved
       .map((f, i) => ({ ...f, name: f.name ?? `Quiz ${i + 1}`, questions: f.questions.filter((q) => ids.has(q.seedId)) }))
       .filter((f) => f.questions.length > 0);
     const settings = await getSettings();
-    return { pads, groups, changes, fruits, hasGeminiKey: Boolean(settings.geminiKey), hasCerebrasKey: Boolean(settings.cerebrasKey) };
+    return { pads, groups, changes, quizzes, hasGeminiKey: Boolean(settings.geminiKey), hasCerebrasKey: Boolean(settings.cerebrasKey) };
   }, [forestId, color, reloadToken]);
 
-  const fruits = data?.fruits ?? [];
+  const quizzes = data?.quizzes ?? [];
 
   const [making, setMaking] = useState<QuizMaker | null>(null);
   // Why Gemini could not be used, if it failed and the quiz was made without AI instead.
@@ -66,7 +66,7 @@ export function useQuiz(forestId: string, color: string) {
    * Makes and saves a new quiz, and returns it (null if none was made). `mix` is the custom setup, AI only. `padIds`
    * are the lily pads chosen for it (all of them if not given).
    */
-  async function make(maker: QuizMaker, mix?: QuizMix, padIds?: string[]): Promise<Fruit | null> {
+  async function make(maker: QuizMaker, mix?: QuizMix, padIds?: string[]): Promise<Quiz | null> {
     if (!data) return null;
     // Read at click time so a lily pad planted after the page loaded is included in a remake.
     const chosen = padIds && new Set(padIds);
@@ -92,27 +92,27 @@ export function useQuiz(forestId: string, color: string) {
       }
     }
     if (questions.length === 0) questions = fillBlankQuestions(pads);
-    let fruit: Fruit | null = null;
+    let quiz: Quiz | null = null;
     if (questions.length === 0) setNotice(`These ${pad}s have too little text to ask about. Highlight a full sentence with a ${pad}.`);
     else {
-      fruit = await saveFruit({ forestId, color, questions, provider: generatedBy });
+      quiz = await saveQuiz({ forestId, color, questions, provider: generatedBy });
       setReloadToken((token) => token + 1);
     }
     setMaking(null);
-    return fruit;
+    return quiz;
   }
 
   /**
    * Brings a saved quiz up to date: drops questions about removed lily pads and adds questions for only the new ones,
    * written the same way as the quiz (by its AI provider if its key is still there, otherwise without AI).
    */
-  async function addNewPads(fruit: Fruit): Promise<void> {
+  async function addNewPads(quiz: Quiz): Promise<void> {
     if (!data) return;
-    const { newPads } = data.changes[fruit.id] ?? { newPads: [] };
+    const { newPads } = data.changes[quiz.id] ?? { newPads: [] };
     const ids = new Set(data.pads.map((p) => p.id));
-    const kept = fruit.questions.filter((q) => ids.has(q.seedId));
-    const isAi = !fruit.questions.some((q) => q.type === 'fill-blank');
-    const provider = fruit.provider ?? 'gemini';
+    const kept = quiz.questions.filter((q) => ids.has(q.seedId));
+    const isAi = !quiz.questions.some((q) => q.type === 'fill-blank');
+    const provider = quiz.provider ?? 'gemini';
     const maker: QuizMaker = isAi && (provider === 'cerebras' ? data.hasCerebrasKey : data.hasGeminiKey) ? provider : 'fill-blank';
     setMaking(maker);
     setNotice(null);
@@ -126,27 +126,27 @@ export function useQuiz(forestId: string, color: string) {
       }
       if (added.length === 0) setNotice((n) => n ?? `The new ${pad}s have too little text to ask about.`);
     }
-    await updateFruit(fruit.id, { questions: [...kept, ...added] });
+    await updateQuiz(quiz.id, { questions: [...kept, ...added] });
     setMaking(null);
     setReloadToken((token) => token + 1);
   }
 
-  return { data, fruits, make, addNewPads, making, notice };
+  return { data, quizzes, make, addNewPads, making, notice };
 }
 
 /**
  * What changed for a saved quiz. New lily pads are ones planted after it with no question in it. If every pad the
  * quiz asks about is in one group, only new pads in that group count, since it was a quiz on that group.
  */
-function quizChanges(fruit: Fruit, pads: Seed[], groups: PadGroup[]): QuizChanges {
-  const asked = new Set(fruit.questions.map((q) => q.seedId));
+function quizChanges(quiz: Quiz, pads: Seed[], groups: PadGroup[]): QuizChanges {
+  const asked = new Set(quiz.questions.map((q) => q.seedId));
   const ids = new Set(pads.map((p) => p.id));
-  const removed = fruit.questions.filter((q) => !ids.has(q.seedId)).length;
+  const removed = quiz.questions.filter((q) => !ids.has(q.seedId)).length;
   const live = [...asked].filter((id) => ids.has(id));
   const group = groups.find((g) => live.length > 0 && live.every((id) => g.pads.some((p) => p.id === id)));
   // It was a group quiz only if other lily pads, outside the group, already existed when it was made.
-  const wasGroupQuiz = group && pads.some((p) => p.createdAt <= fruit.createdAt && !group.pads.includes(p));
+  const wasGroupQuiz = group && pads.some((p) => p.createdAt <= quiz.createdAt && !group.pads.includes(p));
   const pool = wasGroupQuiz ? group.pads : pads;
-  const newPads = pool.filter((p) => p.createdAt > fruit.createdAt && !asked.has(p.id));
+  const newPads = pool.filter((p) => p.createdAt > quiz.createdAt && !asked.has(p.id));
   return { newPads, removed };
 }

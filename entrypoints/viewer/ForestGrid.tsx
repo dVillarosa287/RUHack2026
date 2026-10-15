@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { createForest, deleteForest, getForests, getSeedsForForest, updateForest, type Forest } from '@/lib/storage';
 import { FOREST_ICONS, countOf, useWords } from '@/lib/theme';
 import { ForestIcon } from '@/lib/theme/SpriteIcon';
+import { LoadBackupButton } from './ForestBackup';
 import { forestHref } from './route';
 import { useStored } from './useStored';
 
@@ -180,6 +181,7 @@ export function ForestGrid() {
             <button className="rounded-lg border border-edge px-3 py-1.5 text-sm hover:bg-primary-soft" onClick={() => setNewName(null)}>Cancel</button>
           </>
         )}
+        <LoadBackupButton />
       </div>
 
       {selected && selectedEntry ? (

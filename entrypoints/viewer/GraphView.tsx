@@ -24,6 +24,7 @@ import { GrowFromLink } from './GrowFromLink';
 import { NODE_TYPES, type GraphNode, type LargeTreeNodeType, type SeedNodeType } from './GraphNodes';
 import { circleAround, clearSpotNear, largeTreePages, largeTreeSpot, layoutNewSeeds, type Point } from './graphLayout';
 import { NewNoteForm } from './NewNoteForm';
+import { SeedSearch, seedMatches } from './SeedSearch';
 import { NodeDetail } from './NodeDetail';
 import { forestHref } from './route';
 import { useStored } from './useStored';
@@ -99,6 +100,7 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
   const [edges, setEdges] = useState<Edge[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [writingNote, setWritingNote] = useState(false);
+  const [query, setQuery] = useState(''); // the search box: seeds that do not match fade out
 
   // Line boil on every sprite in the graph, the same wobble as the sprites on web pages (lib/engine/lineBoil.ts).
   // It animates one CSS variable on the graph's box, so nodes added or redrawn later boil too (graph.css, .fo-boil).
@@ -374,19 +376,27 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
 
   // Hover focus: the hovered node and its neighbors stay bright, their lines light up, everything else fades
   // (graph.css). Only classes are added here; the real nodes and edges in state are left untouched.
+  // Searching fades the seeds that do not match (and the large trees), the same way, while nothing is hovered.
   const lit = useMemo(() => (hoveredId ? hoverNeighborhood(hoveredId, edges) : null), [hoveredId, edges]);
+  const matches = useMemo(() => (query.trim() ? new Set(seeds.filter((s) => seedMatches(s, query)).map((s) => s.id)) : null), [seeds, query]);
   const shownNodes = useMemo(
     () =>
       nodes.map((n) => {
-        const hoverClass = !lit ? '' : n.id === hoveredId ? 'fo-hovered' : lit.has(n.id) ? 'fo-lit' : 'fo-dim';
+        const searchClass = matches && !matches.has(n.id) ? 'fo-dim' : '';
+        const hoverClass = !lit ? searchClass : n.id === hoveredId ? 'fo-hovered' : lit.has(n.id) ? 'fo-lit' : 'fo-dim';
         const className = `${hoverClass} ${n.id === linkStartId ? 'fo-link-start' : ''}`.trim();
         return className ? { ...n, className } : n;
       }),
-    [nodes, lit, hoveredId, linkStartId],
+    [nodes, lit, hoveredId, linkStartId, matches],
   );
   const shownEdges = useMemo(
-    () => (lit ? edges.map((e) => ({ ...e, className: `${e.className ?? ''} ${e.source === hoveredId || e.target === hoveredId ? 'fo-lit' : 'fo-dim'}` })) : edges),
-    [edges, lit, hoveredId],
+    () =>
+      lit
+        ? edges.map((e) => ({ ...e, className: `${e.className ?? ''} ${e.source === hoveredId || e.target === hoveredId ? 'fo-lit' : 'fo-dim'}` }))
+        : matches
+          ? edges.map((e) => ({ ...e, className: `${e.className ?? ''} ${matches.has(e.source) && matches.has(e.target) ? '' : 'fo-dim'}` }))
+          : edges,
+    [edges, lit, hoveredId, matches],
   );
 
   const seedsById = useMemo(() => new Map(seeds.map((s) => [s.id, s])), [seeds]);
@@ -432,16 +442,21 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
             ) : (
               <div className="flex gap-2">
                 <button className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink shadow-md shadow-drop hover:bg-primary-strong" onClick={() => setWritingNote(true)}>
-                  + Text note
+                  + Add note
                 </button>
                 {pages.size > 0 && (
                   <button className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink shadow-md shadow-drop hover:bg-primary-strong" onClick={() => recenterWebs([...pages.keys()])}>
-                    Recenter All {cap(words.webs)}
+                    Recenter
                   </button>
                 )}
               </div>
             )}
           </Panel>
+          {seeds.length > 0 && (
+            <Panel position="top-right">
+              <SeedSearch value={query} onChange={setQuery} />
+            </Panel>
+          )}
           {seeds.length === 0 ? (
             <Panel position="top-center" className="rounded-lg bg-surface px-3 py-2 text-sm text-ink-muted">{words.emptyGraph}</Panel>
           ) : (
@@ -461,7 +476,7 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
         {treeMenu && (
           <div ref={treeMenuRef} className="absolute z-10 rounded-lg border border-edge bg-surface py-1 text-sm text-ink shadow-md shadow-drop" style={{ left: treeMenu.x, top: treeMenu.y }}>
             <button className="block w-full px-3 py-1.5 text-left hover:bg-primary-soft" onClick={() => { recenterWebs([treeMenu.url]); setTreeMenu(null); }}>
-              Recenter This {cap(words.web)}
+              Recenter
             </button>
           </div>
         )}

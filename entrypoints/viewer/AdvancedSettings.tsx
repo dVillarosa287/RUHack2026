@@ -17,6 +17,15 @@ const SIZES: [number, string][] = [
   [1.3, 'Large'],
   [1.6, 'Very large'],
 ];
+const REPEATS: [number, string][] = [
+  [1, 'On'],
+  [0, 'Off'],
+];
+const SPACING: [number, string][] = [
+  [0.5, 'Shorter'],
+  [1, 'Normal'],
+  [2, 'Longer'],
+];
 const PLANT_SIZES: [number, string][] = [0.5, 0.7, 0.8, 0.9, 1, 1.2, 1.5, 2].map((n) => [n, `${Math.round(n * 100)}%`]);
 
 /** One row: a label, a short help line, and a drop-down of choices. */
@@ -54,10 +63,12 @@ export function AdvancedSettings() {
       {open && (
         <>
           <Row label="Owl visits" help="How often an owl flies onto the page while the toolbar is open." value={a.owlRate} choices={RATES} onChange={(owlRate) => set({ owlRate })} />
-          <Row label="Owl size" help="How big the visiting owl is." value={a.owlScale} choices={SIZES} onChange={(owlScale) => set({ owlScale })} />
+          <Row label="Visiting owl size" help="How big the visiting owl is." value={a.owlScale} choices={SIZES} onChange={(owlScale) => set({ owlScale })} />
           <Row label="Frog visits" help="How often a frog jumps onto a lily pad." value={a.frogRate} choices={RATES} onChange={(frogRate) => set({ frogRate })} />
           <Row label="Frog size" help="How big the frog is next to its lily pad." value={a.frogScale} choices={SIZES} onChange={(frogScale) => set({ frogScale })} />
           <Row label="Default sprite size" help="The size new sprites are planted at. - and + still change it on the page." value={a.plantScale} choices={PLANT_SIZES} onChange={(plantScale) => set({ plantScale })} />
+          <Row label="Review again later" help="After an apple's question, ask it again after 1, 3 and 7 days. A wrong answer starts over." value={a.reviewRepeats ? 1 : 0} choices={REPEATS} onChange={(n) => set({ reviewRepeats: n === 1 })} />
+          <Row label="Time between reviews" help="Shorter halves the days between reviews, longer doubles them." value={a.reviewSpacing} choices={SPACING} onChange={(reviewSpacing) => set({ reviewSpacing })} />
           <button className="rounded-lg border border-edge px-3 py-1.5 text-sm hover:bg-primary-soft" onClick={() => set(DEFAULT_ADVANCED)}>
             Reset to defaults
           </button>

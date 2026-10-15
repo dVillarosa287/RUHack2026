@@ -5,18 +5,19 @@
 import { browser } from 'wxt/browser';
 import { DEFAULT_THEME_ID } from '@/lib/theme/themes';
 import { cleanUrl } from './url';
-import type { AdvancedSettings, Folder, Forest, Fruit, LoadoutState, Root, Seed, SeedInput, Settings, ToolbarState } from './types';
+import type { AdvancedSettings, Folder, Forest, Quiz, StashState, Root, Seed, SeedInput, Settings, ToolbarState } from './types';
 
 export * from './types';
 export { cleanUrl } from './url';
 export { padGroups, type PadGroup } from './padGroups';
 
-const PREFIX = { forest: 'forest:', folder: 'folder:', seed: 'seed:', root: 'root:', fruit: 'fruit:', shot: 'shot:' } as const;
+// Quizzes are saved under 'fruit:' (their old name), so quizzes saved before the rename still load.
+const PREFIX = { forest: 'forest:', folder: 'folder:', seed: 'seed:', root: 'root:', quiz: 'fruit:', shot: 'shot:' } as const;
 const SETTINGS_KEY = 'settings';
 const PENDING_JUMP_KEY = 'pendingJump';
 const TOOLBAR_KEY = 'toolbar';
 const ADVANCED_KEY = 'advanced';
-const LOADOUTS_KEY = 'loadouts';
+const STASHES_KEY = 'stashes';
 const DEFAULT_FOREST_ID = 'forest-default';
 const PENDING_JUMP_MAX_AGE_MS = 60_000;
 
@@ -66,7 +67,7 @@ const byCreatedAt = (a: { createdAt: number }, b: { createdAt: number }) => a.cr
 export async function getForests(): Promise<Forest[]> {
   const forests = await listRecords<Forest>(PREFIX.forest);
   if (forests.length > 0) return forests.sort(byCreatedAt);
-  const fallback: Forest = { id: DEFAULT_FOREST_ID, name: 'My First Forest', icon: 'tree', createdAt: Date.now() };
+  const fallback: Forest = { id: DEFAULT_FOREST_ID, name: 'My Forest', icon: 'tree', createdAt: Date.now() };
   await writeRecord(PREFIX.forest + fallback.id, fallback);
   return [fallback];
 }
@@ -203,7 +204,7 @@ export async function deleteRoot(id: string): Promise<void> {
 }
 
 /**
- * Apples (fruit sprouts) whose time is up and whose question has not been answered yet, in every forest,
+ * Apples (quiz sprouts) whose time is up and whose question has not been answered yet, in every forest,
  * oldest first. An apple's `nextReviewAt` is cleared once its question is answered.
  */
 export async function getDueReviews(now = Date.now()): Promise<Seed[]> {
@@ -211,37 +212,111 @@ export async function getDueReviews(now = Date.now()): Promise<Seed[]> {
   return seeds.filter((s) => s.spriteType === 'fruitsprout' && s.nextReviewAt !== null && s.nextReviewAt <= now).sort((a, b) => (a.nextReviewAt ?? 0) - (b.nextReviewAt ?? 0));
 }
 
-// ---------- fruits (quizzes) ----------
+// ---------- quizzes (quizzes) ----------
 
 /** A forest's quizzes, oldest first. */
-export async function getFruits(forestId: string): Promise<Fruit[]> {
-  const fruits = await listRecords<Fruit>(PREFIX.fruit);
-  return fruits.filter((f) => f.forestId === forestId).sort(byCreatedAt);
+export async function getQuizzes(forestId: string): Promise<Quiz[]> {
+  const quizzes = await listRecords<Quiz>(PREFIX.quiz);
+  return quizzes.filter((f) => f.forestId === forestId).sort(byCreatedAt);
 }
 
 /**
  * Saves a new quiz, keeping the older ones, and names it "Quiz N". N is one more than the highest "Quiz N" so far
  * (or than the number of quizzes, if larger), so a number never comes back after a rename. Counted per forest and
- * color, so each apple's one-question fruit does not push up the lily pad quiz numbers.
+ * color, so each apple's one-question quiz does not push up the lily pad quiz numbers.
  */
-export async function saveFruit(input: Omit<Fruit, 'id' | 'createdAt' | 'name'>): Promise<Fruit> {
-  const old = (await getFruits(input.forestId)).filter((f) => f.color === input.color);
+export async function saveQuiz(input: Omit<Quiz, 'id' | 'createdAt' | 'name'>): Promise<Quiz> {
+  const old = (await getQuizzes(input.forestId)).filter((f) => f.color === input.color);
   const highest = Math.max(old.length, ...old.map((f) => Number(/^Quiz (\d+)$/.exec(f.name ?? '')?.[1] ?? 0)));
-  const fruit: Fruit = { ...input, name: `Quiz ${highest + 1}`, id: newId(), createdAt: Date.now() };
-  await writeRecord(PREFIX.fruit + fruit.id, fruit);
-  return fruit;
+  const quiz: Quiz = { ...input, name: `Quiz ${highest + 1}`, id: newId(), createdAt: Date.now() };
+  await writeRecord(PREFIX.quiz + quiz.id, quiz);
+  return quiz;
 }
 
 /** Changes a quiz's name or icon, or its questions (when new lily pads are added to it). */
-export async function updateFruit(id: string, patch: Partial<Pick<Fruit, 'name' | 'icon' | 'questions'>>): Promise<void> {
-  const current = await readRecord<Fruit>(PREFIX.fruit + id);
+export async function updateQuiz(id: string, patch: Partial<Pick<Quiz, 'name' | 'icon' | 'questions'>>): Promise<void> {
+  const current = await readRecord<Quiz>(PREFIX.quiz + id);
   if (!current) return;
-  await writeRecord(PREFIX.fruit + id, { ...current, ...patch });
+  await writeRecord(PREFIX.quiz + id, { ...current, ...patch });
+}
+
+/** Removes a quiz for good. */
+export async function deleteQuiz(id: string): Promise<void> {
+  await browser.storage.local.remove(PREFIX.quiz + id);
 }
 
 /** Gives a quiz a new name. An empty name is ignored. */
-export async function renameFruit(id: string, name: string): Promise<void> {
-  if (name.trim()) await updateFruit(id, { name: name.trim() });
+export async function renameQuiz(id: string, name: string): Promise<void> {
+  if (name.trim()) await updateQuiz(id, { name: name.trim() });
+}
+
+// ---------- forest backup files ----------
+
+/** What a forest backup file holds. `version` lets later versions of the app still read old files. */
+export interface ForestBackup {
+  app: 'wildernotes';
+  version: 1;
+  exportedAt: number;
+  forest: Forest;
+  folders: Folder[];
+  seeds: Seed[];
+  roots: Root[];
+  quizzes: Quiz[];
+  /** Screenshots of media seeds, by seed id (JPEG data URLs). */
+  shots: Record<string, string>;
+}
+
+/** Everything in one forest, for a backup file. Never includes settings or API keys. */
+export async function exportForest(id: string): Promise<ForestBackup> {
+  const forest = await getForest(id);
+  if (!forest) throw new Error(`Forest ${id} not found`);
+  const seeds = await getSeedsForForest(id);
+  const shots: Record<string, string> = {};
+  for (const seed of seeds) {
+    const shot = seed.kind === 'media' ? await getScreenshot(seed.id) : null;
+    if (shot) shots[seed.id] = shot;
+  }
+  return { app: 'wildernotes', version: 1, exportedAt: Date.now(), forest, folders: await getFolders(id), seeds, roots: await getRoots(id), quizzes: await getQuizzes(id), shots };
+}
+
+const isList = (value: unknown): value is Record<string, unknown>[] => Array.isArray(value) && value.every((v) => v && typeof v === 'object');
+
+/**
+ * Adds a backup file's forest as a new forest. Every record gets a new id (so importing the same file twice makes two
+ * copies, and nothing already saved is overwritten), and the links between them are rewired to the new ids.
+ * Apples whose review time has passed are not asked again straight away. Throws an Error with a message for the user
+ * if the file is not a Wildernotes forest.
+ */
+export async function importForest(data: unknown): Promise<Forest> {
+  const file = data as Partial<ForestBackup> | null;
+  if (!file || file.app !== 'wildernotes' || !file.forest || typeof file.forest.name !== 'string') throw new Error('This is not a Wildernotes forest file.');
+  if (file.version !== 1) throw new Error('This forest file was made by a newer version of Wildernotes. Update the extension and try again.');
+  if (![file.folders, file.seeds, file.roots, file.quizzes].every(isList)) throw new Error('This forest file is damaged.');
+  const ids = new Map<string, string>(); // old id -> new id
+  const fresh = (old: string) => ids.get(old) ?? (ids.set(old, newId()), ids.get(old)!);
+  const forest: Forest = { ...file.forest, id: newId(), createdAt: Date.now(), x: undefined, y: undefined };
+  const records: Record<string, unknown> = { [PREFIX.forest + forest.id]: forest };
+  for (const f of file.folders!) records[PREFIX.folder + fresh(f.id)] = { ...f, id: fresh(f.id), forestId: forest.id };
+  const now = Date.now();
+  for (const s of file.seeds!) {
+    const seed: Seed = { ...s, id: fresh(s.id), forestId: forest.id, folderId: s.folderId ? fresh(s.folderId) : null, nextReviewAt: s.nextReviewAt !== null && s.nextReviewAt < now ? null : s.nextReviewAt };
+    records[PREFIX.seed + seed.id] = seed;
+    const shot = file.shots?.[s.id];
+    if (typeof shot === 'string' && shot.startsWith('data:image/')) records[PREFIX.shot + seed.id] = shot;
+  }
+  for (const r of file.roots!) {
+    if (!ids.has(r.fromSeedId) || !ids.has(r.toSeedId)) continue; // a root to a seed that is not in the file
+    const root: Root = { ...r, id: newId(), forestId: forest.id, fromSeedId: fresh(r.fromSeedId), toSeedId: fresh(r.toSeedId) };
+    records[PREFIX.root + root.id] = root;
+  }
+  for (const f of file.quizzes!) {
+    // An apple's own question is saved under "apple:<seed id>" (lib/engine/recall.ts), so that id is rewired too.
+    const color = f.color.startsWith('apple:') ? `apple:${fresh(f.color.slice(6))}` : f.color;
+    const quiz: Quiz = { ...f, id: newId(), forestId: forest.id, color, questions: f.questions.map((q) => ({ ...q, seedId: ids.get(q.seedId) ?? q.seedId })) };
+    records[PREFIX.quiz + quiz.id] = quiz;
+  }
+  await browser.storage.local.set(records);
+  return forest;
 }
 
 // ---------- settings ----------
@@ -279,7 +354,7 @@ export async function updateToolbarState(patch: Partial<ToolbarState>): Promise<
   return updated;
 }
 
-export const DEFAULT_ADVANCED: AdvancedSettings = { owlRate: 1, owlScale: 1, frogRate: 1, frogScale: 1, plantScale: 1 };
+export const DEFAULT_ADVANCED: AdvancedSettings = { owlRate: 1, owlScale: 1, frogRate: 1, frogScale: 1, plantScale: 1, reviewRepeats: true, reviewSpacing: 1 };
 
 /** The advanced settings (owl and frog, default sprite size). Missing values are the defaults. */
 export async function getAdvancedSettings(): Promise<AdvancedSettings> {
@@ -292,19 +367,19 @@ export async function updateAdvancedSettings(patch: Partial<AdvancedSettings>): 
   return updated;
 }
 
-/** The user's own toolbar loadouts, and which one is in use ('default' until they pick another). */
-export async function getLoadouts(): Promise<LoadoutState> {
-  return { currentId: 'default', custom: [], ...(await readRecord<Partial<LoadoutState>>(LOADOUTS_KEY)) };
+/** The user's own toolbar stashes, and which one is in use ('default' until they pick another). */
+export async function getStashes(): Promise<StashState> {
+  return { currentId: 'default', custom: [], ...(await readRecord<Partial<StashState>>(STASHES_KEY)) };
 }
 
-export async function updateLoadouts(patch: Partial<LoadoutState>): Promise<LoadoutState> {
-  const updated = { ...(await getLoadouts()), ...patch };
-  await writeRecord(LOADOUTS_KEY, updated);
+export async function updateStashes(patch: Partial<StashState>): Promise<StashState> {
+  const updated = { ...(await getStashes()), ...patch };
+  await writeRecord(STASHES_KEY, updated);
   return updated;
 }
 
-/** A new id for a loadout. */
-export const newLoadoutId = newId;
+/** A new id for a stash. */
+export const newStashId = newId;
 
 /** Calls `callback` whenever anything in storage changes, in any tab or page. Returns a function that stops listening. */
 export function onDataChanged(callback: () => void): () => void {

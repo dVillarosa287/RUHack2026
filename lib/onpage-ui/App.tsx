@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
 import { buildMarkerAnchor, nearbyText, useDropSprite, usePlanting, useSeedsOnPage, type Tool } from '@/lib/engine';
-import { createForest, deleteSeed, getSeed, restoreSeed, updateLoadouts, updateSeed, updateSettings, updateToolbarState, type Seed, type SpriteType } from '@/lib/storage';
+import { createForest, deleteSeed, getSeed, restoreSeed, updateStashes, updateSeed, updateSettings, updateToolbarState, type Seed, type SpriteType } from '@/lib/storage';
 import { CursorSprite } from './CursorSprite';
 import { FOREST_ICONS, TEXT_ONLY_SPRITES, spriteLabel, spriteTakesNote, useThemeId } from '@/lib/theme';
 import { ReviewPopup } from './ReviewPopup';
@@ -11,7 +11,7 @@ import { PondFrog } from './PondFrog';
 import { ScrollRail } from './ScrollRail';
 import { NoteEditor, NoteTooltip } from './SeedNote';
 import { PadGroupPicker } from './PadGroupPicker';
-import { allLoadouts, currentLoadout, hotbarOf } from './hotbar';
+import { allStashes, currentStash, hotbarOf } from './hotbar';
 import { Toolbar } from './Toolbar';
 import { useKeybinds } from './useKeybinds';
 import { usePageData } from './usePageData';
@@ -28,9 +28,9 @@ import { useSpriteDrag } from './useSpriteDrag';
  *  - PadGroupPicker chooses a clicked lily pad's group; PageOwl and PondFrog are the visiting creatures
  */
 export function App({ shadowHost }: { shadowHost: HTMLElement }) {
-  const { toolbar, forests, currentForestId, seeds, advanced, loadouts } = usePageData();
-  const loadout = currentLoadout(loadouts);
-  const hotbar = hotbarOf(loadout);
+  const { toolbar, forests, currentForestId, seeds, advanced, stashes } = usePageData();
+  const stash = currentStash(stashes);
+  const hotbar = hotbarOf(stash);
   const [tool, setTool] = useState<Tool>('none');
   const [spriteType, setSpriteType] = useState<SpriteType>('sprout');
   const [status, setStatus] = useState('');
@@ -176,10 +176,10 @@ export function App({ shadowHost }: { shadowHost: HTMLElement }) {
             say(`Created ${name}`);
           }}
           onOpenCurrentForest={() => openViewer(currentForestId ?? undefined)}
-          loadouts={allLoadouts(loadouts)}
-          loadout={loadout}
-          onSwitchLoadout={(id) => void updateLoadouts({ currentId: id })}
-          onEditLoadouts={() => void browser.runtime.sendMessage({ type: 'forest:open-viewer', page: 'settings' })}
+          stashes={allStashes(stashes)}
+          stash={stash}
+          onSwitchStash={(id) => void updateStashes({ currentId: id })}
+          onEditStashes={() => void browser.runtime.sendMessage({ type: 'forest:open-viewer', page: 'settings' })}
         />
       )}
       {visible && <ScrollRail seeds={seeds} onJump={jumpToSeed} />}

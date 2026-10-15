@@ -1,32 +1,32 @@
 // The toolbar's layout and its hotbar, shared by the toolbar (Toolbar.tsx) and the keyboard shortcuts (useKeybinds.ts),
-// so the number keys always match what the user sees. The sprites come from the chosen loadout.
-import type { Loadout, LoadoutState, SpriteType } from '@/lib/storage';
+// so the number keys always match what the user sees. The sprites come from the chosen stash.
+import type { Stash, StashState, SpriteType } from '@/lib/storage';
 
 export type ToolbarSlot = SpriteType | 'shovel' | 'forest' | null;
 
-/** The most sprites a loadout can hold: two rows of five, keys 1 to 9 and 0. */
-export const LOADOUT_SIZE = 10;
+/** The most sprites a stash can hold: two rows of five, keys 1 to 9 and 0. */
+export const STASH_SIZE = 10;
 
-/** The loadout everyone starts with. It cannot be changed or removed; the user's own loadouts are saved in storage. */
-export const DEFAULT_LOADOUT: Loadout = {
+/** The stash everyone starts with. It cannot be changed or removed; the user's own stashes are saved in storage. */
+export const DEFAULT_STASH: Stash = {
   id: 'default',
   name: 'Default',
   sprites: ['sprout', 'mushroom', 'house', 'flower', 'lilypad', 'cat', 'grass', 'owl', 'rock', 'fruitsprout'],
 };
 
-/** Every loadout to choose from: the default first, then the user's own. */
-export const allLoadouts = (state: LoadoutState | null): Loadout[] => [DEFAULT_LOADOUT, ...(state?.custom ?? [])];
+/** Every stash to choose from: the default first, then the user's own. */
+export const allStashes = (state: StashState | null): Stash[] => [DEFAULT_STASH, ...(state?.custom ?? [])];
 
-/** The loadout in use. Falls back to the default if the chosen one was deleted. */
-export function currentLoadout(state: LoadoutState | null): Loadout {
-  return state?.custom.find((l) => l.id === state.currentId) ?? DEFAULT_LOADOUT;
+/** The stash in use. Falls back to the default if the chosen one was deleted. */
+export function currentStash(state: StashState | null): Stash {
+  return state?.custom.find((l) => l.id === state.currentId) ?? DEFAULT_STASH;
 }
 
-/** The hotbar (sprites in key order) of a loadout. */
-export const hotbarOf = (loadout: Loadout): SpriteType[] => loadout.sprites.slice(0, LOADOUT_SIZE);
+/** The hotbar (sprites in key order) of a stash. */
+export const hotbarOf = (stash: Stash): SpriteType[] => stash.sprites.slice(0, STASH_SIZE);
 
-/** The default hotbar, for help text that does not know the user's loadout. */
-export const HOTBAR: SpriteType[] = hotbarOf(DEFAULT_LOADOUT);
+/** The default hotbar, for help text that does not know the user's stash. */
+export const HOTBAR: SpriteType[] = hotbarOf(DEFAULT_STASH);
 
 /** Two rows of buttons: five sprites each, then the shovel (top) and the forest button (bottom). `null` is an empty cell. */
 export function toolbarLayout(hotbar: SpriteType[]): ToolbarSlot[][] {

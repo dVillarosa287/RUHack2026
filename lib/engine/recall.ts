@@ -10,7 +10,7 @@ const MAX_SIDE = 150;
 
 const tidy = (text: string) => text.replace(/\s+/g, ' ');
 
-/** An apple's question is saved as a Fruit with this "color" (one question, as decided in BACKLOG.md D1). */
+/** An apple's question is saved as a Quiz with this "color" (one question, as decided in BACKLOG.md D1). */
 export const appleFruitKey = (seedId: string) => `apple:${seedId}`;
 
 /** The closest block element around the whole highlight. */

@@ -8,7 +8,7 @@ export type UndoableAction = { undo(): Promise<void>; redo(): Promise<void> };
 
 /**
  * Keyboard shortcuts, only while the toolbar is open:
- *   1-9 and 0   pick the hotbar sprite in that slot (the chosen loadout, see hotbar.ts)
+ *   1-9 and 0   pick the hotbar sprite in that slot (the chosen stash, see hotbar.ts)
  *   Ctrl/Cmd+Z  undo,  Ctrl/Cmd+Shift+Z  redo
  *   Esc         put the tool down
  *   -  and  +   make the sprite about to be planted smaller / larger (planted ones keep their size)
@@ -16,7 +16,7 @@ export type UndoableAction = { undo(): Promise<void>; redo(): Promise<void> };
  */
 export function useKeybinds(props: {
   enabled: boolean; // the toolbar is open
-  hotbar: SpriteType[]; // the sprites of the loadout in use, in key order
+  hotbar: SpriteType[]; // the sprites of the stash in use, in key order
   tool: Tool;
   setSpriteType: (type: SpriteType) => void;
   setTool: (tool: Tool) => void;

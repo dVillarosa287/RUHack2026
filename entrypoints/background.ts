@@ -22,6 +22,11 @@ export default defineBackground(() => {
     })();
   });
 
+  // The first install (not an update or a Chrome update) opens the welcome page once.
+  browser.runtime.onInstalled.addListener(({ reason }) => {
+    if (reason === 'install') void browser.tabs.create({ url: browser.runtime.getURL('/viewer.html' as never) + '#/welcome' });
+  });
+
   // Clicking the extension's icon in Chrome's toolbar opens or closes the on-page toolbar.
   // The state is saved, so the toolbar then follows you into every tab and stays until you close it.
   browser.action.onClicked.addListener(async () => {
@@ -34,7 +39,7 @@ export default defineBackground(() => {
 
     // Content scripts cannot open extension pages themselves, so they ask us to.
     if (type === 'forest:open-viewer') {
-      // `page: 'settings'` opens the Settings page (the toolbar's "+ Make or edit loadouts").
+      // `page: 'settings'` opens the Settings page (the toolbar's "+ Make or edit stashes").
       const hash = page === 'settings' ? '#/settings' : forestId ? `#/forest/${forestId}` : '';
       void browser.tabs.create({ url: browser.runtime.getURL('/viewer.html' as never) + hash });
       return false;

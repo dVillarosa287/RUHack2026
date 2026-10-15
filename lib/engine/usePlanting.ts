@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { browser } from 'wxt/browser';
-import { deleteSeed, getSeed, getSettings, saveFruit, saveSeed, type Seed, type SpriteType } from '@/lib/storage';
+import { deleteSeed, getSeed, getSettings, saveQuiz, saveSeed, type Seed, type SpriteType } from '@/lib/storage';
 import { TEXT_ONLY_SPRITES, getWords, spriteColorKey, spriteLabel, useThemeId } from '@/lib/theme';
 import { buildQuoteAnchor } from './anchor';
 import { startDigging, startPlanting } from './capture';
@@ -60,7 +60,7 @@ export function usePlanting({ tool, spriteType, forestId, scale, isInsideUi, say
         const seed = await saveSeed({ forestId, kind: 'highlight', spriteType, color: spriteColorKey(spriteType), url: pageUrl(), pageTitle: document.title, text, anchor, nextReviewAt, scale });
         if (nextReviewAt) {
           // Its question is made now, while the paragraph is on screen: that paragraph with the highlight blanked out.
-          await saveFruit({ forestId, color: appleFruitKey(seed.id), questions: [recallQuestion(range, text, seed.id)] });
+          await saveQuiz({ forestId, color: appleFruitKey(seed.id), questions: [recallQuestion(range, text, seed.id)] });
           void browser.runtime.sendMessage({ type: 'forest:schedule-review', seedId: seed.id, when: nextReviewAt });
         }
         onCreated(seed);

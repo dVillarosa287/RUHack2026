@@ -73,9 +73,9 @@ Done already, waiting for a check in Chrome: sprites as real art tinted with pal
 | Frogs on the page: now and then a frog jumps in from off screen onto a lily pad, sits there, and may hop to another lily pad nearby | `lib/onpage-ui/` | the frog art (in `images/`) | S | Sonnet | Done: Teobobeo99 (`PondFrog.tsx`; needs a check in Chrome) |
 | Owl on the page: now and then an owl flies down from above and sits on a button or the top of a block of text | `lib/onpage-ui/`, `lib/theme/`, `wxt.config.ts` | the owl art (in `forest-images/`, `jungle-images/`) | S | Sonnet | Done: Teobobeo99 (`PageOwl.tsx`; needs a check in Chrome) |
 | Frog summary bubble, read aloud | `lib/engine/`, `lib/onpage-ui/`, `lib/ai/` | Gemini, the frog talking art | M | Sonnet | Future (2026-10-15, not for release) |
-| Export a forest as JSON and import it (one forest per file, import adds a new forest; Markdown is Future) | new `lib/export/`, `entrypoints/viewer/` (check `ForestExport.tsx` first) | nothing | M | Sonnet | |
+| Export a forest as JSON and import it (one forest per file, import adds a new forest; Markdown is Future) | new `lib/export/`, `entrypoints/viewer/` (check `ForestExport.tsx` first) | nothing | M | Sonnet | Done: Teobobeo99 (needs a check in Chrome) |
 | Delete a forest from the viewer grid (Delete button and Delete/Backspace key, with a confirm) | `entrypoints/viewer/ForestGrid.tsx` | nothing (`deleteForest` exists) | S | Sonnet | Done: roshan714 (needs a check in Chrome) |
-| Recenter webs in the graph: "Recenter All Webs" button and a right-click "Recenter This Web" menu on a large tree | `entrypoints/viewer/graphLayout.ts`, `GraphView.tsx` | Large trees | S | Sonnet | Done: roshan714 (needs a check in Chrome) |
+| Recenter webs in the graph: "Recenter" button and a right-click "Recenter" menu on a large tree | `entrypoints/viewer/graphLayout.ts`, `GraphView.tsx` | Large trees | S | Sonnet | Done: roshan714 (needs a check in Chrome) |
 | "+ New forest" button and inline form under the forests grid | `entrypoints/viewer/ForestGrid.tsx` | nothing (`createForest` exists) | S | Sonnet | Done: roshan714 (needs a check in Chrome) |
 | Better "Grow from link": ideas a student would review, a `note` on each seed, quotes that anchor more often (normalized match), no duplicate seeds on a second run | `lib/ai/gemini.ts`, `lib/ai/readPage.ts`, `lib/ai/index.ts` | "Grow from link" | S | Sonnet | Done: roshan714 (needs a check in Chrome with a real key) |
 | More quiz styles: type-in and matching (AI and offline), played on the quiz screen | `lib/storage/types.ts` (`Question`, approved), `lib/ai/gemini.ts`, `lib/ai/fillBlank.ts`, `entrypoints/viewer/QuizView.tsx` | Quiz screen | M | Sonnet | Done: roshan714 (needs a check in Chrome) |
@@ -92,12 +92,12 @@ Done already, waiting for a check in Chrome: sprites as real art tinted with pal
 | Drag the owl and frog, and remove them with the shovel | `lib/onpage-ui/` | nothing | M | Sonnet | Done: Teobobeo99 (tested in Chromium, still needs a check in Chrome) |
 | Advanced settings (creature spawn rates, sizes, default sprite size) | `lib/storage/`, `entrypoints/viewer/SettingsPage.tsx`, `lib/onpage-ui/` | nothing | M | Sonnet | Done: Teobobeo99 (tested in Chromium, still needs a check in Chrome) |
 | Change a seed's sprite in the graph's detail panel | `entrypoints/viewer/NodeDetail.tsx` | nothing | S | Sonnet | Done: Teobobeo99 (tested in Chromium, still needs a check in Chrome) |
-| Toolbar loadouts (default plus the user's own) | `lib/onpage-ui/`, `lib/storage/`, `entrypoints/viewer/` | nothing | M | Sonnet | Done: Teobobeo99 (tested in Chromium, still needs a check in Chrome) |
+| Toolbar stashes (default plus the user's own) | `lib/onpage-ui/`, `lib/storage/`, `entrypoints/viewer/` | nothing | M | Sonnet | Done: Teobobeo99 (tested in Chromium, still needs a check in Chrome) |
 | Lily pad groups (from roots), choosing pads for a quiz, updating a quiz with new pads | `entrypoints/viewer/`, `lib/onpage-ui/`, `lib/storage/` | nothing | L | Larger | Done: Teobobeo99 (tested in Chromium, still needs a check in Chrome) |
-| Search inside one forest (list and graph) | `entrypoints/viewer/` | nothing | S | Sonnet | |
-| Delete a quiz from the quizzes grid, with a confirm | `lib/storage/` (a `deleteFruit`), `entrypoints/viewer/QuizGrid.tsx` | nothing | S | Sonnet | |
-| Welcome tab on install | `entrypoints/background.ts`, new `entrypoints/welcome/` | nothing | S | Sonnet | |
-| Apple spaced repetition (1, 3, 7 days; wrong restarts; settings) | `entrypoints/background.ts`, `lib/engine/`, `lib/storage/`, `entrypoints/viewer/SettingsPage.tsx` | D9 approved | M | Larger (alarms) | |
+| Search inside one forest (list and graph) | `entrypoints/viewer/` | nothing | S | Sonnet | Done: Teobobeo99 (needs a check in Chrome) |
+| Delete a quiz from the quizzes grid, with a confirm | `lib/storage/` (a `deleteFruit`), `entrypoints/viewer/QuizGrid.tsx` | nothing | S | Sonnet | Done: Teobobeo99 (needs a check in Chrome) |
+| Welcome tab on install | `entrypoints/background.ts`, new `entrypoints/welcome/` | nothing | S | Sonnet | Done: Teobobeo99 (needs a check in Chrome) |
+| Apple spaced repetition (1, 3, 7 days; wrong restarts; settings) | `entrypoints/background.ts`, `lib/engine/`, `lib/storage/`, `entrypoints/viewer/SettingsPage.tsx` | D9 (approved) | M | Larger (alarms) | Done: Teobobeo99 (needs a check in Chrome) |
 
 ## Two sessions at once
 

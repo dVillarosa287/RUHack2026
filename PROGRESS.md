@@ -102,10 +102,10 @@ Entry format:
 - [Oct 15, memory + cursor] (Teobobeo99)
   - Did: (1) RAM: removed `will-change: transform` from `.fo-marker`, `.fo-pond-frog` and `.fo-page-owl` (`toolbar.css`); with the line boil's SVG filter it cost ~65 MB of GPU memory per open tab (5 tabs: GPU process 375 MB went to 127 MB, same as no extension). `listRecords` (`lib/storage/index.ts`) now reads only matching keys with `storage.local.getKeys()` instead of the whole database (big forest: 112-136 MB per tab went to 61-94). (2) The sprite on the mouse now sits bottom-middle on the cursor, exactly where it will be planted (`.fo-cursor-sprite`, `CursorSprite.tsx`); its old top-right offset grew with - and +, so big sprites landed off center.
   - Others can use / need to know: don't put `will-change` on anything that has the line boil. What's left is in `BACKLOG.md` F13: with the in-progress creature changes the GPU process sits at ~180-220 MB again. The measuring script was a scratch file (Playwright + `top` memory footprint), not committed.
-  - Need from someone else: whoever is working on owl/frog/loadouts: check `toolbar.css` still has all your edits (one restore around 02:28 may have overlapped a write), and see F13 (1).
+  - Need from someone else: whoever is working on owl/frog/stashes: check `toolbar.css` still has all your edits (one restore around 02:28 may have overlapped a write), and see F13 (1).
 
 - [Oct 15] (Teobobeo99)
-  - Did: loadouts on the toolbar (`hotbar.ts` `DEFAULT_LOADOUT`, `toolbarLayout`, a "Loadout" drop-down; `Picker.tsx` is now the shared drop-down, `ForestPicker` uses it); owl and frog can be dragged or dug up (`creatureGrab.ts`), with rates and sizes from Advanced settings; clicking a lily pad opens `PadGroupPicker` under its text; the default plant size comes from Advanced settings.
+  - Did: stashes on the toolbar (`hotbar.ts` `DEFAULT_STASH`, `toolbarLayout`, a "Stash" drop-down; `Picker.tsx` is now the shared drop-down, `ForestPicker` uses it); owl and frog can be dragged or dug up (`creatureGrab.ts`), with rates and sizes from Advanced settings; clicking a lily pad opens `PadGroupPicker` under its text; the default plant size comes from Advanced settings.
   - Others can use / need to know: any new creature should use `grabCreature`. `useFollowMarker` (`SeedNote.tsx`) is exported, with `underText`. The background's `forest:open-viewer` message takes `page: 'settings'`. Tested with a Playwright script in Chromium (all checks pass); creatures now take the mouse, so they can cover a click target under them.
   - Need from someone else: a person to try it in Chrome.
 
@@ -287,6 +287,16 @@ Entry format:
 ### Viewer notes
 
 - [Oct 15, later] (Teobobeo99)
+  - Did: wording: "Recenter" (both graph buttons), "Quiz" instead of "Lily pad quiz", "Export", toolbar tree tip "Forest", default forest "My Forest", "+ Add note"/"Add note" in every theme, "Visiting owl size". Code: the quiz type `Fruit` is now `Quiz` (`getQuizzes`, `saveQuiz`, `updateQuiz`, `renameQuiz`, `quizId`); storage keys stay `fruit:` and the apple's id stays `fruitsprout` so saved data still loads.
+  - Others can use / need to know: pull before touching quiz code; old names no longer exist. Compile and build pass.
+  - Need from someone else: nothing
+
+- [Oct 15, later] (Teobobeo99)
+  - Did: renamed "loadout" to "stash" everywhere (UI, code, docs): `Stash`, `StashState`, `getStashes`/`updateStashes`, `DEFAULT_STASH`, `StashEditor.tsx`; the storage record is now `stashes`.
+  - Others can use / need to know: any loadouts saved while testing are gone (old `loadouts` record is ignored). Compile and build pass.
+  - Need from someone else: nothing
+
+- [Oct 15, later] (Teobobeo99)
   - Did: `Pond.tsx` spreads the lily pads over about 70% of the pond's width for short quizzes (each pad's space 72 to 200px, from the pond's measured width); long quizzes still scroll at 72px.
   - Others can use / need to know: constants `MIN_PAD_W`, `MAX_PAD_W`, `ROW_SHARE` at the top of `Pond.tsx`. Compile and build pass; not yet checked in Chrome.
   - Need from someone else: nothing
@@ -297,7 +307,7 @@ Entry format:
   - Need from someone else: nothing.
 
 - [Oct 15] (Teobobeo99)
-  - Did: `seedLabel` falls back to `note`; "Change sprite" and a lily pad "Group" section with "Quiz this group" in `NodeDetail.tsx`; the new-quiz page chooses pads (`PadChooser`, `?group=<padId>` in `route.ts`); `QuizChangesNotice` + `addNewPads` (`useQuiz.ts`) add questions for new pads only; Settings has `LoadoutEditor.tsx` and `AdvancedSettings.tsx`.
+  - Did: `seedLabel` falls back to `note`; "Change sprite" and a lily pad "Group" section with "Quiz this group" in `NodeDetail.tsx`; the new-quiz page chooses pads (`PadChooser`, `?group=<padId>` in `route.ts`); `QuizChangesNotice` + `addNewPads` (`useQuiz.ts`) add questions for new pads only; Settings has `StashEditor.tsx` and `AdvancedSettings.tsx`.
   - Others can use / need to know: `make(maker, mix, padIds)` takes the chosen pads. `updateFruit` can now patch `questions`. Groups come from `padGroups(seeds, roots)` in `@/lib/storage`. Not tested with a real AI key.
   - Need from someone else: a person to try it in Chrome, with a Gemini key.
 
@@ -472,10 +482,15 @@ Entry format:
 
 ### Data, AI and integration notes
 
+- [Oct 15, later] (Teobobeo99)
+  - Did: built the five release additions. Forest backup: `exportForest`/`importForest` (`lib/storage/index.ts`, new ids, rewired links and `apple:` keys), buttons in `entrypoints/viewer/ForestBackup.tsx` (Save on the forest page, Load under the grid). `deleteFruit` plus a Delete button in `QuizGrid.tsx`. Search: `SeedSearch.tsx` in `ForestView` and `GraphView` (non-matches fade). Welcome page `#/welcome` (`WelcomePage.tsx`), opened by `onInstalled` in `background.ts`. Apple spaced repetition: `nextReview` in `lib/onpage-ui/ReviewPopup.tsx`, `reviewRepeats`/`reviewSpacing` in `AdvancedSettings`, `Seed.reviewStep` (D9 closed).
+  - Others can use / need to know: compile, check:theme and build pass; nothing tested in Chrome yet. To test spaced repetition: answer an apple (Settings recall time 30 seconds), then check its `nextReviewAt` is about 1 day later (12 hours with Shorter) and `reviewStep` is 1; a wrong answer keeps it at 1. Privacy policy has one new line on backup files.
+  - Need from someone else: a check in Chrome of all five (export a forest with a screenshot and an apple, load it twice).
+
 - [Oct 15] (Teobobeo99)
   - Did: interviewed the user about missing features and wrote down the answers in `docs/SPEC.md`, `PROGRESS.md` ("Release additions" under Stage 3), `BACKLOG.md` (D9) and `docs/DIVIDING_WORK.md`. No code changed.
   - Others can use / need to know: for release, JSON export/import (one forest per file), search inside a forest, quiz delete, a welcome tab and apple spaced repetition are wanted. Frog summaries/voice, AI-suggested roots and Markdown export are now Future. Sprout and mushroom are plain note sprites.
-  - Need from someone else: the team's OK on D9 before spaced repetition is built.
+  - Need from someone else: nothing (D9 approved later that day).
 
 - [Oct 15, later] (roshan714)
   - Did: `Fruit.icon` (optional, approved) and `updateFruit(id, { name, icon })`. `quizQuestions(key, sources, provider, mix?)`: with `QuizMix` ({ multipleChoice, typeIn, matching }) it asks for exactly that mix in one request (`MIX_QUIZ_SCHEMA`: `matching` is groups of `{ rows }`), allows several questions per note (deduped by prompt), cuts extras and uses up to 20 notes. Without `mix` nothing changed. Passed through `aiQuizQuestions` and the `forest:ai-quiz` message.
@@ -762,16 +777,16 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 
 ### Priority 6: Export
 
-- [ ] [Data] Save a forest as a JSON file (one forest per file, from the forest page, no settings or keys)
-- [ ] [Data] Load a forest back in from a JSON file (always adds a new forest with new ids)
+- [ ] [Data] Save a forest as a JSON file (one forest per file, from the forest page, no settings or keys) (in progress: built, compile, theme check and build pass; needs a check in Chrome)
+- [ ] [Data] Load a forest back in from a JSON file (always adds a new forest with new ids) (in progress: built, compile, theme check and build pass; needs a check in Chrome)
 - [ ] [Data] Markdown export (moved to Future 2026-10-15)
 
 ### Release additions (decided 2026-10-15, user's request; details in `docs/SPEC.md`)
 
-- [ ] [Viewer] Search inside one forest: filter box on the list and graph view (text, note, page title, URL)
-- [ ] [Viewer] Delete a quiz from the quizzes grid, with a confirm
-- [ ] [Data] Welcome tab opens once on install
-- [ ] [Data] [Engine] Spaced repetition for the apple: asks again at 1, 3, 7 days; wrong answer restarts; Advanced settings on/off and Shorter/Normal/Longer (waits on D9 in `BACKLOG.md`)
+- [ ] [Viewer] Search inside one forest: filter box on the list and graph view (text, note, page title, URL) (in progress: built, compile, theme check and build pass; needs a check in Chrome)
+- [ ] [Viewer] Delete a quiz from the quizzes grid, with a confirm (in progress: built, compile, theme check and build pass; needs a check in Chrome)
+- [ ] [Data] Welcome tab opens once on install (in progress: built, compile, theme check and build pass; needs a check in Chrome)
+- [ ] [Data] [Engine] Spaced repetition for the apple: asks again at 1, 3, 7 days; wrong answer restarts; Advanced settings on/off and Shorter/Normal/Longer (D9 approved) (in progress: built, compile, theme check and build pass; needs a check in Chrome)
 
 ### Art from the artist (waiting)
 
@@ -794,7 +809,7 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 - [ ] [UI] Drag the owl and frog, and send them away with the shovel (`creatureGrab.ts`) (in progress: tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [All] Advanced settings: owl and frog visits and size, default sprite size (`AdvancedSettings.tsx`, `getAdvancedSettings`) (in progress: tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [Viewer] Change a seed's sprite in the graph's detail panel (`NodeDetail.tsx`) (in progress: tested by the agent in Chromium, still needs a check in Chrome by a person)
-- [ ] [All] Toolbar loadouts: default plus the user's own, picked on the toolbar or in Settings (`hotbar.ts`, `LoadoutEditor.tsx`) (in progress: tested by the agent in Chromium, still needs a check in Chrome by a person)
+- [ ] [All] Toolbar stashes: default plus the user's own, picked on the toolbar or in Settings (`hotbar.ts`, `StashEditor.tsx`) (in progress: tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [All] Lily pad groups from roots, group picker on the page, choosing pads or a group for a quiz, adding new pads to a saved quiz (`padGroups.ts`, `PadGroupPicker.tsx`, `QuizView.tsx`, `useQuiz.ts`) (in progress: tested by the agent in Chromium without AI, still needs a check in Chrome by a person and with an AI key)
 
 **Done when:** the full demo script runs twice in a row without a failure.

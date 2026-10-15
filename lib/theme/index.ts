@@ -41,7 +41,7 @@ export interface ThemeSprite {
   emoji: string;
   /** File in images/. Most art is colored already. "uncolored-*" art (black outline, white fill) is tinted with the sprite's color. */
   image: string;
-  /** What it looks like grown (growth `tree`). Only the sprout and the fruit sprout (apple) grow. */
+  /** What it looks like grown (growth `tree`). Only the sprout and the quiz sprout (apple) grow. */
   grownImage?: string;
   /** Shown under the toolbar button on hover, for sprites that do something special. */
   tip?: string;
