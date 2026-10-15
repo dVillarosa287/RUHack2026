@@ -17,12 +17,12 @@ import {
 } from '@xyflow/react';
 import { createLineBoilVariable } from '@/lib/engine/lineBoil';
 import { addRoot, deleteRoot, getFolders, getForest, getRoots, getSeedsForForest, saveSeed, updateSeed, type Folder, type Root, type Seed, type SpriteType } from '@/lib/storage';
-import { countOf, useWords } from '@/lib/theme';
+import { cap, countOf, useWords } from '@/lib/theme';
 import { ForestHeader } from './ForestHeader';
 import { ForestExport } from './ForestExport';
 import { GrowFromLink } from './GrowFromLink';
 import { NODE_TYPES, type GraphNode, type LargeTreeNodeType, type SeedNodeType } from './GraphNodes';
-import { clearSpotNear, largeTreePages, largeTreeSpot, layoutNewSeeds, type Point } from './graphLayout';
+import { circleAround, clearSpotNear, largeTreePages, largeTreeSpot, layoutNewSeeds, type Point } from './graphLayout';
 import { NewNoteForm } from './NewNoteForm';
 import { NodeDetail } from './NodeDetail';
 import { forestHref } from './route';
@@ -109,7 +109,11 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
   const [linkStartId, setLinkStartId] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null); // light line to the mouse
   const shiftHeld = useRef(false); // so a Shift+click does not also open the detail panel
-  const rightDrag = useRef<{ pointerId: number; origin: Point; positions: Map<string, Point>; currentPositions: Map<string, Point> } | null>(null);
+  const rightDrag = useRef<{ pointerId: number; nodeId: string; client: Point; origin: Point; positions: Map<string, Point>; currentPositions: Map<string, Point> } | null>(null);
+  // The right-click menu on a large tree: its page and where it opens, in pixels inside the graph box.
+  const [treeMenu, setTreeMenu] = useState<{ url: string; x: number; y: number } | null>(null);
+  const treeMenuRef = useRef<HTMLDivElement>(null);
+  const pages = useMemo(() => largeTreePages(seeds), [seeds]);
 
   // Where every seed goes: its saved spot, or for a seed that has none, a spot from the force layout.
   const spots = useMemo(() => {
@@ -197,6 +201,8 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
     const origin = screenToFlowPosition({ x: event.clientX, y: event.clientY });
     rightDrag.current = {
       pointerId: event.pointerId,
+      nodeId,
+      client: { x: event.clientX, y: event.clientY },
       origin,
       positions: new Map(nodes.filter((node) => group.has(node.id)).map((node) => [node.id, { ...node.position }])),
       currentPositions: new Map(nodes.filter((node) => group.has(node.id)).map((node) => [node.id, { ...node.position }])),
@@ -233,7 +239,46 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
     for (const [nodeId, position] of drag.currentPositions) {
       if (!nodeId.startsWith('tree:')) void updateSeed(nodeId, { graphX: Math.round(position.x), graphY: Math.round(position.y) }).catch(() => {});
     }
+    // A right-click on a large tree that did not move (4px, as in ForestGrid) opens its menu instead of being a drag.
+    const moved = Math.abs(event.clientX - drag.client.x) + Math.abs(event.clientY - drag.client.y) > 4;
+    if (event.type === 'pointerup' && !moved && drag.nodeId.startsWith('tree:') && box.current) {
+      const rect = box.current.getBoundingClientRect();
+      setTreeMenu({ url: drag.nodeId.slice('tree:'.length), x: event.clientX - rect.left - box.current.clientLeft, y: event.clientY - rect.top - box.current.clientTop });
+    }
   }, [moveRightDrag]);
+
+  // Recenter: put each web's seeds in a circle around its large tree (circleAround), then save them like a drag.
+  // Webs are done one after another, so a later web faces the new spots of an earlier one. Large trees stay put.
+  const recenterWebs = useCallback((urls: string[]) => {
+    const now = new Map(nodes.map((n) => [n.id, n.position]));
+    const moved = new Map<string, Point>();
+    for (const url of urls) {
+      const seedIds = pages.get(url);
+      const center = now.get('tree:' + url);
+      if (!seedIds || !center) continue;
+      for (const [id, spot] of circleAround(center, seedIds, roots, now)) {
+        now.set(id, spot);
+        moved.set(id, spot);
+      }
+    }
+    setNodes((nds) => nds.map((n) => (moved.has(n.id) ? { ...n, position: moved.get(n.id)! } : n)));
+    for (const [id, spot] of moved) void updateSeed(id, { graphX: Math.round(spot.x), graphY: Math.round(spot.y) }).catch(() => {});
+  }, [nodes, pages, roots]);
+
+  // The tree menu closes on a click anywhere outside it, or on Esc.
+  useEffect(() => {
+    if (!treeMenu) return;
+    const onDown = (e: globalThis.PointerEvent) => {
+      if (!treeMenuRef.current?.contains(e.target as Node)) setTreeMenu(null);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setTreeMenu(null);
+    window.addEventListener('pointerdown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [treeMenu]);
 
   // Add a root between two seeds, or remove it if one exists already (one root per pair, whichever way it was drawn).
   const toggleRoot = useCallback(
@@ -389,6 +434,11 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
                 <button className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink shadow-md shadow-drop hover:bg-primary-strong" onClick={() => setWritingNote(true)}>
                   + Text note
                 </button>
+                {pages.size > 0 && (
+                  <button className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink shadow-md shadow-drop hover:bg-primary-strong" onClick={() => recenterWebs([...pages.keys()])}>
+                    Recenter All {cap(words.webs)}
+                  </button>
+                )}
               </div>
             )}
           </Panel>
@@ -407,6 +457,13 @@ function ForestGraph({ forestId, seeds, roots, folders }: { forestId: string; se
           <svg className="fo-link-preview" aria-hidden="true">
             <line x1={preview.x1} y1={preview.y1} x2={preview.x2} y2={preview.y2} />
           </svg>
+        )}
+        {treeMenu && (
+          <div ref={treeMenuRef} className="absolute z-10 rounded-lg border border-edge bg-surface py-1 text-sm text-ink shadow-md shadow-drop" style={{ left: treeMenu.x, top: treeMenu.y }}>
+            <button className="block w-full px-3 py-1.5 text-left hover:bg-primary-soft" onClick={() => { recenterWebs([treeMenu.url]); setTreeMenu(null); }}>
+              Recenter This {cap(words.web)}
+            </button>
+          </div>
         )}
       </div>
       {selected && <NodeDetail seed={selected} roots={roots} seedsById={seedsById} folders={folders} onClose={closeDetail} />}

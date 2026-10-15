@@ -75,6 +75,8 @@ Done already, waiting for a check in Chrome: sprites as real art tinted with pal
 | Frog summary bubble, read aloud | `lib/engine/`, `lib/onpage-ui/`, `lib/ai/` | Gemini, the frog talking art | M | Sonnet | |
 | Export a forest as JSON and Markdown, and import JSON | new `lib/export/` | nothing | M | Sonnet | |
 | Delete a forest from the viewer grid (Delete button and Delete/Backspace key, with a confirm) | `entrypoints/viewer/ForestGrid.tsx` | nothing (`deleteForest` exists) | S | Sonnet | Done: roshan714 (needs a check in Chrome) |
+| Recenter webs in the graph: "Recenter All Webs" button and a right-click "Recenter This Web" menu on a large tree | `entrypoints/viewer/graphLayout.ts`, `GraphView.tsx` | Large trees | S | Sonnet | Done: roshan714 (needs a check in Chrome) |
+| "+ New forest" button and inline form under the forests grid | `entrypoints/viewer/ForestGrid.tsx` | nothing (`createForest` exists) | S | Sonnet | Done: roshan714 (needs a check in Chrome) |
 
 ## Two sessions at once
 

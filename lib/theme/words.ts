@@ -22,6 +22,9 @@ export interface Words {
   /** A connection the user draws in the graph (Root in the code). */
   root: string;
   roots: string;
+  /** A large tree plus its page's seeds in the graph (the "Recenter" buttons). Minimal says "group". */
+  web: string;
+  webs: string;
   /** What dragging between two nodes does: "grow a root". */
   growRoot: string;
   /** The button that saves a text note in the graph. */
@@ -64,6 +67,8 @@ const NATURE_WORDS: Words = {
   aSeed: 'a seed',
   root: 'root',
   roots: 'roots',
+  web: 'web',
+  webs: 'webs',
   growRoot: 'grow a root',
   plantNote: 'Plant note',
   quizLater: (sprite) => `${sprite} planted: it will quiz you later`,
@@ -93,6 +98,8 @@ const MINIMAL_WORDS: Words = {
   aSeed: 'an item',
   root: 'link',
   roots: 'links',
+  web: 'group',
+  webs: 'groups',
   growRoot: 'draw a link',
   plantNote: 'Add note',
   quizLater: (sprite) => `${sprite} placed: it will quiz you later`,

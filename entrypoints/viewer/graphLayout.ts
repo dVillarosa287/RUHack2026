@@ -67,6 +67,82 @@ const PUSH = -700; // was -260: every node pushes every other node away; stronge
 const CENTER_PULL = 0.02; // was 0.04: a gentler pull to the middle, so the push can spread things out
 const START_RING = 130; // was 60: new seeds start this far from their page point
 
+/**
+ * "Recenter": new spots for one web's seeds (a web is a large tree and its page's seeds), in a circle around
+ * `center` (the large tree). Pure math, no React, like the rest of this file, so it can be read and tried alone.
+ * - The circle is big enough that seeds do not overlap, and never closer to the tree than PAGE_DISTANCE.
+ * - Seeds joined by roots sit next to each other: each connected group is walked in turn and fills neighboring slots.
+ * - The ring is turned so seeds rooted to a seed outside this web face that seed (its spot in `otherSpots`).
+ */
+export function circleAround(
+  center: Point,
+  seedIds: string[],
+  roots: { fromSeedId: string; toSeedId: string }[],
+  otherSpots: Map<string, Point>,
+): Map<string, Point> {
+  const spots = new Map<string, Point>();
+  if (seedIds.length === 0) return spots;
+  const mine = new Set(seedIds);
+
+  // Which seeds of this web are rooted to each other.
+  const neighbors = new Map<string, string[]>(seedIds.map((id) => [id, []]));
+  for (const r of roots) {
+    if (mine.has(r.fromSeedId) && mine.has(r.toSeedId)) {
+      neighbors.get(r.fromSeedId)!.push(r.toSeedId);
+      neighbors.get(r.toSeedId)!.push(r.fromSeedId);
+    }
+  }
+
+  // The order around the circle: one connected group after another (breadth first, so roots stay short).
+  const order: string[] = [];
+  const seen = new Set<string>();
+  for (const start of seedIds) {
+    if (seen.has(start)) continue;
+    seen.add(start);
+    const queue = [start];
+    while (queue.length) {
+      const id = queue.shift()!;
+      order.push(id);
+      for (const next of neighbors.get(id)!) {
+        if (!seen.has(next)) {
+          seen.add(next);
+          queue.push(next);
+        }
+      }
+    }
+  }
+
+  const radius = Math.max(PAGE_DISTANCE, (order.length * 2 * SEED_RADIUS) / (2 * Math.PI));
+  const slotAngle = (i: number) => (i / order.length) * Math.PI * 2 - Math.PI / 2; // start straight above
+
+  // Turn the ring: the average direction of the seeds rooted outside this web should point at the average spot
+  // of the seeds they are rooted to. Directions are averaged as vectors, so angles on either side of 0 work.
+  let mineX = 0, mineY = 0, outX = 0, outY = 0, outCount = 0;
+  order.forEach((id, i) => {
+    for (const r of roots) {
+      const other = r.fromSeedId === id ? r.toSeedId : r.toSeedId === id ? r.fromSeedId : null;
+      const spot = other && !mine.has(other) ? otherSpots.get(other) : undefined;
+      if (!spot) continue;
+      mineX += Math.cos(slotAngle(i));
+      mineY += Math.sin(slotAngle(i));
+      outX += spot.x;
+      outY += spot.y;
+      outCount++;
+    }
+  });
+  let turn = 0;
+  if (outCount > 0 && Math.hypot(mineX, mineY) > 1e-6) {
+    const towards = Math.atan2(outY / outCount - center.y, outX / outCount - center.x);
+    turn = towards - Math.atan2(mineY, mineX);
+  }
+
+  order.forEach((id, i) => {
+    const angle = slotAngle(i) + turn;
+    spots.set(id, { x: center.x + Math.cos(angle) * radius, y: center.y + Math.sin(angle) * radius });
+  });
+  return spots;
+}
+
 interface SimNode extends SimulationNodeDatum {
   id: string;
 }

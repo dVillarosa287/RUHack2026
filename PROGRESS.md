@@ -276,6 +276,11 @@ Entry format:
 
 ### Viewer notes
 
+- [Oct 14, later] (roshan714)
+  - Did: graph "Recenter All Webs" button (top-left panel) and right-click (no drag) on a large tree → "Recenter This Web" menu (`GraphView.tsx`, `recenterWebs(urls)`); pure `circleAround()` in `graphLayout.ts`. Forests grid: "+ New forest" button and inline form (`ForestGrid.tsx`).
+  - Others can use / need to know: `circleAround(center, seedIds, roots, otherSpots)` puts rooted seeds side by side and turns the ring toward seeds in other webs. New `web`/`webs` words in `lib/theme/words.ts` (Minimal: group/groups). The Help panel does not mention these yet. Compile passes; check:theme only shows the Windows bug (BACKLOG F5).
+  - Need from someone else: a person to run the "Done when" steps in Chrome (recenter, right-click menu vs right-drag, new forest form, Minimal wording).
+
 - [Oct 14] (roshan714)
   - Did: "Delete" button in the bar under the forest grid, plus Delete/Backspace on a focused tile (`ForestGrid.tsx`). It confirms with `useWords()` text, then calls `deleteForest` as it is. The Help panel line for the grid mentions it.
   - Others can use / need to know: ForestView and GraphView already say "no longer exists" for a deleted forest, and the background apple alarm skips a missing seed quietly, so neither needed changes. `npm run compile` passes. `check:theme` fails only on `lib/theme/themes.ts` because of the Windows path bug (BACKLOG F5), not this change.
@@ -695,6 +700,8 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 - [ ] [Viewer] Help button (question mark, top right) with text explaining every user action (in progress: built, compile/theme check/build pass, still needs a check in Chrome by a person)
 - [ ] [UI] Themed forest drop-down on the toolbar (`ForestPicker.tsx`), replacing the browser's `<select>` list (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [Viewer] Delete a forest from the forest grid, with a confirm (`ForestGrid.tsx`) (in progress: built, compile passes, still needs a check in Chrome by a person)
+- [ ] [Viewer] Recenter webs in the graph: "Recenter All Webs" button and right-click "Recenter This Web" on a large tree (`graphLayout.ts` `circleAround`, `GraphView.tsx`) (in progress: built, compile passes, layout math checked with a script, still needs a check in Chrome by a person)
+- [ ] [Viewer] "+ New forest" button and inline form under the forests grid (`ForestGrid.tsx`) (in progress: built, compile passes, still needs a check in Chrome by a person)
 
 **Done when:** the full demo script runs twice in a row without a failure.
 

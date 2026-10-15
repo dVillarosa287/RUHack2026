@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
-import { deleteForest, getForests, getSeedsForForest, updateForest, type Forest } from '@/lib/storage';
+import { createForest, deleteForest, getForests, getSeedsForForest, updateForest, type Forest } from '@/lib/storage';
 import { FOREST_ICONS, countOf, useWords } from '@/lib/theme';
 import { ForestIcon } from '@/lib/theme/SpriteIcon';
 import { forestHref } from './route';
@@ -57,6 +57,7 @@ export function ForestGrid() {
   // The tile being dragged: where it started, where the pointer started, and where it is now.
   const [drag, setDrag] = useState<{ id: string; from: Point; pointer: Point; now: Point } | null>(null);
   const [dropped, setDropped] = useState<Record<string, Point>>({});
+  const [newName, setNewName] = useState<string | null>(null); // the "+ New forest" form: null while it is shut
 
   // Follow the box's width, so tiles stay inside it. The box only exists once the forests have loaded.
   const loaded = forests !== undefined;
@@ -86,6 +87,15 @@ export function ForestGrid() {
     if (!window.confirm(`Delete the ${words.forest} "${forest.name}" and its ${countOf(seedCount, words.seed, words.seeds)}? This cannot be undone.`)) return;
     await deleteForest(forest.id);
     setSelectedId(null);
+  }
+
+  // Same icon choice as the toolbar's new forest (lib/onpage-ui/App.tsx). The current forest is left as it is.
+  async function create() {
+    const name = newName?.trim();
+    if (!name || !forests) return;
+    const forest = await createForest({ name, icon: FOREST_ICONS[forests.length % FOREST_ICONS.length] ?? 'tree' });
+    setNewName(null);
+    setSelectedId(forest.id);
   }
 
   function onPointerDown(e: PointerEvent, forest: Forest) {
@@ -148,6 +158,30 @@ export function ForestGrid() {
         </div>
       </div>
 
+      <div className="mt-3 flex items-center gap-2">
+        {newName === null ? (
+          <button className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink hover:bg-primary-strong" onClick={() => setNewName('')}>
+            + New {words.forest}
+          </button>
+        ) : (
+          <>
+            <input
+              autoFocus
+              className="rounded-lg border border-edge bg-surface-alt px-2 py-1.5 text-sm"
+              placeholder={`Name your ${words.forest}`}
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void create();
+                if (e.key === 'Escape') setNewName(null);
+              }}
+            />
+            <button className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-ink hover:bg-primary-strong" onClick={() => void create()}>Create</button>
+            <button className="rounded-lg border border-edge px-3 py-1.5 text-sm hover:bg-primary-soft" onClick={() => setNewName(null)}>Cancel</button>
+          </>
+        )}
+      </div>
+
       {selected && selectedEntry ? (
         <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border-2 border-edge bg-surface p-3">
           <span className="font-semibold">{selected.name}</span>
@@ -170,7 +204,7 @@ export function ForestGrid() {
         </div>
       ) : (
         <p className="mt-4 text-sm text-ink-muted">
-          Drag {words.forests} to arrange them. Click one to choose its icon or delete it, double-click to open it. Create a new {words.forest} from the toolbar on any web page.
+          Drag {words.forests} to arrange them. Click one to choose its icon or delete it, double-click to open it. Make a new {words.forest} with the button above, or from the toolbar on any web page.
         </p>
       )}
     </>
