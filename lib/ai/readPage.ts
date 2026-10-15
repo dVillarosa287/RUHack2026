@@ -50,17 +50,51 @@ export async function readPage(address: string): Promise<ReadPage> {
 }
 
 /**
+ * A copy of `text` with curly quotes made straight, every dash made "-", runs of whitespace made one space, and
+ * lower case, plus where each of its characters came from in `text`. The AI often "fixes" quotes and dashes when it
+ * copies a sentence, so an exact search misses; searching both copies normalized finds it, and `from` maps the
+ * match back to the page's own characters.
+ */
+export function normalizeText(text: string): { text: string; from: number[] } {
+  let out = '';
+  const from: number[] = [];
+  for (let i = 0; i < text.length; i++) {
+    let ch = text[i] as string;
+    if (/\s/.test(ch)) {
+      if (out.endsWith(' ')) continue;
+      ch = ' ';
+    } else if (/[‘’‚‛′]/.test(ch)) ch = "'";
+    else if (/[“”„‟″]/.test(ch)) ch = '"';
+    else if (/[‐‑‒–—―−]/.test(ch)) ch = '-';
+    for (const lower of ch.toLowerCase()) {
+      out += lower;
+      from.push(i);
+    }
+  }
+  return { text: out, from };
+}
+
+/**
  * The anchor for a quote Gemini copied from the page, so the seed is highlighted if the user opens the page later.
- * Null if the quote is not really in the text: the seed is then still saved, just not drawn on the page.
+ * `exact` is always the page's own text, so use it as the seed's text. Null if the quote is not in the text even
+ * after normalizing: the seed is then still saved, just not drawn on the page.
  */
 export function quoteAnchor(page: ReadPage, quote: string): Anchor | null {
-  const at = page.text.indexOf(quote);
-  if (at === -1) return null;
+  let at = page.text.indexOf(quote);
+  let end = at + quote.length;
+  if (at === -1) {
+    const haystack = normalizeText(page.text);
+    const needle = normalizeText(quote).text.trim();
+    const found = needle ? haystack.text.indexOf(needle) : -1;
+    if (found === -1) return null;
+    at = haystack.from[found] as number;
+    end = (haystack.from[found + needle.length - 1] as number) + 1;
+  }
   return {
     quote: {
-      exact: quote,
+      exact: page.text.slice(at, end),
       prefix: page.text.slice(Math.max(0, at - CONTEXT_CHARS), at),
-      suffix: page.text.slice(at + quote.length, at + quote.length + CONTEXT_CHARS),
+      suffix: page.text.slice(end, end + CONTEXT_CHARS),
     },
     scrollPercent: at / page.text.length,
   };

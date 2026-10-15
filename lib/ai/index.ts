@@ -3,17 +3,18 @@
 import { browser } from 'wxt/browser';
 import { addRoot, saveSeed, type Question, type Seed, type SpriteType } from '@/lib/storage';
 import { spriteColorKey } from '@/lib/theme';
-import type { AiProvider, LinkIdea, LinkPage, LinkRoot, LinkSource, SummarySource, QuizSource } from './gemini';
-import { quoteAnchor, readPage } from './readPage';
+import type { AiProvider, LinkIdea, LinkPage, LinkRoot, LinkSource, QuizMix, SummarySource, QuizSource } from './gemini';
+import { cleanUrl } from '@/lib/storage/url';
+import { normalizeText, quoteAnchor, readPage } from './readPage';
 
 export { fillBlankQuestion, fillBlankQuestions, isCorrectAnswer } from './fillBlank';
 export { CEREBRAS_MODEL, GEMINI_MODEL } from './gemini';
-export type { AiProvider } from './gemini';
+export type { AiProvider, QuizMix } from './gemini';
 
 /** The messages the background worker answers. */
 export type AiRequest =
   | { type: 'forest:ai-test'; provider: AiProvider }
-  | { type: 'forest:ai-quiz'; provider: AiProvider; sources: QuizSource[] }
+  | { type: 'forest:ai-quiz'; provider: AiProvider; sources: QuizSource[]; mix?: QuizMix }
   | { type: 'forest:ai-summary'; provider: AiProvider; forestName: string; sources: SummarySource[] }
   | { type: 'forest:ai-link'; provider: AiProvider; page: LinkPage; sources: LinkSource[] };
 export type AiReply<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -31,8 +32,8 @@ export function testAiKey(provider: AiProvider): Promise<true> {
 }
 
 /** Gemini's multiple-choice questions for these lily pads, in one request. Throws with a readable message if it fails. */
-export function aiQuizQuestions(seeds: Seed[], provider: AiProvider): Promise<Question[]> {
-  return ask<Question[]>({ type: 'forest:ai-quiz', provider, sources: seeds.map(({ id, text, pageTitle }) => ({ id, text, pageTitle })) });
+export function aiQuizQuestions(seeds: Seed[], provider: AiProvider, mix?: QuizMix): Promise<Question[]> {
+  return ask<Question[]>({ type: 'forest:ai-quiz', provider, mix, sources: seeds.map(({ id, text, pageTitle }) => ({ id, text, pageTitle })) });
 }
 
 /** Gemini's study-guide summary for a forest. */
@@ -56,8 +57,15 @@ export async function growFromLink(forestId: string, address: string, seeds: See
   const { ideas, roots } = await ask<{ ideas: LinkIdea[]; roots: LinkRoot[] }>({ type: 'forest:ai-link', provider, page, sources });
 
   onStep?.('Planting…');
+  // Running the same link twice must not plant the same sentence twice: compare with this page's seeds, normalized.
+  const same = (text: string) => normalizeText(text).text.trim();
+  const planted = new Set(seeds.filter((s) => cleanUrl(s.url) === page.url).map((s) => same(s.text)));
   const newIds = new Map<string, string>(); // "new-1" -> the saved seed's id
   for (const [i, idea] of ideas.entries()) {
+    const anchor = quoteAnchor(page, idea.quote);
+    const text = anchor?.quote?.exact ?? idea.quote; // the page's own words, when the quote was found
+    if (planted.has(same(text))) continue;
+    planted.add(same(text));
     const seed = await saveSeed({
       forestId,
       kind: 'highlight',
@@ -65,15 +73,22 @@ export async function growFromLink(forestId: string, address: string, seeds: See
       color: spriteColorKey(LINK_SPRITE),
       url: page.url,
       pageTitle: page.title,
-      text: idea.quote,
-      anchor: quoteAnchor(page, idea.quote),
+      text,
+      anchor,
       displayText: idea.label || undefined,
+      note: idea.note || undefined,
     });
     newIds.set(`new-${i + 1}`, seed.id);
   }
-  const idOf = (end: string) => newIds.get(end) ?? end;
+  // A root to a dropped idea has nothing to join, so it is left out.
+  const idOf = (end: string) => (end.startsWith('new-') ? newIds.get(end) : end);
+  let grown = 0;
   for (const root of roots) {
-    await addRoot({ forestId, fromSeedId: idOf(root.from), toSeedId: idOf(root.to), source: 'ai', reason: root.reason });
+    const fromSeedId = idOf(root.from);
+    const toSeedId = idOf(root.to);
+    if (!fromSeedId || !toSeedId) continue;
+    await addRoot({ forestId, fromSeedId, toSeedId, source: 'ai', reason: root.reason });
+    grown++;
   }
-  return { title: page.title, seeds: ideas.length, roots: roots.length };
+  return { title: page.title, seeds: newIds.size, roots: grown };
 }

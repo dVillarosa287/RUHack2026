@@ -93,7 +93,7 @@ async function answerAi(request: AiRequest): Promise<AiReply<unknown>> {
     if (request.type === 'forest:ai-summary') {
       return { ok: true, value: await forestSummary(key, request.forestName, request.sources, request.provider) };
     }
-    return { ok: true, value: await quizQuestions(key, request.sources, request.provider) };
+    return { ok: true, value: await quizQuestions(key, request.sources, request.provider, request.mix) };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) };
   }

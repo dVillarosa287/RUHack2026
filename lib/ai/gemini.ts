@@ -1,6 +1,7 @@
 // Calls to Google's Gemini API. Runs in the background worker only (CLAUDE.md: Gemini is called from there, only
 // when the user asks, with one request per quiz and JSON output). The viewer asks for it with lib/ai/index.ts.
 import type { Question, Seed } from '@/lib/storage';
+import { shuffle } from './fillBlank';
 
 /** The free-tier Flash model listed in Google AI Studio on the day (BACKLOG.md D5). Change it here when Google retires it. */
 export const GEMINI_MODEL = 'gemini-3.8-flash';
@@ -8,12 +9,20 @@ export const CEREBRAS_MODEL = 'qwen-3.8-27b';
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 const CEREBRAS_ENDPOINT = 'https://api.cerebras.ai/v1/chat/completions';
 const MAX_QUESTIONS = 10;
+/** A custom quiz (with a `mix`) may ask for up to this many questions. */
+const MAX_MIX_QUESTIONS = 20;
 export type AiProvider = 'gemini' | 'cerebras';
 const providerName = (provider: AiProvider) => provider === 'cerebras' ? 'Cerebras' : 'Gemini';
 
 /** What the viewer sends: just the saved text, so nothing else from storage leaves the browser. */
 export type QuizSource = Pick<Seed, 'id' | 'text' | 'pageTitle'>;
 export type SummarySource = Pick<Seed, 'text' | 'pageTitle' | 'note'>;
+/** How many questions of each style a custom quiz asks for. Each matching question is one group of rows. */
+export interface QuizMix {
+  multipleChoice: number;
+  typeIn: number;
+  matching: number;
+}
 /** One piece of a request. */
 type Part = { text: string };
 
@@ -30,16 +39,37 @@ const QUIZ_SCHEMA = {
         type: 'OBJECT',
         properties: {
           seedId: { type: 'STRING' },
+          type: { type: 'STRING', enum: ['multiple-choice', 'type-in'] },
           prompt: { type: 'STRING' },
           choices: { type: 'ARRAY', items: { type: 'STRING' } },
           answer: { type: 'STRING' },
         },
-        required: ['seedId', 'prompt', 'choices', 'answer'],
+        required: ['seedId', 'type', 'prompt', 'choices', 'answer'],
+      },
+    },
+    // One row per note for the single matching question at the end of the quiz.
+    matching: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: { seedId: { type: 'STRING' }, left: { type: 'STRING' }, right: { type: 'STRING' } },
+        required: ['seedId', 'left', 'right'],
       },
     },
   },
   required: ['questions'],
 };
+/** The same, for a custom quiz: `matching` is a list of groups, one per matching question. */
+const MIX_QUIZ_SCHEMA = {
+  ...QUIZ_SCHEMA,
+  properties: {
+    ...QUIZ_SCHEMA.properties,
+    matching: { type: 'ARRAY', items: { type: 'OBJECT', properties: { rows: QUIZ_SCHEMA.properties.matching }, required: ['rows'] } },
+  },
+};
+/** The blank in a type-in prompt, and the most rows a matching question has. */
+const BLANK = '_____';
+const MAX_MATCHING_ROWS = 6;
 
 async function generate(provider: AiProvider, key: string, parts: Part[], schema?: object): Promise<string> {
   if (!key) throw new GeminiError(`Add your ${providerName(provider)} API key on the Settings page first.`);
@@ -109,8 +139,8 @@ export async function testAi(provider: AiProvider, key: string): Promise<void> {
 }
 
 /** Multiple-choice questions for a quiz: one request for all of them. Bad items from Gemini are dropped, not shown. */
-export async function quizQuestions(key: string, sources: QuizSource[], provider: AiProvider = 'gemini'): Promise<Question[]> {
-  const usable = sources.filter((s) => s.text.trim().split(/\s+/).length >= 4).slice(0, MAX_QUESTIONS);
+export async function quizQuestions(key: string, sources: QuizSource[], provider: AiProvider = 'gemini', mix?: QuizMix): Promise<Question[]> {
+  const usable = sources.filter((s) => s.text.trim().split(/\s+/).length >= 4).slice(0, mix ? MAX_MIX_QUESTIONS : MAX_QUESTIONS);
   if (usable.length === 0) throw new GeminiError('There is too little saved text here to ask about.');
 
   const notes = usable.map((s) => ({ seedId: s.id, page: s.pageTitle, text: s.text.slice(0, 1500) }));
@@ -118,37 +148,125 @@ export async function quizQuestions(key: string, sources: QuizSource[], provider
     {
       text: [
         'You write study questions for a student, for active recall.',
-        'Below are notes the student highlighted on web pages, as JSON. Write exactly one multiple-choice question for each note,',
-        "using that note's seedId. Each question must be answerable from its note alone and test the key idea, not a trivial detail.",
-        'Give exactly 4 short choices, one of them correct and three plausible but wrong. The answer must be copied exactly from the choices.',
+        ...(mix ? [
+          `Below are notes the student highlighted on web pages, as JSON. Write exactly ${mix.multipleChoice} "multiple-choice" and exactly ${mix.typeIn} "type-in" questions,`,
+          'each with the seedId of the note it comes from. A note may be used for more than one question when there are more questions than notes, but every question must test a different idea.',
+          'Each question must be answerable from its note alone and test a key idea, not a trivial detail.',
+        ] : [
+          'Below are notes the student highlighted on web pages, as JSON. Write exactly one question for each note,',
+          "using that note's seedId. Each question must be answerable from its note alone and test the key idea, not a trivial detail.",
+        ]),
+        'Write every question, every type-in sentence and every matching row in your own words: rephrase the idea, and never copy a sentence from the note.',
+        mix ? 'The two styles:' : 'Mix two styles, about half of each:',
+        '- "multiple-choice": exactly 4 short choices, one correct and three plausible but wrong. The answer must be copied exactly from the choices.',
+        `- "type-in": a new full sentence of at least 8 words, in your own words, that tests the key idea, with "${BLANK}" in place of a key term of 1 to 3 words. The answer is that term; choices is [].`,
         'Do not mention "the note" or "the text" in the question.',
-        'Return exactly one JSON object with a "questions" array. Each item must contain exactly these fields: seedId, prompt, choices, answer.',
+        mix
+          ? mix.matching > 0
+            ? `Also give a "matching" array of exactly ${mix.matching} groups. Each group is { "rows": [...] } with 3 to 5 rows: seedId, "left" a short term or concept from that note (at most 6 words), "right" a short definition of it in your own words (at most 15 words), not a sentence copied from the note. Within a group every left and every right must be different; different groups should cover different ideas.`
+            : 'Give an empty "matching" array.'
+          : usable.length >= 3
+          ? `Also give a "matching" array with one row per note (3 to ${MAX_MATCHING_ROWS} rows): seedId, "left" a short term or concept from that note (at most 6 words), "right" a short definition of it in your own words (at most 15 words), not a sentence copied from the note. Every left and every right must be different.`
+          : 'Give an empty "matching" array.',
+        'Return exactly one JSON object with a "questions" array and a "matching" array. Each question must contain exactly these fields: seedId, type, prompt, choices, answer.',
         '',
         JSON.stringify(notes),
       ].join('\n'),
     },
   ];
 
-  const raw = await generate(provider, key, parts, QUIZ_SCHEMA);
-  const parsed = parseJsonResponse(raw, provider) as { questions?: unknown };
+  const raw = await generate(provider, key, parts, mix ? MIX_QUIZ_SCHEMA : QUIZ_SCHEMA);
+  const parsed = parseJsonResponse(raw, provider) as { questions?: unknown; matching?: unknown };
 
-  const ids = new Set(usable.map((s) => s.id));
+  const ids = new Map(usable.map((s) => [s.id, s.text])); // seed id -> its note, to spot copied questions
+  // Without a mix there is one question per note; with one, a note can be asked about more than once, but not the same prompt.
   const seen = new Set<string>();
+  const seenKey = (seedId: string, prompt: string) => (mix ? tidy(prompt) : seedId);
   const questions: Question[] = [];
   for (const item of Array.isArray(parsed.questions) ? parsed.questions : []) {
     const q = item as Partial<Question>;
-    const choices = Array.isArray(q.choices) ? [...new Set(q.choices.map((c) => String(c).trim()).filter(Boolean))] : [];
-    const answerText = String(q.answer ?? '').trim();
     const seedId = String(q.seedId ?? '');
+    const answerText = String(q.answer ?? '').trim();
+    if (!ids.has(seedId) || !q.prompt || seen.has(seenKey(seedId, String(q.prompt)))) continue;
+    if (q.type === 'type-in') {
+      // Some models write the blank with more or fewer underscores; make it the one the quiz shows.
+      const prompt = String(q.prompt).trim().replace(/_{3,}/g, BLANK);
+      if (!prompt.includes(BLANK) || !answerText || answerText.split(/\s+/).length > 3 || answerText.length > 40) continue;
+      // Not a bare blank, and not the note itself with one word taken out.
+      if (wordsOf(prompt.replace(BLANK, ' ')).length < 5 || tidy(prompt.replace(BLANK, answerText)) === tidy(ids.get(seedId) ?? '')) continue;
+      if (mix && questions.filter((x) => x.type === 'type-in').length >= mix.typeIn) continue; // more than asked for
+      seen.add(seenKey(seedId, String(q.prompt)));
+      questions.push({ seedId, type: 'type-in', prompt, choices: [], answer: answerText });
+      continue;
+    }
+    const choices = Array.isArray(q.choices) ? [...new Set(q.choices.map((c) => String(c).trim()).filter(Boolean))] : [];
     const answer = choices.find((choice) => choice === answerText)
       ?? choices.find((choice) => choice.toLowerCase() === answerText.toLowerCase());
-    if (!ids.has(seedId) || seen.has(seedId) || !q.prompt || choices.length < 2 || !answer) continue;
-    seen.add(seedId);
+    if (choices.length < 2 || !answer) continue;
+    if (mix && questions.filter((x) => x.type === 'multiple-choice').length >= mix.multipleChoice) continue; // more than asked for
+    seen.add(seenKey(seedId, String(q.prompt)));
     questions.push({ seedId, type: 'multiple-choice', prompt: String(q.prompt).trim(), choices, answer });
   }
+  if (mix) return mixedQuiz(questions, parsed.matching, usable, ids, mix, provider);
   if (questions.length === 0) throw new GeminiError(`${providerName(provider)} did not send any usable questions. Try again.`);
-  // Keep the order of the lily pads, which is the order the frog hops in.
-  return usable.map((s) => questions.find((q) => q.seedId === s.id)).filter((q): q is Question => q !== undefined);
+  // Keep the order of the lily pads, which is the order the frog hops in. The matching question goes last.
+  const ordered = usable.map((s) => questions.find((q) => q.seedId === s.id)).filter((q): q is Question => q !== undefined);
+  const matching = matchingQuestion(Array.isArray(parsed.matching) ? parsed.matching : [], ids);
+  return matching ? [...ordered, matching] : ordered;
+}
+
+/** A custom quiz: the valid questions in lily pad order, then up to `mix.matching` matching questions, one per valid group. */
+function mixedQuiz(questions: Question[], groups: unknown, usable: QuizSource[], ids: Map<string, string>, mix: QuizMix, provider: AiProvider): Question[] {
+  const order = (q: Question) => usable.findIndex((s) => s.id === q.seedId);
+  const matching = (Array.isArray(groups) ? groups : [])
+    .map((group) => (group as { rows?: unknown }).rows)
+    .map((rows) => matchingQuestion(Array.isArray(rows) ? rows : [], ids))
+    .filter((q): q is Question => q !== null)
+    .slice(0, mix.matching);
+  const all = [...[...questions].sort((a, b) => order(a) - order(b)), ...matching];
+  if (all.length === 0) throw new GeminiError(`${providerName(provider)} did not send any usable questions. Try again.`);
+  return all;
+}
+
+/** Lower-case words, and text with only its letters and digits, for comparing a question with its note. */
+const wordsOf = (text: string) => text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+const tidy = (text: string) => wordsOf(text).join('');
+/** More than this many words in a row taken from the note counts as copied. */
+const MAX_COPIED_RUN = 8;
+
+/** Whether `side` has a run of more than MAX_COPIED_RUN words copied from `note`. */
+function copiesNote(side: string, note: string): boolean {
+  const run = MAX_COPIED_RUN + 1;
+  const sideWords = wordsOf(side);
+  if (sideWords.length < run) return false;
+  const noteText = ` ${wordsOf(note).join(' ')} `;
+  for (let i = 0; i + run <= sideWords.length; i++) {
+    if (noteText.includes(` ${sideWords.slice(i, i + run).join(' ')} `)) return true;
+  }
+  return false;
+}
+
+/** One matching question from the AI's rows, keeping only good rows with unique sides. Null if fewer than 3 are left. */
+function matchingQuestion(items: unknown[], ids: Map<string, string>): Question | null {
+  const pairs: { left: string; right: string }[] = [];
+  let seedId = '';
+  const lefts = new Set<string>();
+  const rights = new Set<string>();
+  for (const item of items) {
+    const row = item as { seedId?: unknown; left?: unknown; right?: unknown };
+    const left = String(row.left ?? '').trim().slice(0, 120);
+    const right = String(row.right ?? '').trim().slice(0, 160);
+    const note = ids.get(String(row.seedId ?? ''));
+    if (note === undefined || !left || !right || copiesNote(left, note) || copiesNote(right, note)) continue;
+    if (lefts.has(left.toLowerCase()) || rights.has(right.toLowerCase())) continue;
+    lefts.add(left.toLowerCase());
+    rights.add(right.toLowerCase());
+    seedId ||= String(row.seedId);
+    pairs.push({ left, right });
+    if (pairs.length >= MAX_MATCHING_ROWS) break;
+  }
+  if (pairs.length < 3) return null;
+  return { seedId, type: 'matching', prompt: 'Match each term to its meaning', choices: shuffle(pairs.map((p) => p.right)), answer: '', pairs };
 }
 
 /** A concise study guide for the saved notes in one forest. */
@@ -183,10 +301,11 @@ export interface LinkPage {
   text: string;
 }
 export type LinkSource = Pick<Seed, 'id' | 'text' | 'pageTitle' | 'note'>;
-/** A key idea from the page: a sentence copied from it, and a few words to show on its node. */
+/** A key idea from the page: a sentence copied from it, a few words to show on its node, and a short explanation. */
 export interface LinkIdea {
   quote: string;
   label: string;
+  note: string;
 }
 /** A root to grow. `from` and `to` are a seed id, or "new-1", "new-2"... for the ideas, counted from 1. */
 export interface LinkRoot {
@@ -200,7 +319,11 @@ const LINK_SCHEMA = {
   properties: {
     ideas: {
       type: 'ARRAY',
-      items: { type: 'OBJECT', properties: { quote: { type: 'STRING' }, label: { type: 'STRING' } }, required: ['quote', 'label'] },
+      items: {
+        type: 'OBJECT',
+        properties: { quote: { type: 'STRING' }, label: { type: 'STRING' }, note: { type: 'STRING' } },
+        required: ['quote', 'label', 'note'],
+      },
     },
     connections: {
       type: 'ARRAY',
@@ -226,8 +349,12 @@ export async function linkConnections(key: string, page: LinkPage, sources: Link
   const raw = await generate(provider, key, [{
     text: [
       'A student is collecting notes on a topic. They gave you a new web page to add to their notes.',
-      `1. Pick the 3 to ${MAX_IDEAS} most important ideas on the page. For each, copy ONE sentence from the page text exactly,`,
-      '   character for character (do not fix, shorten or join sentences), as "quote", and write a label of at most 6 words.',
+      `1. Pick the 3 to ${MAX_IDEAS} ideas on the page a student would actually review for a test: definitions, key claims,`,
+      '   causes and effects, important numbers, names or dates. Spread them across the whole page, not only the opening.',
+      '   Skip menus, image captions, references, citations and "see also" lists. Skip any idea that repeats one of the',
+      '   existing notes below. For each idea, copy ONE sentence from the page text exactly, character for character',
+      '   (do not fix, shorten or join sentences), as "quote", and write a label of at most 6 words.',
+      '   Also write a "note": 1 to 2 plain sentences (at most 200 characters) explaining the idea in a student\'s own words.',
       '2. Connect the ideas to the student\'s existing notes (listed below as JSON) where they are truly related: same concept,',
       '   cause and effect, an example of, a contrast with. Also connect ideas to each other where it helps.',
       '   Refer to an idea as "new-1", "new-2"... in the order you listed them, and to a note by its seedId.',
@@ -250,7 +377,7 @@ export async function linkConnections(key: string, page: LinkPage, sources: Link
     const idea = item as Partial<LinkIdea>;
     const quote = String(idea.quote ?? '').trim();
     if (!quote || ideas.length >= MAX_IDEAS || ideas.some((kept) => kept.quote === quote)) return;
-    ideas.push({ quote: quote.slice(0, 500), label: String(idea.label ?? '').trim().slice(0, 60) });
+    ideas.push({ quote: quote.slice(0, 500), label: String(idea.label ?? '').trim().slice(0, 60), note: String(idea.note ?? '').trim().slice(0, 300) });
     renumber.set(`new-${i + 1}`, `new-${ideas.length}`);
   });
   if (ideas.length === 0) throw new GeminiError(`${providerName(provider)} did not find any key ideas on that page. Try another link.`);

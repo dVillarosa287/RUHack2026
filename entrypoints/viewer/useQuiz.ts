@@ -1,19 +1,24 @@
 import { useState } from 'react';
-import { aiQuizQuestions, fillBlankQuestions, type AiProvider } from '@/lib/ai';
+import { aiQuizQuestions, fillBlankQuestions, type AiProvider, type QuizMix } from '@/lib/ai';
 import { getFruits, getSeedsForForest, getSettings, saveFruit, type Fruit, type Question, type Seed } from '@/lib/storage';
 import { spriteLabel, useThemeId } from '@/lib/theme';
 import { quizPads } from './QuizBar';
 import { useStored } from './useStored';
 
 const MAX_QUESTIONS = 10;
+/** A custom quiz (with a mix) can use up to this many lily pads. */
+const MAX_MIX_QUESTIONS = 20;
 
 export type QuizMaker = AiProvider | 'fill-blank';
 
 export interface QuizData {
   /** The forest's lily pads, in planting order. */
   pads: Seed[];
-  /** The saved quiz, with questions about pads that were removed since taken out. Null if there is none yet. */
-  fruit: Fruit | null;
+  /**
+   * Every saved quiz, oldest first, each with questions about pads that were removed since taken out (a quiz left with
+   * none is left out). A quiz saved before names existed is named "Quiz <its position>".
+   */
+  fruits: Fruit[];
   hasGeminiKey: boolean;
   hasCerebrasKey: boolean;
 }
@@ -27,42 +32,54 @@ export function useQuiz(forestId: string, color: string) {
   const data = useStored<QuizData>(async () => {
     const pads = quizPads(await getSeedsForForest(forestId));
     const ids = new Set(pads.map((p) => p.id));
-    const saved = (await getFruits(forestId)).filter((f) => f.color === color).pop();
-    const questions = saved?.questions.filter((q) => ids.has(q.seedId)) ?? [];
+    const fruits = (await getFruits(forestId))
+      .filter((f) => f.color === color)
+      .map((f, i) => ({ ...f, name: f.name ?? `Quiz ${i + 1}`, questions: f.questions.filter((q) => ids.has(q.seedId)) }))
+      .filter((f) => f.questions.length > 0);
     const settings = await getSettings();
-    return { pads, fruit: saved && questions.length ? { ...saved, questions } : null, hasGeminiKey: Boolean(settings.geminiKey), hasCerebrasKey: Boolean(settings.cerebrasKey) };
+    return { pads, fruits, hasGeminiKey: Boolean(settings.geminiKey), hasCerebrasKey: Boolean(settings.cerebrasKey) };
   }, [forestId, color, reloadToken]);
+
+  const fruits = data?.fruits ?? [];
 
   const [making, setMaking] = useState<QuizMaker | null>(null);
   // Why Gemini could not be used, if it failed and the quiz was made without AI instead.
   const [notice, setNotice] = useState<string | null>(null);
   const pad = spriteLabel('lilypad', useThemeId()).toLowerCase(); // "lily pad", or the theme's own name for it
 
-  async function make(maker: QuizMaker) {
-    if (!data) return;
+  /** Makes and saves a new quiz, and returns it (null if none was made). `mix` is the custom setup, AI only. */
+  async function make(maker: QuizMaker, mix?: QuizMix): Promise<Fruit | null> {
+    if (!data) return null;
     // Read at click time so a lily pad planted after the page loaded is included in a remake.
-    const pads = quizPads(await getSeedsForForest(forestId)).slice(0, MAX_QUESTIONS);
+    const pads = quizPads(await getSeedsForForest(forestId)).slice(0, mix ? MAX_MIX_QUESTIONS : MAX_QUESTIONS);
     setMaking(maker);
     setNotice(null);
     let questions: Question[] = [];
     let generatedBy: AiProvider | undefined;
     if (maker === 'gemini' || maker === 'cerebras') {
       try {
-        questions = await aiQuizQuestions(pads, maker);
+        questions = await aiQuizQuestions(pads, maker, mix);
         generatedBy = maker;
+        const asked = mix ? mix.multipleChoice + mix.typeIn + mix.matching : 0;
+        if (questions.length < asked) setNotice(`Got ${questions.length} of ${asked} questions.`);
       } catch (error) {
         console.error(`[${maker}] quiz generation failed`, error);
-        setNotice(`${error instanceof Error ? error.message : String(error)} The quiz was made without AI instead.`);
+        // Keep the saved quiz. The quiz without AI copies the highlighted sentences, so it is made only when asked for.
+        setNotice(`${error instanceof Error ? error.message : String(error)} Try again, or choose Make a new quiz without AI.`);
+        setMaking(null);
+        return null;
       }
     }
     if (questions.length === 0) questions = fillBlankQuestions(pads);
+    let fruit: Fruit | null = null;
     if (questions.length === 0) setNotice(`These ${pad}s have too little text to ask about. Highlight a full sentence with a ${pad}.`);
     else {
-      await saveFruit({ forestId, color, questions, provider: generatedBy });
+      fruit = await saveFruit({ forestId, color, questions, provider: generatedBy });
       setReloadToken((token) => token + 1);
     }
     setMaking(null);
+    return fruit;
   }
 
-  return { data, make, making, notice };
+  return { data, fruits, make, making, notice };
 }

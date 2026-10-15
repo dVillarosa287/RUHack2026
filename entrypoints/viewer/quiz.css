@@ -1,5 +1,13 @@
 /* The quiz pond (Pond.tsx). Colors come only from theme tokens, see docs/THEME.md. */
 
+/* The row of pads scrolls sideways inside the pond's box when there are many questions. The box is tall enough
+   for the frog's hop, because a scrolling element also clips what sticks out above it. */
+.fo-pond-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
 /* The frog's spot over a lily pad. Changing `left` slides it to the next pad. */
 .fo-frog-slot {
   position: absolute;

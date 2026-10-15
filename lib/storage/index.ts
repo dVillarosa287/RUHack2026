@@ -212,13 +212,29 @@ export async function getFruits(forestId: string): Promise<Fruit[]> {
   return fruits.filter((f) => f.forestId === forestId).sort(byCreatedAt);
 }
 
-/** Saves a new quiz. Older quizzes of the same forest and color are removed, so only the latest one is kept. */
-export async function saveFruit(input: Omit<Fruit, 'id' | 'createdAt'>): Promise<Fruit> {
+/**
+ * Saves a new quiz, keeping the older ones, and names it "Quiz N". N is one more than the highest "Quiz N" so far
+ * (or than the number of quizzes, if larger), so a number never comes back after a rename. Counted per forest and
+ * color, so each apple's one-question fruit does not push up the lily pad quiz numbers.
+ */
+export async function saveFruit(input: Omit<Fruit, 'id' | 'createdAt' | 'name'>): Promise<Fruit> {
   const old = (await getFruits(input.forestId)).filter((f) => f.color === input.color);
-  const fruit: Fruit = { ...input, id: newId(), createdAt: Date.now() };
+  const highest = Math.max(old.length, ...old.map((f) => Number(/^Quiz (\d+)$/.exec(f.name ?? '')?.[1] ?? 0)));
+  const fruit: Fruit = { ...input, name: `Quiz ${highest + 1}`, id: newId(), createdAt: Date.now() };
   await writeRecord(PREFIX.fruit + fruit.id, fruit);
-  if (old.length) await browser.storage.local.remove(old.map((f) => PREFIX.fruit + f.id));
   return fruit;
+}
+
+/** Changes a quiz's name or icon. */
+export async function updateFruit(id: string, patch: Partial<Pick<Fruit, 'name' | 'icon'>>): Promise<void> {
+  const current = await readRecord<Fruit>(PREFIX.fruit + id);
+  if (!current) return;
+  await writeRecord(PREFIX.fruit + id, { ...current, ...patch });
+}
+
+/** Gives a quiz a new name. An empty name is ignored. */
+export async function renameFruit(id: string, name: string): Promise<void> {
+  if (name.trim()) await updateFruit(id, { name: name.trim() });
 }
 
 // ---------- settings ----------

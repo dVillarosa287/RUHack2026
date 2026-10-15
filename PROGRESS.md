@@ -276,6 +276,26 @@ Entry format:
 
 ### Viewer notes
 
+- [Oct 15, evening] (roshan714)
+  - Did: `QuizSetup` (`QuizView.tsx`): counts start at 0, each capped at total minus the others, `fit()` lowers them when the total drops, "Random questions: N" replaces "x of N chosen", and random ones get a random style in `create` before `onCreate`. `Pond.tsx`: 72px pads in a scrolling row (`.fo-pond-scroll` in `quiz.css`), ‹ › buttons when it overflows, follows the frog, `furthest`/`onPick` make earlier pads clickable. `PlayQuiz`: answers stored at index `at`, `reached` state, "Next" on an earlier answered question.
+  - Others can use / need to know: the pond box is now `h-44` (was `h-36`), because the scrolling row clips the frog's hop otherwise. `fo-still` only on the very first load. Not yet tested in Chrome.
+  - Need from someone else: a person to run the "Done when" steps (20-question quiz, going back, 3-question quiz looks the same).
+- [Oct 15, later] (roshan714)
+  - Did: quiz routes `#/…/quiz/<c>` (grid), `/new` (setup), `/<fruitId>` (play): `route.ts` (`NEW_QUIZ`, `newQuizHref`, `playQuizHref`, `fruitId` on the quiz route), `App.tsx`. New `QuizGrid.tsx` (tiles, icon picker, Rename, Play). `QuizView.tsx`: `SavedQuizzes` drop-down removed; `MakeQuiz` opens `QuizSetup` for Gemini/Cerebras; "Make a new quiz with Gemini/Cerebras" opens that setup on `/new`, "without AI" makes one at once.
+  - Others can use / need to know: `useQuiz` no longer has `selected`/`select`; `make(maker, mix?)` returns the saved Fruit. Not yet tested in Chrome.
+  - Need from someone else: a person to run the "Done when" steps (icons and rename after reload, 3+3+2 quiz, fewer than 3 pads).
+- [Oct 15] (roshan714)
+  - Did: saved quizzes. `useQuiz.ts` now returns `fruits` (all of this color, oldest first, unnamed ones as "Quiz <position>"), `selected` and `select(id)`, and selects a new quiz after `make` (`QuizData.fruit` is gone). `QuizView.tsx` has a `SavedQuizzes` bar (drop-down, newest first, Rename with Save/Cancel, Enter/Esc). The remake buttons are now "Make a new quiz with Gemini / Cerebras / without AI", and the AI error notice names that button.
+  - Others can use / need to know: not yet tested in Chrome.
+  - Need from someone else: a person to run the "Done when" steps (Quiz 1/2/3, rename survives a reload, an old quiz shows as Quiz 1).
+- [Oct 14, night] (roshan714)
+  - Did: `useQuiz.ts` no longer falls back to the offline quiz when Gemini or Cerebras fails: the saved quiz stays and `notice` says "Try again, or choose Remake without AI." `QuizView.tsx` hides prompts that are only underscores, and the new `PairList` shows matching answers one pair per block (after a wrong Check, and in "To look at again" with "You said: …").
+  - Others can use / need to know: `correctText` is gone. Not yet tested in Chrome.
+  - Need from someone else: a person to run the "Done when" steps (wrong key, wrong matching answer, results page).
+- [Oct 14, evening] (roshan714)
+  - Did: `QuizView.tsx` plays the new question types: `type-in` uses the text box ("Type the missing term"); `matching` is the new `MatchingAnswer` (a drop-down per row, one Check, rows marked ✓/✗ with the correct match). `given` is the chosen rights joined with " | ".
+  - Others can use / need to know: "made with AI" is now "has no `fill-blank` question" (the offline quiz has type-in too). Pond and QuizBar unchanged. Not yet tested in Chrome.
+  - Need from someone else: a person to run the quiz "Done when" steps in Chrome (AI quiz, no-key quiz, an old saved quiz, the apple pop-up).
 - [Oct 14, later] (roshan714)
   - Did: graph "Recenter All Webs" button (top-left panel) and right-click (no drag) on a large tree → "Recenter This Web" menu (`GraphView.tsx`, `recenterWebs(urls)`); pure `circleAround()` in `graphLayout.ts`. Forests grid: "+ New forest" button and inline form (`ForestGrid.tsx`).
   - Others can use / need to know: `circleAround(center, seedIds, roots, otherSpots)` puts rooted seeds side by side and turns the ring toward seeds in other webs. New `web`/`webs` words in `lib/theme/words.ts` (Minimal: group/groups). The Help panel does not mention these yet. Compile passes; check:theme only shows the Windows bug (BACKLOG F5).
@@ -427,6 +447,22 @@ Entry format:
 
 ### Data, AI and integration notes
 
+- [Oct 15, later] (roshan714)
+  - Did: `Fruit.icon` (optional, approved) and `updateFruit(id, { name, icon })`. `quizQuestions(key, sources, provider, mix?)`: with `QuizMix` ({ multipleChoice, typeIn, matching }) it asks for exactly that mix in one request (`MIX_QUIZ_SCHEMA`: `matching` is groups of `{ rows }`), allows several questions per note (deduped by prompt), cuts extras and uses up to 20 notes. Without `mix` nothing changed. Passed through `aiQuizQuestions` and the `forest:ai-quiz` message.
+  - Others can use / need to know: compile passes; check:theme only shows BACKLOG F5. Not yet tested with a real key.
+  - Need from someone else: nothing.
+- [Oct 15] (roshan714)
+  - Did: `Fruit.name` (optional, approved). `saveFruit` keeps older quizzes and names the new one "Quiz N" (N = 1 + max of the highest "Quiz N" and the count, per forest and color). New `renameFruit(id, name)` (trims, ignores empty).
+  - Others can use / need to know: quizzes now pile up in storage (no delete yet). Apple fruits also get a name, which nothing shows. Compile passes; check:theme only shows BACKLOG F5.
+  - Need from someone else: nothing.
+- [Oct 14, night] (roshan714)
+  - Did: `quizQuestions` (`gemini.ts`) asks for questions in the AI's own words (type-in at least 8 words; matching term ≤ 6 words, definition ≤ 15), drops type-in prompts with < 5 words besides the blank or that equal the note with the answer put back, and drops matching rows copying > 8 words in a row from the note (`copiesNote`). `fillBlankQuestion` returns null with < 5 words around the blank.
+  - Others can use / need to know: the apple pop-up's fallback (`ReviewPopup`, only for seeds with no saved question) now also gets null for one-word text; `recall.ts` is unchanged. Compile passes; check:theme only shows BACKLOG F5.
+  - Need from someone else: a person with a key to check that type-in and matching rows are reworded.
+- [Oct 14, evening] (roshan714)
+  - Did: `Question` gained `type-in`/`matching` and optional `pairs` (approved). `quizQuestions` (`gemini.ts`) mixes multiple-choice and type-in and adds one matching question last from a `matching` array (still one request). `fillBlankQuestions` makes every other question type-in and adds a matching one with 3+ seeds; `shuffle` is now exported. Grow from link: new prompt, `note` per idea saved on the seed, `normalizeText` in `readPage.ts` lets `quoteAnchor` find quotes with changed quotes/dashes/spaces/case (its `exact` is the page's own text), duplicates from the same url are skipped.
+  - Others can use / need to know: `SeedInput` accepts `note`. `growFromLink` now returns the counts actually saved. Compile passes; check:theme only shows the Windows bug (BACKLOG F5). Not yet tested in Chrome with a real key.
+  - Need from someone else: a person with a key to run Grow from link on a Wikipedia article twice and check notes and highlights.
 - [Oct 11] (GitHub Copilot)
   - Did: Grow from link now labels its in-progress step and tooltip with the selected provider, so Cerebras no longer appears as Gemini during graph generation.
   - Others can use / need to know: request routing was already provider-aware; this fixed the remaining hard-coded UI text. `npm run compile` passes.
@@ -650,6 +686,12 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 - [ ] [Viewer] Quiz screen: lily pads in a row (in progress: built and tested by the agent in Chromium, still needs a check in Chrome by a person)
 - [ ] [UI] Frog art (sitting, jumping, talking) and the hop animation from pad to pad (in progress: sitting and jumping frog and the hop are in, tested in Chromium; the talking frog art is still missing)
 - [ ] [Engine] The lily pad only goes on text (drag over a sentence); a click with it places nothing (in progress: built and tested by the agent in Chromium on Wikipedia, still needs a check in Chrome by a person)
+- [ ] [Data] [Viewer] More quiz styles: type-in and matching, from the AI (one request) and the offline fallback, played on the quiz screen (user's request, 2026-10-14) (in progress: built, compile passes, offline builder checked with a script; needs the "Done when" check in Chrome with a real key)
+- [ ] [Viewer] Quiz setup "Random questions" and capped style counts, a scrolling pond, and going back to earlier pads (user's request, 2026-10-15) (in progress: built, compile passes; needs the "Done when" check in Chrome)
+- [ ] [Viewer] Quizzes page: a grid of saved quizzes with icons, rename and play; play and "new quiz" have their own addresses (user's request, 2026-10-15) (in progress: built, compile passes; needs the "Done when" check in Chrome)
+- [ ] [Data] [Viewer] Custom AI quiz: number of questions and mix of styles, still one request (user's request, 2026-10-15) (in progress: built, compile passes; needs a check in Chrome with a real key)
+- [ ] [Data] [Viewer] Saved, named quizzes: every quiz kept as "Quiz N", chosen from a "Saved quizzes" list and renamed (user's request, 2026-10-15) (in progress: built, compile passes; needs the "Done when" check in Chrome)
+- [ ] [Data] [Viewer] Quiz fixes: no blank-only questions, AI questions in its own words with no silent fallback after an AI error, matching answers shown pair by pair (user's request, 2026-10-14) (in progress: built, compile passes, offline guard checked with a script; needs the "Done when" check in Chrome with a real key and a wrong key)
 - [ ] [UI] Notice in the UI that AI features send saved text to Google (in progress: on the quiz start and results screens and the Settings page, tested in Chromium; needs a check in Chrome)
 
 ### Priority 2: Growth
@@ -670,6 +712,7 @@ Goal: the features that win the demo. Build in priority order and stop wherever 
 - [ ] [Data] AI-suggested roots: send one forest's nodes to Gemini, get pairs with a reason each
 - [ ] [Viewer] Suggested roots shown in the graph for the user to accept or reject
 - [ ] [Viewer] [Data] "Grow from link": paste a link, Gemini reads the page, plants its key ideas and grows roots to related seeds (user's request, 2026-10-11) (in progress: built and tested by the agent in Chromium with a stand-in page and a stand-in Gemini answer; needs a check in Chrome on a real page with a real key)
+- [ ] [Data] Better "Grow from link": ideas a student would review, a note on each seed, quotes that anchor more often, no duplicates on a second run (user's request, 2026-10-14) (in progress: built, compile passes, quote matching checked with a script; needs a check in Chrome on a Wikipedia article with a real key)
 - [ ] [Viewer] Automatic paths between nodes from the same page or site, drawn dashed
 - [ ] [Viewer] Switch to turn automatic paths off
 

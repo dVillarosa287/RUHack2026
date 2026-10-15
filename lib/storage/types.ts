@@ -63,7 +63,7 @@ export interface Seed {
 
 /** What a caller passes to saveSeed. The storage module fills in the rest. */
 export type SeedInput = Pick<Seed, 'forestId' | 'kind' | 'spriteType' | 'color' | 'url' | 'pageTitle' | 'text'> &
-  Partial<Pick<Seed, 'folderId' | 'growth' | 'linkTarget' | 'anchor' | 'nextReviewAt' | 'scale' | 'displayText'>>;
+  Partial<Pick<Seed, 'folderId' | 'growth' | 'linkTarget' | 'anchor' | 'nextReviewAt' | 'scale' | 'displayText' | 'note'>>;
 
 export interface Root {
   id: string;
@@ -76,16 +76,22 @@ export interface Root {
 
 export interface Question {
   seedId: string;
-  type: 'multiple-choice' | 'fill-blank';
+  type: 'multiple-choice' | 'fill-blank' | 'type-in' | 'matching';
   prompt: string;
   choices: string[];
   answer: string;
+  /** Matching only: left item and its correct right item. */
+  pairs?: { left: string; right: string }[];
 }
 
 export interface Fruit {
   id: string;
   forestId: string;
   color: string;
+  /** The quiz's name, e.g. "Quiz 1". Missing on quizzes saved before names existed. */
+  name?: string;
+  /** An art id from lib/theme, like Forest.icon. Missing means the default (FOREST_ICONS[0]). */
+  icon?: string;
   questions: Question[];
   /** The AI provider used to write this quiz. Missing on older quizzes, which were Gemini quizzes. */
   provider?: 'gemini' | 'cerebras';

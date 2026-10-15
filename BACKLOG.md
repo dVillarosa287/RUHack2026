@@ -128,6 +128,9 @@ These are expected problems from SPEC section 6. Turn one into a "Needs fixing" 
 
 ## Closed
 
+- Quiz icons: approved by the user, team informed (2026-10-15). `Fruit` has an optional `icon` (an art id like `Forest.icon`; missing means `FOREST_ICONS[0]`), changed with the new `updateFruit(id, { name, icon })` (`renameFruit` now calls it).
+- Saved, named quizzes: approved by the user, team informed (2026-10-15). `Fruit` has an optional `name` ("Quiz 1"…; missing on older quizzes). `saveFruit` no longer removes older quizzes of the same color, and `renameFruit(id, name)` was added. Numbers are counted per forest and color, so the apples' one-question fruits do not push up the lily pad quiz numbers.
+- Quiz styles type-in and matching: approved by the user, team informed (2026-10-14). `Question.type` is now `'multiple-choice' | 'fill-blank' | 'type-in' | 'matching'`, and `Question` has an optional `pairs` ({ left, right }[], matching only). Older quizzes load unchanged. `SeedInput` also accepts `note`, so "Grow from link" saves its explanation.
 - F2. Jump highlight flashed for one second: fixed (2026-10-10). It now stays lit 2.5s and fades over 1.5s (`lib/engine/highlights.ts`); marker glow does the same in `toolbar.css`. Tested in Chromium; needs a check in Chrome. Changed later (2026-10-11): the copy sits a little to the top right of the mouse at 60% opacity, instead of on top of it.
 - F3. Sprites landed off-center from the mouse: fixed (2026-10-10). Sprites are centered on the spot and text anchors use the middle of the line. Tested in Chromium; needs a check in Chrome.
 - F4. Selected sprite did not follow the mouse: fixed (2026-10-10) with `CursorSprite`. Tested in Chromium; needs a check in Chrome.

@@ -13,6 +13,8 @@ const MAX_PROMPT_LENGTH = 220;
 const CHOICES = 4;
 /** At least one word is enough to make a typed-answer question; every pad should remain represented. */
 const MIN_WORDS = 1;
+/** A question needs at least this many words besides the blank, or there is nothing to answer from. */
+const MIN_CONTEXT_WORDS = 5;
 
 /** Words as they are written, with their position in the text. Only letters, digits, hyphens and apostrophes. */
 function wordsIn(text: string): { word: string; index: number }[] {
@@ -57,7 +59,7 @@ function sentenceAround(text: string, at: number, length: number): { text: strin
   return { text: sentence, offset };
 }
 
-function shuffle<T>(items: T[]): T[] {
+export function shuffle<T>(items: T[]): T[] {
   const copy = [...items];
   for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -82,6 +84,8 @@ export function fillBlankQuestion(seed: Seed, others: Seed[] = []): Question | n
 
   const { text: sentence, offset } = sentenceAround(text, best.index, best.word.length);
   const prompt = sentence.slice(0, offset) + BLANK + sentence.slice(offset + best.word.length);
+  // Too few words around the blank (a one-word highlight) would leave only "_____" to answer from.
+  if (wordsIn(prompt.replace(BLANK, ' ')).length < MIN_CONTEXT_WORDS) return null;
 
   // Wrong choices: other good words, from the other seeds first (they are about the same topic), then this one.
   const taken = new Set([plain(best.word)]);
@@ -108,9 +112,38 @@ export function fillBlankQuestion(seed: Seed, others: Seed[] = []): Question | n
   };
 }
 
-/** One fill-in-the-blank question per seed that has usable text, in the order given. */
+/** A matching question's left side is at most this long, so the rows stay readable. */
+const MAX_MATCH_LEFT = 100;
+
+/**
+ * One question per seed that has usable text, in the order given: every other one is type-in (no choices), the rest
+ * fill in the blank. With 3 or more, one matching question goes last: each blanked sentence matched to its word.
+ */
 export function fillBlankQuestions(seeds: Seed[]): Question[] {
-  return seeds.map((seed) => fillBlankQuestion(seed, seeds)).filter((q): q is Question => q !== null);
+  const made = seeds.map((seed) => fillBlankQuestion(seed, seeds)).filter((q): q is Question => q !== null);
+  const questions = made.map((q, i): Question => (i % 2 === 1 ? { ...q, type: 'type-in', choices: [] } : q));
+
+  // Matching reuses the questions above. Two seeds can blank the same word, so repeated sides are skipped.
+  const pairs: { left: string; right: string }[] = [];
+  const taken = new Set<string>();
+  for (const q of made.slice(0, 6)) {
+    const left = shortenAroundBlank(q.prompt);
+    if (taken.has(plain(left)) || taken.has(plain(q.answer))) continue;
+    taken.add(plain(left));
+    taken.add(plain(q.answer));
+    pairs.push({ left, right: q.answer });
+  }
+  if (pairs.length >= 3 && made[0]) {
+    questions.push({ seedId: made[0].seedId, type: 'matching', prompt: 'Match each term to its meaning', choices: shuffle(pairs.map((p) => p.right)), answer: '', pairs });
+  }
+  return questions;
+}
+
+/** A blanked sentence cut to MAX_MATCH_LEFT characters, keeping the blank in view. */
+function shortenAroundBlank(prompt: string): string {
+  if (prompt.length <= MAX_MATCH_LEFT) return prompt;
+  const from = Math.max(0, Math.min(prompt.indexOf(BLANK) - MAX_MATCH_LEFT / 2, prompt.length - MAX_MATCH_LEFT));
+  return `${from > 0 ? '…' : ''}${prompt.slice(from, from + MAX_MATCH_LEFT)}${from + MAX_MATCH_LEFT < prompt.length ? '…' : ''}`;
 }
 
 /**
